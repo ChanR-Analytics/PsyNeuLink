@@ -941,7 +941,7 @@ import typecheck as tc
 from psyneulink.components.component import Component, Param, function_type, method_type
 from psyneulink.components.functions.function import FunctionOutputType, Linear
 from psyneulink.components.shellclasses import Function, Mechanism, Projection, State
-from psyneulink.components.states.inputstate import InputState, DEFER_VARIABLE_SPEC_TO_MECH_MSG
+from psyneulink.components.states.inputstate import DEFER_VARIABLE_SPEC_TO_MECH_MSG, InputState
 from psyneulink.components.states.modulatorysignals.modulatorysignal import _is_modulatory_spec
 from psyneulink.components.states.outputstate import OutputState
 from psyneulink.components.states.parameterstate import ParameterState
@@ -956,8 +956,7 @@ from psyneulink.globals.keywords import \
     VALUE, VARIABLE, kwMechanismComponentCategory, kwMechanismExecuteFunction
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.registry import register_category, remove_instance_from_registry
-from psyneulink.globals.utilities import ContentAddressableList, ReadOnlyOrderedDict, \
-    append_type_to_name, convert_to_np_array, iscompatible, kwCompatibilityNumeric
+from psyneulink.globals.utilities import ContentAddressableList, ReadOnlyOrderedDict, append_type_to_name, convert_to_np_array, iscompatible, kwCompatibilityNumeric
 
 __all__ = [
     'Mechanism_Base', 'MechanismError'
@@ -1443,27 +1442,6 @@ class Mechanism_Base(Mechanism):
                                              param_defaults=params,
                                              prefs=prefs,
                                              name=name)
-
-        # FUNCTIONS:
-
-# IMPLEMENTATION NOTE:  REPLACE THIS WITH ABC (ABSTRACT CLASS)
-        # Assign class functions
-        self.classMethods = {
-            kwMechanismExecuteFunction: self.execute,
-            # kwMechanismAdjustFunction: self.adjust_function,
-            # kwMechanismTerminateFunction: self.terminate_execute
-        }
-        self.classMethodNames = self.classMethods.keys()
-
-        #  Validate class methods:
-        #    make sure all required ones have been implemented in (i.e., overridden by) subclass
-        for name, method in self.classMethods.items():
-            try:
-                method
-            except (AttributeError):
-                raise MechanismError("{0} is not implemented in Mechanism class {1}".
-                                     format(name, self.name))
-
         try:
             self.instance_defaults.value = self.value.copy()
         except AttributeError:
@@ -1649,10 +1627,10 @@ class Mechanism_Base(Mechanism):
         :return:
         """
 
-        variable = self._update_variable(super(Mechanism_Base, self)._validate_variable(variable, context))
+        variable = super(Mechanism_Base, self)._validate_variable(variable, context)
 
         # Force Mechanism variable specification to be a 2D array (to accomodate multiple InputStates - see above):
-        variable = self._update_variable(convert_to_np_array(variable, 2))
+        variable = convert_to_np_array(variable, 2)
 
         return variable
 
@@ -2216,6 +2194,11 @@ class Mechanism_Base(Mechanism):
         """
         self.ignore_execution_id = ignore_execution_id
         context = context or ContextFlags.COMMAND_LINE
+
+        # initialize context for this execution_id if not done already
+        if execution_id is not None:
+            self._assign_context_values(execution_id)
+
         if not self.context.source or context & ContextFlags.COMMAND_LINE:
             self.context.source = ContextFlags.COMMAND_LINE
         if self.context.initialization_status == ContextFlags.INITIALIZED:
@@ -2292,8 +2275,7 @@ class Mechanism_Base(Mechanism):
         if (input is None
             and (self.context.execution_phase & (ContextFlags.PROCESSING|ContextFlags.LEARNING|ContextFlags.SIMULATION))
             and (self.input_state.path_afferents != [])):
-            variable = self._update_variable(self._update_input_states(runtime_params=runtime_params,
-                                                                       context=context))
+            variable = self._update_input_states(execution_id=execution_id, runtime_params=runtime_params, context=context)
 
         # Direct call to execute Mechanism with specified input, so assign input to Mechanism's input_states
         else:
@@ -2303,10 +2285,10 @@ class Mechanism_Base(Mechanism):
                 input = self.instance_defaults.variable
             #     FIX:  this input value is sent to input CIMs when compositions are nested
             #           variable should be based on afferent projections
-            variable = self._update_variable(self._get_variable_from_input(input))
+            variable = self._get_variable_from_input(input)
 
         # UPDATE PARAMETER STATE(S)
-        self._update_parameter_states(runtime_params=runtime_params, context=context)
+        self._update_parameter_states(execution_id=execution_id, runtime_params=runtime_params, context=context)
 
         # CALL SUBCLASS _execute method AND ASSIGN RESULT TO self.value
 
@@ -2343,7 +2325,7 @@ class Mechanism_Base(Mechanism):
         # Set status based on whether self.value has changed
         self.status = value
 
-        self.value = value
+        self.parameters.value.set(value, execution_context=execution_id, override=True)
 
         # UPDATE OUTPUT STATE(S)
         self._update_output_states(execution_id=execution_id, runtime_params=runtime_params, context=context)
@@ -2360,7 +2342,7 @@ class Mechanism_Base(Mechanism):
         # Used by sublcasses with update_previous_value and/or convergence_function and delta
         self._current_value = value
 
-        return self.value
+        return value
 
     def run(
         self,
@@ -2446,7 +2428,7 @@ class Mechanism_Base(Mechanism):
         except:
             self.previous_value = None
 
-    def _update_input_states(self, runtime_params=None, context=None):
+    def _update_input_states(self, execution_id=None, runtime_params=None, context=None):
         """ Update value for each InputState in self.input_states:
 
         Call execute method for all (MappingProjection) Projections in InputState.path_afferents
@@ -2455,13 +2437,13 @@ class Mechanism_Base(Mechanism):
         """
         for i in range(len(self.input_states)):
             state = self.input_states[i]
-            state.update(params=runtime_params, context=context)
+            state.update(execution_id=execution_id, params=runtime_params, context=context)
         return np.array(self.input_values)
 
-    def _update_parameter_states(self, runtime_params=None, context=None):
+    def _update_parameter_states(self, execution_id=None, runtime_params=None, context=None):
 
         for state in self._parameter_states:
-            state.update(params=runtime_params, context=context)
+            state.update(execution_id=execution_id, params=runtime_params, context=context)
         self._update_attribs_dicts(context=context)
 
     def _update_attribs_dicts(self, context=None):
@@ -2881,7 +2863,6 @@ class Mechanism_Base(Mechanism):
                     old_variable = self.instance_defaults.variable
                 old_variable.extend(added_variable)
                 self.instance_defaults.variable = np.array(old_variable)
-                self._update_variable(self.instance_defaults.variable)
             instantiated_input_states = _instantiate_input_states(self,
                                                                   input_states,
                                                                   added_variable,
@@ -2942,7 +2923,6 @@ class Mechanism_Base(Mechanism):
                 old_variable = self.instance_defaults.variable
                 old_variable = np.delete(old_variable,index,0)
                 self.instance_defaults.variable = old_variable
-                self._update_variable(self.instance_defaults.variable)
 
             elif state in self.output_states:
                 if isinstance(state, OutputState):
@@ -3328,3 +3308,10 @@ class MechanismList(UserList):
                 values.append(output_state.value)
         return values
 
+    def get_output_state_values(self, execution_id):
+        """Return values of OutputStates for all mechanisms in MechanismList for **execution_id**"""
+        values = []
+        for item in self.mechanisms:
+            for output_state in item.output_states:
+                values.append(output_state.parameters.value.get(execution_id))
+        return values

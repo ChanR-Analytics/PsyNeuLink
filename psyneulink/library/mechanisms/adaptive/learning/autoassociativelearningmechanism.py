@@ -352,7 +352,7 @@ class AutoAssociativeLearningMechanism(LearningMechanism):
         """
 
         # Skip LearningMechanism._validate_variable in call to super(), as it requires variable to have 3 items
-        variable = self._update_variable(super(LearningMechanism, self)._validate_variable(variable, context))
+        variable = super(LearningMechanism, self)._validate_variable(variable, context)
 
         # # MODIFIED 9/22/17 NEW: [HACK] JDC: 6/29/18 -> CAUSES DEFAULT variable [[0]] OR ANYTHING OF size=1 TO FAIL
         # if np.array(np.squeeze(variable)).ndim != 1 or not is_numeric(variable):

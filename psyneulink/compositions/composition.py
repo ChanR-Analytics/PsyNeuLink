@@ -65,6 +65,7 @@ from psyneulink.components.states.outputstate import OutputState
 from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.keywords import HARD_CLAMP, IDENTITY_MATRIX, MATRIX_KEYWORD_VALUES, NO_CLAMP, OWNER_VALUE, PULSE_CLAMP, SOFT_CLAMP
 from psyneulink.globals.socket import ConnectionInfo
+from psyneulink.globals.utilities import call_with_pruned_args
 from psyneulink.scheduling.condition import Always
 from psyneulink.scheduling.scheduler import Scheduler
 from psyneulink.scheduling.time import TimeScale
@@ -436,6 +437,7 @@ class Composition(object):
         self._graph_processing = None
         self.c_nodes = []
         self.required_c_node_roles = []
+        self.projections = []
         self.input_CIM = CompositionInterfaceMechanism(name=self.name + " Input_CIM",
                                                        composition=self)
         self.input_CIM_states = {}
@@ -671,6 +673,7 @@ class Composition(object):
             projection.is_processing = False
             projection.name = '{0} to {1}'.format(sender, receiver)
             self.graph.add_component(projection, feedback=feedback)
+            self.projections.append(projection)
 
             self.graph.connect_components(graph_sender, projection)
             self.graph.connect_components(projection, graph_receiver)
@@ -1222,19 +1225,23 @@ class Composition(object):
         if execution_id is None:
             execution_id = self.default_execution_id
 
-        # Traverse processing graph and assign one uuid to all of its mechanisms
         if execution_id not in self.execution_ids:
             self.execution_ids.append(execution_id)
 
-        for v in self._graph_processing.vertices:
-            v.component._execution_id = execution_id
+        for c_node in self.c_nodes:
+            c_node._assign_context_values(execution_id, composition=self)
 
-        self.input_CIM._execution_id = execution_id
-        self.output_CIM._execution_id = execution_id
-        # self.target_CIM._execution_id = execution_id
+        for proj in self.projections:
+            proj._assign_context_values(execution_id, composition=self)
 
-        self._current_execution_id = execution_id
         return execution_id
+
+    def _assign_context_values(self, execution_id, base_execution_id=None, **kwargs):
+        for c_node in self.c_nodes:
+            c_node._assign_context_values(execution_id, base_execution_id, **kwargs)
+
+        for proj in self.projections:
+            proj._assign_context_values(execution_id, base_execution_id, **kwargs)
 
     def _identify_clamp_inputs(self, list_type, input_type, origins):
         # clamp type of this list is same as the one the user set for the whole composition; return all nodes
@@ -1310,15 +1317,19 @@ class Composition(object):
 
             call_before_time_step : callable
                 will be called before each `TIME_STEP` is executed
+                will be passed the current *execution_id* (but it is not necessary for your callable to take)
 
             call_after_time_step : callable
                 will be called after each `TIME_STEP` is executed
+                will be passed the current *execution_id* (but it is not necessary for your callable to take)
 
             call_before_pass : callable
                 will be called before each `PASS` is executed
+                will be passed the current *execution_id* (but it is not necessary for your callable to take)
 
             call_after_pass : callable
                 will be called after each `PASS` is executed
+                will be passed the current *execution_id* (but it is not necessary for your callable to take)
 
             Returns
             ---------
@@ -1366,23 +1377,23 @@ class Composition(object):
         execution_scheduler = scheduler_processing
 
         if call_before_pass:
-            call_before_pass()
+            call_with_pruned_args(call_before_pass, execution_id=execution_id)
 
         for next_execution_set in execution_scheduler.run(termination_conds=termination_processing, execution_id=execution_id):
             if call_after_pass:
                 if next_pass_after == execution_scheduler.clocks[execution_id].get_total_times_relative(TimeScale.PASS, TimeScale.TRIAL):
                     logger.debug('next_pass_after {0}\tscheduler pass {1}'.format(next_pass_after, execution_scheduler.clocks[execution_id].get_total_times_relative(TimeScale.PASS, TimeScale.TRIAL)))
-                    call_after_pass()
+                    call_with_pruned_args(call_after_pass, execution_id=execution_id)
                     next_pass_after += 1
 
             if call_before_pass:
                 if next_pass_before == execution_scheduler.clocks[execution_id].get_total_times_relative(TimeScale.PASS, TimeScale.TRIAL):
-                    call_before_pass()
+                    call_with_pruned_args(call_before_pass, execution_id=execution_id)
                     logger.debug('next_pass_before {0}\tscheduler pass {1}'.format(next_pass_before, execution_scheduler.clocks[execution_id].get_total_times_relative(TimeScale.PASS, TimeScale.TRIAL)))
                     next_pass_before += 1
 
             if call_before_time_step:
-                call_before_time_step()
+                call_with_pruned_args(call_before_time_step, execution_id=execution_id)
 
             frozen_values = {}
             new_values = {}
@@ -1422,8 +1433,11 @@ class Composition(object):
                     node.context.execution_phase = ContextFlags.PROCESSING
                     if not (CNodeRole.OBJECTIVE in self.get_roles_by_c_node(node) and not node is self.controller):
 
-                        node.execute(runtime_params=execution_runtime_params,
-                                     context=ContextFlags.COMPOSITION)
+                        node.execute(
+                            runtime_params=execution_runtime_params,
+                            execution_id=execution_id,
+                            context=ContextFlags.COMPOSITION
+                        )
 
 
                     for key in node._runtime_params_reset:
@@ -1455,10 +1469,10 @@ class Composition(object):
                     node.output_states[i].set_value_without_logging(new_values[node][i])
 
             if call_after_time_step:
-                call_after_time_step()
+                call_with_pruned_args(call_after_time_step, execution_id=execution_id)
 
         if call_after_pass:
-            call_after_pass()
+            call_with_pruned_args(call_after_pass, execution_id=execution_id)
 
         self.output_CIM.context.execution_phase = ContextFlags.PROCESSING
         self.output_CIM.execute(context=ContextFlags.PROCESSING)
@@ -1627,7 +1641,7 @@ class Composition(object):
         for trial_num in range(num_trials):
             # Execute call before trial "hook" (user defined function)
             if call_before_trial:
-                call_before_trial()
+                call_with_pruned_args(call_before_trial, execution_id=execution_id)
 
             if termination_processing[TimeScale.RUN].is_satisfied(scheduler=scheduler_processing,
                                                                   execution_id=execution_id):
@@ -1708,7 +1722,7 @@ class Composition(object):
             #                                   )
 
             if call_after_trial:
-                call_after_trial()
+                call_with_pruned_args(call_after_trial, execution_id=execution_id)
 
         scheduler_processing.clocks[execution_id]._increment_time(TimeScale.RUN)
 

@@ -1005,12 +1005,12 @@ class RecurrentTransferMechanism(TransferMechanism):
             # If combination_function is a method of a subclass, let it pass
             if not isinstance(comb_fct, Function):
                 if isinstance(comb_fct, type):
-                    self._combination_function = comb_fct(default_variable=self.variable)
+                    self._combination_function = comb_fct(default_variable=self.instance_defaults.variable)
                 elif isinstance(comb_fct, MethodType) and comb_fct.__self__ == self:
                     pass
                 else:
                     self._combination_function = UserDefinedFunction(custom_function=comb_fct,
-                                                                     default_variable=self.variable)
+                                                                     default_variable=self.instance_defaults.variable)
 
         if self.auto is None and self.hetero is None:
             self.matrix = specified_matrix

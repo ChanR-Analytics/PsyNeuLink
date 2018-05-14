@@ -1,5 +1,6 @@
 import functools
 import logging
+
 from timeit import timeit
 
 import numpy as np
@@ -29,8 +30,21 @@ logger = logging.getLogger(__name__)
 # see http://doc.pytest.org/en/latest/skipping.html
 
 
+def record_values(d, time_scale, *mechs, execution_id=None):
+    if time_scale not in d:
+        d[time_scale] = {}
+    for mech in mechs:
+        if mech not in d[time_scale]:
+            d[time_scale][mech] = []
+        mech_value = mech.parameters.value.get(execution_id)
+        if mech_value is None:
+            d[time_scale][mech].append(np.nan)
+        else:
+            d[time_scale][mech].append(mech_value[0])
+
 # Unit tests for each function of the Composition class #######################
 # Unit tests for Composition.Composition(
+
 
 class TestConstructor:
 
@@ -1889,18 +1903,6 @@ class TestCallBeforeAfterTimescale:
         assert pass_array == [0, 1, 2, 3]
 
     def test_call_beforeafter_values_onepass(self):
-
-        def record_values(d, time_scale, *mechs):
-            if time_scale not in d:
-                d[time_scale] = {}
-            for mech in mechs:
-                if mech not in d[time_scale]:
-                    d[time_scale][mech] = []
-                if mech.value is None:
-                    d[time_scale][mech].append(np.nan)
-                else:
-                    d[time_scale][mech].append(mech.value[0])
-
         comp = Composition()
 
         A = TransferMechanism(name="A [transfer]", function=Linear(slope=2.0))
@@ -1968,18 +1970,6 @@ class TestCallBeforeAfterTimescale:
                 np.testing.assert_allclose(comp, after_expected[ts][mech], err_msg='Failed on after[{0}][{1}]'.format(ts, mech))
 
     def test_call_beforeafter_values_twopass(self):
-
-        def record_values(d, time_scale, *mechs):
-            if time_scale not in d:
-                d[time_scale] = {}
-            for mech in mechs:
-                if mech not in d[time_scale]:
-                    d[time_scale][mech] = []
-                if mech.value is None:
-                    d[time_scale][mech].append(np.nan)
-                else:
-                    d[time_scale][mech].append(mech.value[0])
-
         comp = Composition()
 
         A = IntegratorMechanism(name="A [transfer]", function=SimpleIntegrator(rate=1))
@@ -2417,18 +2407,6 @@ class TestSystemComposition:
         assert np.allclose(125, output[0][0])
 
     def test_call_beforeafter_values_onepass(self):
-
-        def record_values(d, time_scale, *mechs):
-            if time_scale not in d:
-                d[time_scale] = {}
-            for mech in mechs:
-                if mech not in d[time_scale]:
-                    d[time_scale][mech] = []
-                if mech.value is None:
-                    d[time_scale][mech].append(np.nan)
-                else:
-                    d[time_scale][mech].append(mech.value)
-
         comp = Composition()
 
         A = TransferMechanism(name="A [transfer]", function=Linear(slope=2.0))
@@ -2437,7 +2415,7 @@ class TestSystemComposition:
         comp.add_c_node(B)
         comp.add_projection(MappingProjection(sender=A, receiver=B), A, B)
         comp._analyze_graph()
-        inputs_dict = {A: [[1],[ 2], [3], [4]]}
+        inputs_dict = {A: [[1], [2], [3], [4]]}
         sched = Scheduler(composition=comp)
 
         before = {}
@@ -2491,24 +2469,12 @@ class TestSystemComposition:
                 comp = []
                 for x in after[ts][mech]:
                     try:
-                        comp.append(x[0][0])
+                        comp.append(x[0])
                     except TypeError:
                         comp.append(x)
                 np.testing.assert_allclose(comp, after_expected[ts][mech], err_msg='Failed on after[{0}][{1}]'.format(ts, mech))
 
     def test_call_beforeafter_values_twopass(self):
-
-        def record_values(d, time_scale, *mechs):
-            if time_scale not in d:
-                d[time_scale] = {}
-            for mech in mechs:
-                if mech not in d[time_scale]:
-                    d[time_scale][mech] = []
-                if mech.value is None:
-                    d[time_scale][mech].append(np.nan)
-                else:
-                    d[time_scale][mech].append(mech.value)
-
         comp = Composition()
 
         A = IntegratorMechanism(name="A [transfer]", function=SimpleIntegrator(rate=1))
@@ -2595,7 +2561,7 @@ class TestSystemComposition:
                 comp = []
                 for x in after[ts][mech]:
                     try:
-                        comp.append(x[0][0])
+                        comp.append(x[0])
                     except TypeError:
                         comp.append(x)
                 np.testing.assert_allclose(comp, after_expected[ts][mech], err_msg='Failed on after[{0}][{1}]'.format(ts, mech))
@@ -3437,7 +3403,7 @@ class TestCompositionInterface:
 
         assert np.allclose(A.input_states[0].value, [2.])
         assert np.allclose(A.input_states[1].value, [4.])
-        assert np.allclose(A.variable, [[2.], [4.]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.], [4.]])
         assert np.allclose(output, [np.array([[5.], [5.]]), np.array([[2.], [4.]])])
 
     def test_two_input_states_new_origin_second_trial(self):
@@ -3474,7 +3440,7 @@ class TestCompositionInterface:
         output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
         assert np.allclose(A.input_states[0].value, [5.])
         assert np.allclose(A.input_states[1].value, [5.])
-        assert np.allclose(A.variable, [[5.], [5.]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[5.], [5.]])
         assert np.allclose(output, [[50.]])
 
         # A --> B --> C
@@ -3502,11 +3468,11 @@ class TestCompositionInterface:
         output2 = comp.run(inputs=inputs_dict2, scheduler_processing=sched)
         assert np.allclose(A.input_states[0].value, [2.])
         assert np.allclose(A.input_states[1].value, [4.])
-        assert np.allclose(A.variable, [[2.], [4.]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.], [4.]])
 
         assert np.allclose(D.input_states[0].value, [2.])
         assert np.allclose(D.input_states[1].value, [4.])
-        assert np.allclose(D.variable, [[2.], [4.]])
+        assert np.allclose(D.parameters.variable.get(comp.default_execution_id), [[2.], [4.]])
 
         assert np.allclose([np.array([[50.]]), np.array([[40.]])], output2)
 
@@ -3609,7 +3575,7 @@ class TestInputStateSpecifications:
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
-        assert np.allclose(A.variable, [[2.0], [4.0]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
     def test_two_input_states_created_first_with_deferred_init(self):
         comp = Composition()
@@ -3642,7 +3608,7 @@ class TestInputStateSpecifications:
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
-        assert np.allclose(A.variable, [[2.0], [4.0]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
     def test_two_input_states_created_with_keyword(self):
         comp = Composition()
@@ -3668,7 +3634,7 @@ class TestInputStateSpecifications:
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
-        assert np.allclose(A.variable, [[2.0], [4.0]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
         assert np.allclose([[2], [4]], output)
 
@@ -3697,7 +3663,7 @@ class TestInputStateSpecifications:
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
-        assert np.allclose(A.variable, [[2.0], [4.0]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
     def test_two_input_states_created_with_values(self):
         comp = Composition()
@@ -3723,7 +3689,7 @@ class TestInputStateSpecifications:
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
-        assert np.allclose(A.variable, [[2.0], [4.0]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
 
 class TestInputSpecifications:

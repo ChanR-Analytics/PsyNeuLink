@@ -2776,10 +2776,13 @@ class System(System_Base):
         # sorted_list = list(object_item[0].name for object_item in self.execution_list)
 
         # Execute system without learning on projections (that will be taken care of in _execute_learning()
-        self._execute_processing(runtime_params=runtime_params,
-                                 termination_processing=termination_processing,
-                                 context=context)
-        outcome = self.terminal_mechanisms.outputStateValues
+        self._execute_processing(
+            execution_id=execution_id,
+            runtime_params=runtime_params,
+            termination_processing=termination_processing,
+            context=context
+        )
+        outcome = self.terminal_mechanisms.get_output_state_values(execution_id)
 
         if self.recordSimulationPref and self.context.execution_phase == ContextFlags.SIMULATION:
             self.simulation_results.append(outcome)
@@ -2791,9 +2794,7 @@ class System(System_Base):
             self.context.execution_phase = ContextFlags.LEARNING
             self.context.string = self.context.string.replace(EXECUTING, LEARNING + ' ')
 
-            # # TEST PRINT:
-            # print("\nEXECUTING System._execute_learning\n")
-            self._execute_learning(context)
+            self._execute_learning(execution_id=execution_id, context=context)
 
             self.context.execution_phase = ContextFlags.IDLE
             self.context.string = self.context.string.replace(LEARNING, EXECUTING)
@@ -2809,6 +2810,7 @@ class System(System_Base):
             self.controller.context.execution_phase = ContextFlags.PROCESSING
             try:
                 self.controller.execute(
+                    execution_id=execution_id,
                     runtime_params=None,
                     context=context
                 )
@@ -2831,10 +2833,9 @@ class System(System_Base):
         if self._report_system_output:
             self._report_system_completion()
 
-        # return self.terminal_mechanisms.outputStateValues
         return outcome
 
-    def _execute_processing(self, runtime_params, termination_processing, context=None):
+    def _execute_processing(self, runtime_params, termination_processing, execution_id=None, context=None):
         # Execute each Mechanism in self.execution_list, in the order listed during its phase
         # Only update Mechanism on time_step(s) determined by its phaseSpec (specified in Mechanism's Process entry)
         # FIX: NEED TO IMPLEMENT FRACTIONAL UPDATES (IN Mechanism.update())
@@ -2844,7 +2845,7 @@ class System(System_Base):
                               'must be initialized before execution'.format(self.name))
         logger.debug('{0}.scheduler processing termination conditions: {1}'.format(self, termination_processing))
 
-        for next_execution_set in self.scheduler_processing.run(termination_conds=termination_processing):
+        for next_execution_set in self.scheduler_processing.run(execution_id=execution_id, termination_conds=termination_processing):
             logger.debug('Running next_execution_set {0}'.format(next_execution_set))
             i = 0
 
@@ -2878,7 +2879,7 @@ class System(System_Base):
                 # Execute
                 # # TEST PRINT:
                 # print("\nEXECUTING System._execute_processing\n")
-                mechanism.execute(runtime_params=execution_runtime_params, context=context)
+                mechanism.execute(execution_id=execution_id, runtime_params=execution_runtime_params, context=context)
 
                 if not self._animate is False and self._animate_unit is COMPONENT:
                     self.show_graph(active_items=mechanism, **self._animate, output_fmt='gif')
@@ -2922,7 +2923,7 @@ class System(System_Base):
                 pass
             i += 1
 
-    def _execute_learning(self, context=None):
+    def _execute_learning(self, execution_id=None, context=None):
         # Execute each LearningMechanism as well as LearningProjections in self.learning_execution_list
 
         # FIRST, if targets were specified as a function, call the function now
@@ -2952,7 +2953,7 @@ class System(System_Base):
                               'must be initialized before execution'.format(self.name))
         logger.debug('{0}.scheduler learning termination conditions: {1}'.format(self, self.termination_learning))
 
-        for next_execution_set in self.scheduler_learning.run(termination_conds=self.termination_learning):
+        for next_execution_set in self.scheduler_learning.run(execution_id=execution_id, termination_conds=self.termination_learning):
             logger.debug('Running next_execution_set {0}'.format(next_execution_set))
 
             if (not self._animate is False and
@@ -2986,13 +2987,13 @@ class System(System_Base):
                     component.context.string = context_str
 
                     # Note:  DON'T include input arg, as that will be resolved by mechanism from its sender projections
-                    component.execute(runtime_params=params, context=context)
+                    component.execute(execution_id=execution_id, runtime_params=params, context=context)
 
                 elif isinstance(component, MappingProjection):
                     processes = list(component.sender.owner.processes.keys())
                     component.context.string = "Updating {} for {} in {}".format(ParameterState.__name__,
                                                                                  component.name, self.name)
-                    component._parameter_states[MATRIX].update(context=ContextFlags.COMPOSITION)
+                    component._parameter_states[MATRIX].update(execution_id=execution_id, context=ContextFlags.COMPOSITION)
 
                 component.context.execution_phase = ContextFlags.IDLE
 

@@ -363,7 +363,7 @@ class Context():
     """
 
     __name__ = 'Context'
-    _deepcopy_shared_keys = {'owner'}
+    _deepcopy_shared_keys = {'owner', 'composition', '_composition'}
 
     def __init__(self,
                  owner=None,

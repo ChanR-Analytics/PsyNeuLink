@@ -340,7 +340,7 @@ class KohonenLearningMechanism(LearningMechanism):
         """
 
         # Skip LearningMechanism._validate_variable in call to super(), as it requires variable to have 3 items
-        variable = self._update_variable(super(LearningMechanism, self)._validate_variable(variable, context))
+        variable = super(LearningMechanism, self)._validate_variable(variable, context)
 
         if np.array(variable).ndim != 2 or not is_numeric(variable):
             raise KohonenLearningMechanismError("Variable for {} ({}) must be a list with two items "
