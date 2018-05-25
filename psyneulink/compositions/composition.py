@@ -47,22 +47,23 @@ Class Reference
 """
 
 import collections
-from collections import Iterable, OrderedDict
-from enum import Enum
 import logging
 import numpy as np
 import uuid
 
+from collections import Iterable, OrderedDict
+from enum import Enum
+
 from psyneulink.components.component import function_type
+from psyneulink.components.functions.function import InterfaceStateMap
+from psyneulink.components.mechanisms.adaptive.control.controlmechanism import ControlMechanism
 from psyneulink.components.mechanisms.processing.compositioninterfacemechanism import CompositionInterfaceMechanism
 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
-from psyneulink.components.mechanisms.adaptive.control.controlmechanism import ControlMechanism
 from psyneulink.components.shellclasses import Mechanism, Projection
-from psyneulink.components.states.outputstate import OutputState
-from psyneulink.components.functions.function import InterfaceStateMap
 from psyneulink.components.states.inputstate import InputState
+from psyneulink.components.states.outputstate import OutputState
 from psyneulink.globals.context import ContextFlags
-from psyneulink.globals.keywords import MATRIX_KEYWORD_VALUES, OWNER_VALUE, HARD_CLAMP, IDENTITY_MATRIX, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP
+from psyneulink.globals.keywords import HARD_CLAMP, IDENTITY_MATRIX, MATRIX_KEYWORD_VALUES, NO_CLAMP, OWNER_VALUE, PULSE_CLAMP, SOFT_CLAMP
 from psyneulink.scheduling.condition import Always
 from psyneulink.scheduling.scheduler import Scheduler
 from psyneulink.scheduling.time import TimeScale
@@ -422,7 +423,7 @@ class Composition(object):
 
     '''
 
-    def __init__(self, 
+    def __init__(self,
                  name=None,
                  controller=None,
                  enable_controller=None):
@@ -441,7 +442,8 @@ class Composition(object):
                                                         composition=self)
         self.output_CIM_states = {}
         self.enable_controller = enable_controller
-        self.execution_ids = []
+        self.default_execution_id = self._get_unique_id()
+        self.execution_ids = [self.default_execution_id]
         self.controller = controller
 
         self._scheduler_processing = None
@@ -1209,13 +1211,15 @@ class Composition(object):
     def _assign_execution_ids(self, execution_id=None):
         '''
             assigns the same uuid to each Node in the composition's processing graph as well as the CIMs. The uuid is
-            either specified in the user's call to run(), or generated randomly at run time.
+            either specified in the user's call to run(), or from
+            the Composition's **default_execution_id**
         '''
 
         # Traverse processing graph and assign one uuid to all of its nodes
         if execution_id is None:
-            execution_id = self._get_unique_id()
+            execution_id = self.default_execution_id
 
+        # Traverse processing graph and assign one uuid to all of its mechanisms
         if execution_id not in self.execution_ids:
             self.execution_ids.append(execution_id)
 
@@ -1226,7 +1230,7 @@ class Composition(object):
         self.output_CIM._execution_id = execution_id
         # self.target_CIM._execution_id = execution_id
 
-        self._execution_id = execution_id
+        self._current_execution_id = execution_id
         return execution_id
 
     def _identify_clamp_inputs(self, list_type, input_type, origins):
@@ -1337,7 +1341,7 @@ class Composition(object):
             scheduler_learning = self.scheduler_learning
 
         if nested:
-            self.execution_id = self.input_CIM.path_afferents[0].sender.owner.composition._execution_id
+            self.execution_id = self.input_CIM.path_afferents[0].sender.owner.composition.default_execution_id
             self.input_CIM.context.execution_phase = ContextFlags.PROCESSING
             self.input_CIM.execute(context=ContextFlags.PROCESSING)
 
@@ -1409,7 +1413,7 @@ class Composition(object):
                         for param in runtime_params[node]:
                             if runtime_params[node][param][1].is_satisfied(scheduler=execution_scheduler,
                                                                            # KAM 5/15/18 - not sure if this will always be the correct execution id:
-                                                                                execution_id=self._execution_id):
+                                                                                execution_id=execution_id):
                                 execution_runtime_params[param] = runtime_params[node][param][0]
 
                     node.context.execution_phase = ContextFlags.PROCESSING
@@ -1430,7 +1434,7 @@ class Composition(object):
                     node.function_object._runtime_params_reset = {}
                     node.context.execution_phase = ContextFlags.IDLE
                 elif isinstance(node, Composition):
-                    node.execute(execution_id=self._execution_id)
+                    node.execute(execution_id=execution_id)
                 if node in origin_nodes:
                     if clamp_input:
                         if node in pulse_clamp_inputs:
