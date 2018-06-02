@@ -477,6 +477,7 @@ from psyneulink.globals.keywords import \
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.registry import register_category
+from psyneulink.globals.socket import ConnectionInfo
 from psyneulink.globals.utilities import append_type_to_name, convert_to_np_array, iscompatible
 
 __all__ = [
@@ -1363,12 +1364,13 @@ class Process(Process_Base):
                         receiver = item
                     # MODIFIED 9/19/17 END
 
-                    MappingProjection(
+                    projection = MappingProjection(
                         sender=preceding_item,
                         receiver=receiver,
                         params=projection_params,
                         name='{} from {} to {}'.format(MAPPING_PROJECTION, preceding_item.name, item.name)
                     )
+
                     if self.prefs.verbosePref:
                         print("MappingProjection added from Mechanism {0} to Mechanism {1}"
                               " in pathway of {2}".format(preceding_item.name, item.name, self.name))
@@ -1517,7 +1519,6 @@ class Process(Process_Base):
 
                     if projection.has_learning_projection:
                         self.learning = True
-
                     # TEST
                     # if params:
                     #     projection.matrix = params
@@ -1564,6 +1565,7 @@ class Process(Process_Base):
                 #    with Projection as OBJECT item and original params as PARAMS item of the tuple
                 # IMPLEMENTATION NOTE:  params is currently ignored
                 pathway[i] = projection
+                receiver_mech.input_state.afferents_info[projection] = ConnectionInfo(compositions=self)
 
         if learning_projection_specified:
             self.learning = LEARNING

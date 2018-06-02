@@ -64,6 +64,7 @@ from psyneulink.components.states.inputstate import InputState
 from psyneulink.components.states.outputstate import OutputState
 from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.keywords import HARD_CLAMP, IDENTITY_MATRIX, MATRIX_KEYWORD_VALUES, NO_CLAMP, OWNER_VALUE, PULSE_CLAMP, SOFT_CLAMP
+from psyneulink.globals.socket import ConnectionInfo
 from psyneulink.scheduling.condition import Always
 from psyneulink.scheduling.scheduler import Scheduler
 from psyneulink.scheduling.time import TimeScale
@@ -679,6 +680,8 @@ class Composition(object):
             self.needs_update_graph_processing = True
             self.needs_update_scheduler_processing = True
             self.needs_update_scheduler_learning = True
+
+            projection.receiver.afferents_info[projection] = ConnectionInfo(compositions=self)
 
         else:
             raise CompositionError("Cannot add Projection: {}. This Projection is already in the Compositon."
