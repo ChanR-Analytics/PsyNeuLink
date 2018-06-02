@@ -3208,6 +3208,33 @@ class TestNestedCompositions:
         assert np.allclose(16, output)
 
 
+class TestOverloadedCompositions:
+    def test_mechanism_different_inputs(self):
+        a = TransferMechanism(name='a', function=Linear(slope=2))
+        b = TransferMechanism(name='b')
+        c = TransferMechanism(name='c', function=Linear(slope=3))
+        p = MappingProjection(sender=a, receiver=b)
+
+        comp = Composition()
+        comp2 = Composition()
+
+        comp.add_c_node(a)
+        comp.add_c_node(b)
+        comp.add_projection(p, a, b)
+
+        comp2.add_c_node(a)
+        comp2.add_c_node(b)
+        comp2.add_c_node(c)
+        comp2.add_projection(p, a, b)
+        comp2.add_projection(MappingProjection(sender=c, receiver=b), c, b)
+
+        comp.run({a: 1})
+        comp2.run({a: 1, c: 1})
+
+        np.testing.assert_allclose(comp.results, [[np.array([2])]])
+        np.testing.assert_allclose(comp2.results, [[np.array([5])]])
+
+
 class TestCompositionInterface:
 
     def test_one_input_state_per_origin_two_origins(self):
