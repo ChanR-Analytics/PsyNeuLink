@@ -775,6 +775,9 @@ def _assign_error_signal_projections(processing_mech:Mechanism,
                                              context=ContextFlags.METHOD),
                                   context=ContextFlags.METHOD)
 
+        for projection in aff_lm.projections:
+            projection._enable_for_compositions(system)
+
         if not aff_lm.systems:
             aff_lm._add_system(system, LEARNING)
 

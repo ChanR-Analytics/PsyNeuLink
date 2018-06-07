@@ -437,7 +437,7 @@ class Composition(object):
         self._graph_processing = None
         self.c_nodes = []
         self.required_c_node_roles = []
-        self.projections = []
+        self.projections = set()
         self.input_CIM = CompositionInterfaceMechanism(name=self.name + " Input_CIM",
                                                        composition=self)
         self.input_CIM_states = {}
@@ -673,7 +673,7 @@ class Composition(object):
             projection.is_processing = False
             projection.name = '{0} to {1}'.format(sender, receiver)
             self.graph.add_component(projection, feedback=feedback)
-            self.projections.append(projection)
+            self.projections.add(projection)
 
             self.graph.connect_components(graph_sender, projection)
             self.graph.connect_components(projection, graph_receiver)
@@ -684,12 +684,15 @@ class Composition(object):
             self.needs_update_scheduler_processing = True
             self.needs_update_scheduler_learning = True
 
-            projection.receiver.afferents_info[projection] = ConnectionInfo(compositions=self)
+            projection._enable_for_compositions(self)
 
         else:
             raise CompositionError("Cannot add Projection: {}. This Projection is already in the Compositon."
                                    .format(projection.name))
         return projection
+
+    def _add_projection(self, projection):
+        self.projections.add(projection)
 
     def add_pathway(self, path):
         '''
@@ -1118,11 +1121,12 @@ class Composition(object):
 
                     self.input_CIM_states[input_state] = [interface_input_state, interface_output_state]
 
-                    MappingProjection(sender=interface_output_state,
+                    projection = MappingProjection(sender=interface_output_state,
                                       receiver=input_state,
                                       matrix= IDENTITY_MATRIX,
                                       name="("+interface_output_state.name + ") to ("
                                            + input_state.owner.name + "-" + input_state.name+")")
+                    projection._enable_for_compositions(self)
 
         sends_to_input_states = set(self.input_CIM_states.keys())
 
@@ -1232,6 +1236,14 @@ class Composition(object):
             c_node._assign_context_values(execution_id, composition=self)
 
         for proj in self.projections:
+            proj._assign_context_values(execution_id, composition=self)
+
+        self.input_CIM._assign_context_values(execution_id, composition=self)
+        for proj in self.input_CIM.efferents:
+            proj._assign_context_values(execution_id, composition=self)
+
+        self.output_CIM._assign_context_values(execution_id, composition=self)
+        for proj in self.output_CIM.afferents:
             proj._assign_context_values(execution_id, composition=self)
 
         return execution_id

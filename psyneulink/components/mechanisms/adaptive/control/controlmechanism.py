@@ -351,6 +351,7 @@ from psyneulink.globals.keywords import AUTO_ASSIGN_MATRIX, CONTROL, CONTROL_PRO
     MONITOR_FOR_CONTROL, OBJECTIVE_MECHANISM, OWNER_VALUE,  PRODUCT, PROJECTIONS, PROJECTION_TYPE, SYSTEM
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
+from psyneulink.globals.socket import ConnectionInfo
 from psyneulink.globals.utilities import ContentAddressableList, is_iterable
 
 __all__ = [
@@ -597,6 +598,10 @@ class ControlMechanism(AdaptiveMechanism_Base):
                                                     function=function,
                                                     prefs=prefs,
                                                     context=ContextFlags.CONSTRUCTOR)
+
+        if system is not None:
+            for eff in self.efferents:
+                eff._enable_for_compositions(system)
 
     def _validate_params(self, request_set, target_set=None, context=None):
         """Validate SYSTEM, MONITOR_FOR_CONTROL and CONTROL_SIGNALS

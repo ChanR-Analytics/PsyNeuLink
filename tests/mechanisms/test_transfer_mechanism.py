@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 
 from psyneulink.components.component import ComponentError
-from psyneulink.components.functions.function import FunctionError
 from psyneulink.components.functions.function import AdaptiveIntegrator, ConstantIntegrator, Exponential, Linear, Logistic, Reduce, Reinforcement, ReLU, SoftMax, UserDefinedFunction
-from psyneulink.components.functions.function import ExponentialDist, GammaDist, NormalDist, UniformDist, WaldDist, UniformToNormalDist
+from psyneulink.components.functions.function import ExponentialDist, GammaDist, NormalDist, UniformDist, UniformToNormalDist, WaldDist
+from psyneulink.components.functions.function import FunctionError
 from psyneulink.components.mechanisms.mechanism import MechanismError
 from psyneulink.components.states.inputstate import InputState
 from psyneulink.components.mechanisms.processing.transfermechanism import TransferError, TransferMechanism
@@ -392,7 +392,7 @@ class TestTransferMechanismFunctions:
         )
         val = benchmark(T.execute, [0 for i in range(VECTOR_SIZE)])
         assert np.allclose(val, [[0.5 for i in range(VECTOR_SIZE)]])
-    
+
     @pytest.mark.mechanism
     @pytest.mark.transfer_mechanism
     def test_transfer_mech_relu_fun(self):
@@ -1083,12 +1083,12 @@ class TestIntegratorMode:
         T.integrator_function.reinitialize(0.9)
 
         assert np.allclose(T.integrator_function.previous_value, 0.9)
-        assert np.allclose(T.value, 0.595)
+        assert np.allclose(T.parameters.value.get(S), 0.595)
 
         T.reinitialize(0.5)
 
         assert np.allclose(T.integrator_function.previous_value, 0.5)
-        assert np.allclose(T.value, 0.5)
+        assert np.allclose(T.parameters.value.get(S), 0.5)
 
         S.run(inputs={T: 1.0}, num_trials=2)
         # Trial 3
@@ -1126,12 +1126,12 @@ class TestIntegratorMode:
         T.integrator_function.reinitialize([0.9, 0.9, 0.9])
 
         assert np.allclose(T.integrator_function.previous_value, [0.9, 0.9, 0.9])
-        assert np.allclose(T.value, [0.595, 0.595, 0.595])
+        assert np.allclose(T.parameters.value.get(S), [0.595, 0.595, 0.595])
 
         T.reinitialize([0.5, 0.5, 0.5])
 
         assert np.allclose(T.integrator_function.previous_value, [0.5, 0.5, 0.5])
-        assert np.allclose(T.value, [0.5, 0.5, 0.5])
+        assert np.allclose(T.parameters.value.get(S), [0.5, 0.5, 0.5])
 
         S.run(inputs={T: [1.0, 1.0, 1.0]}, num_trials=2)
         # Trial 3
@@ -1171,12 +1171,12 @@ class TestIntegratorMode:
         T.integrator_function.reinitialize([0.9, 0.9, 0.9])
 
         assert np.allclose(T.integrator_function.previous_value, [0.9, 0.9, 0.9])
-        assert np.allclose(T.value, [0.595, 0.595, 0.595])
+        assert np.allclose(T.parameters.value.get(S), [0.595, 0.595, 0.595])
 
         T.reinitialize(initial_val)
 
         assert np.allclose(T.integrator_function.previous_value, initial_val)
-        assert np.allclose(T.value, initial_val)
+        assert np.allclose(T.parameters.value.get(S), initial_val)
 
         S.run(inputs={T: [1.0, 1.0, 1.0]}, num_trials=2)
         # Trial 3
@@ -1204,7 +1204,7 @@ class TestIntegratorMode:
         T.reinitialize_when = Never()
         # T starts with integrator_mode = True; confirm that T behaves correctly
         S.run({T: [[1.0], [1.0], [1.0]]})
-        assert np.allclose(T.value, [[0.875]])
+        assert np.allclose(T.parameters.value.get(S), [[0.875]])
 
         assert T.integrator_mode is True
         assert T.integrator_function is integrator_function
@@ -1216,7 +1216,7 @@ class TestIntegratorMode:
         assert T.integrator_function is None
 
         S.run({T: [[1.0], [1.0], [1.0]]})
-        assert np.allclose(T.value, [[1.0]])
+        assert np.allclose(T.parameters.value.get(S), [[1.0]])
 
         # Switch integrator_mode BACK to True; confirm that T picks up where it left off
         T.integrator_mode = True
@@ -1225,7 +1225,7 @@ class TestIntegratorMode:
         assert T.integrator_function is integrator_function
 
         S.run({T: [[1.0], [1.0], [1.0]]})
-        assert np.allclose(T.value, [[0.984375]])
+        assert np.allclose(T.parameters.value.get(S), [[0.984375]])
 
     def test_initial_values_softmax(self):
         T = TransferMechanism(default_variable=[[0.0, 0.0], [0.0, 0.0]],
