@@ -2287,6 +2287,8 @@ class Mechanism_Base(Mechanism):
             #           variable should be based on afferent projections
             variable = self._get_variable_from_input(input)
 
+        self.parameters.variable.set(variable, execution_context=execution_id, override=True)
+
         # UPDATE PARAMETER STATE(S)
         self._update_parameter_states(execution_id=execution_id, runtime_params=runtime_params, context=context)
 
