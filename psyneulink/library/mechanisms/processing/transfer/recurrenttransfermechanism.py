@@ -1286,11 +1286,11 @@ class RecurrentTransferMechanism(TransferMechanism):
         if self.learning_mechanism is None:
             self.learning_enabled = False
 
-    # def _execute(self, variable=None, runtime_params=None, context=None):
+    # def _execute(self, variable=None, execution_id=None, runtime_params=None, context=None):
     #
     #     if self.context.initialization_status != ContextFlags.INITIALIZING:
     #         self.previous_value = self.value
-    #     self._output = super()._execute(variable, runtime_params, context)
+    #     self._output = super()._execute(variable=variable, execution_id=execution_id, runtime_params=runtime_params, context=context)
     #     return self._output
     #     # return super()._execute(variable, runtime_params, context)
 

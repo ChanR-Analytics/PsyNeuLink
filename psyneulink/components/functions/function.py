@@ -1051,6 +1051,7 @@ class ArgumentTherapy(Function_Base):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -1814,6 +1815,7 @@ class Reduce(CombinationFunction):  # ------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -2220,6 +2222,7 @@ class LinearCombination(
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -2665,6 +2668,7 @@ class CombineMeans(CombinationFunction):  # ------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """Calculate and combine means of items in `variable <CombineMean.variable>`.
@@ -2894,6 +2898,7 @@ class PredictionErrorDeltaFunction(CombinationFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -3040,10 +3045,13 @@ class Identity(
 
         # self.functionOutputType = None
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 context=None):
+    def function(
+        self,
+        variable=None,
+        execution_id=None,
+        params=None,
+        context=None
+    ):
         """
         Return: `variable <Identity.variable>`
 
@@ -3158,10 +3166,13 @@ class InterfaceStateMap(InterfaceFunction):
 
         # self.functionOutputType = None
 
-    def function(self,
-                 variable=None,
-                 params=None,
-                 context=None):
+    def function(
+        self,
+        variable=None,
+        execution_id=None,
+        params=None,
+        context=None
+    ):
         """
         Return: The item of `value <InterfaceStateMap.value>` whose index corresponds to the index of
         `corresponding_input_state <InterfaceStateMap.corresponding_input_state>` in `input_states
@@ -3397,6 +3408,7 @@ class Linear(TransferFunction):  # ---------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -3569,6 +3581,7 @@ class Exponential(TransferFunction):  # ----------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -3732,6 +3745,7 @@ class Logistic(
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -3889,6 +3903,7 @@ class ReLU(TransferFunction):  # -----------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -4107,6 +4122,7 @@ class SoftMax(TransferFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -4649,6 +4665,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -4975,6 +4992,7 @@ class OneHot(SelectionFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -5696,6 +5714,7 @@ class SimpleIntegrator(Integrator):  # -----------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -5936,6 +5955,7 @@ class ConstantIntegrator(Integrator):  # ---------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -6182,6 +6202,7 @@ class Buffer(Integrator):  # ---------------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -6476,6 +6497,7 @@ class AdaptiveIntegrator(Integrator):  # ---------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -6741,6 +6763,7 @@ class DriftDiffusionIntegrator(Integrator):  # ---------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -6994,6 +7017,7 @@ class OrnsteinUhlenbeckIntegrator(Integrator):  # ------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -7732,6 +7756,7 @@ class FHNIntegrator(Integrator):  # --------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -8057,6 +8082,7 @@ class AccumulatorIntegrator(Integrator):  # ------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -8262,6 +8288,7 @@ class LCAIntegrator(Integrator):  # --------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -8630,6 +8657,7 @@ class AGTUtilityIntegrator(Integrator):  # -------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -8909,6 +8937,7 @@ class BogaczEtAl(IntegratorFunction):  # ---------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -9235,6 +9264,7 @@ class NavarroAndFuss(
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -9386,6 +9416,7 @@ class NormalDist(DistributionFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         # Validate variable and validate params
@@ -9505,6 +9536,7 @@ class UniformToNormalDist(DistributionFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
 
@@ -9606,6 +9638,7 @@ class ExponentialDist(DistributionFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         # Validate variable and validate params
@@ -9708,6 +9741,7 @@ class UniformDist(DistributionFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         # Validate variable and validate params
@@ -9812,6 +9846,7 @@ class GammaDist(DistributionFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         # Validate variable and validate params
@@ -9915,6 +9950,7 @@ class WaldDist(DistributionFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         # Validate variable and validate params
@@ -10207,6 +10243,7 @@ COMMENT
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """Calculate the stability of `variable <Stability.variable>`.
@@ -10395,6 +10432,7 @@ class Distance(ObjectiveFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """Calculate the distance between the two vectors in `variable <Stability.variable>`.
@@ -10743,6 +10781,7 @@ class Kohonen(LearningFunction):  # --------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """Calculate a matrix of weight changes from an array of activity values and a weight matrix that generated
@@ -10963,6 +11002,7 @@ class Hebbian(LearningFunction):  # --------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """Calculate a matrix of weight changes from a 1d array of activity values using Hebbian learning function.
@@ -11176,6 +11216,7 @@ class ContrastiveHebbian(LearningFunction):  # ---------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """Calculate a matrix of weight changes from a 1d array of activity values using ContrastiveHebbian

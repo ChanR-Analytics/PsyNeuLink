@@ -129,6 +129,7 @@ class ValueFunction(EVCAuxiliaryFunction):
         outcome=None,
         costs=None,
         variable=None,
+        execution_id=None,
         params=None,
         context=None
     ):
@@ -182,15 +183,15 @@ class ValueFunction(EVCAuxiliaryFunction):
 
         # Aggregate costs
         if isinstance(cost_function, UserDefinedFunction):
-            cost = cost_function._execute(controller=controller, costs=costs)
+            cost = cost_function._execute(controller=controller, costs=costs, execution_id=execution_id)
         else:
-            cost = cost_function._execute(variable=costs, context=context)
+            cost = cost_function._execute(variable=costs, execution_id=execution_id, context=context)
 
         # Combine outcome and cost to determine value
         if isinstance(combine_function, UserDefinedFunction):
-            value = combine_function._execute(controller=controller, outcome=outcome, cost=cost)
+            value = combine_function._execute(controller=controller, outcome=outcome, cost=cost, execution_id=execution_id)
         else:
-            value = combine_function._execute(variable=[outcome, -cost])
+            value = combine_function._execute(variable=[outcome, -cost], execution_id=execution_id)
 
         return (value, outcome, cost)
 
@@ -274,6 +275,7 @@ class ControlSignalGridSearch(EVCAuxiliaryFunction):
         self,
         controller=None,
         variable=None,
+        execution_id=None,
         runtime_params=None,
         params=None,
         context=None,
@@ -844,7 +846,7 @@ class PredictionMechanism(IntegratorMechanism):
                 name=name,
                 prefs=prefs)
 
-    def _execute(self, variable=None, runtime_params=None, context=None):
+    def _execute(self, variable=None, execution_id=None, runtime_params=None, context=None):
         '''Update predicted value on "real" but not simulation runs '''
 
         if self.context.execution_phase == ContextFlags.SIMULATION:
@@ -852,7 +854,7 @@ class PredictionMechanism(IntegratorMechanism):
             value = self.value
         else:
             # Update deque with new input for any other type of run
-            value = super()._execute(variable, runtime_params=runtime_params, context=context)
+            value = super()._execute(variable=variable, execution_id=execution_id, runtime_params=runtime_params, context=context)
 
             # If inputs are being recorded (#recorded = window_size):
             if len(value) > 1:

@@ -1042,6 +1042,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
 
     def _execute(self,
                  variable=None,
+                 execution_id=None,
                  function_variable=None,
                  runtime_params=None,
                  context=None):
@@ -1080,6 +1081,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
 
         # Note _parse_function_variable selects actual input to function based on execution_phase
         current_activity = super()._execute(variable,
+                                            execution_id=execution_id,
                                             runtime_params=runtime_params,
                                             context=context)
 

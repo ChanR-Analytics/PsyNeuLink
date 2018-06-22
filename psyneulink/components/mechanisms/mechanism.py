@@ -2144,6 +2144,7 @@ class Mechanism_Base(Mechanism):
 
     def execute(self,
                 input=None,
+                execution_id=None,
                 runtime_params=None,
                 ignore_execution_id = False,
                 context=None):
@@ -2223,9 +2224,11 @@ class Mechanism_Base(Mechanism):
                 pass
             # Only call subclass' _execute method and then return (do not complete the rest of this method)
             elif self.initMethod is INIT__EXECUTE__METHOD_ONLY:
-                return_value =  self._execute(variable=self.instance_defaults.variable,
-                                              runtime_params=runtime_params,
-                                              context=context,
+                return_value =  self._execute(
+                    variable=self.instance_defaults.variable,
+                    execution_id=execution_id,
+                    runtime_params=runtime_params,
+                    context=context,
                 )
 
                 # IMPLEMENTATION NOTE:  THIS IS HERE BECAUSE IF return_value IS A LIST, AND THE LENGTH OF ALL OF ITS
@@ -2253,6 +2256,7 @@ class Mechanism_Base(Mechanism):
             elif self.initMethod is INIT_FUNCTION_METHOD_ONLY:
                 return_value = super()._execute(
                     variable=self.instance_defaults.variable,
+                    execution_id=execution_id,
                     runtime_params=runtime_params,
                     context=context,
                 )
@@ -2298,6 +2302,7 @@ class Mechanism_Base(Mechanism):
         #                      to avoid multiple calls to (and potential log entries for) self.value property
         value = self._execute(
             variable=variable,
+            execution_id=execution_id,
             runtime_params=runtime_params,
             context=context
         )
@@ -2329,7 +2334,7 @@ class Mechanism_Base(Mechanism):
         self.value = value
 
         # UPDATE OUTPUT STATE(S)
-        self._update_output_states(runtime_params=runtime_params, context=context)
+        self._update_output_states(execution_id=execution_id, runtime_params=runtime_params, context=context)
 
         # REPORT EXECUTION
         if self.prefs.reportOutputPref and (self.context.execution_phase &
@@ -2457,12 +2462,12 @@ class Mechanism_Base(Mechanism):
             if state.name in self.function_params:
                 self.function_params.__additem__(state.name, state.value)
 
-    def _update_output_states(self, runtime_params=None, context=None):
+    def _update_output_states(self, execution_id=None, runtime_params=None, context=None):
         """Execute function for each OutputState and assign result of each to corresponding item of self.output_values
 
         """
         for state in self.output_states:
-            state.update(params=runtime_params, context=context)
+            state.update(execution_id=execution_id, params=runtime_params, context=context)
 
     def initialize(self, value):
         """Assign an initial value to the Mechanism's `value <Mechanism_Base.value>` attribute and update its

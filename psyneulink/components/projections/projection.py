@@ -888,7 +888,7 @@ class Projection_Base(Projection):
     def add_to(self, receiver, state, context=None):
         _add_projection_to(receiver=receiver, state=state, projection_spec=self, context=context)
 
-    def _execute(self, variable=None, runtime_params=None, context=None):
+    def _execute(self, variable=None, execution_id=None, runtime_params=None, context=None):
 
         if variable is None:
             variable = self.sender.value
@@ -898,6 +898,7 @@ class Projection_Base(Projection):
 
         self.value = super()._execute(
             variable=variable,
+            execution_id=execution_id,
             runtime_params=runtime_params,
             context=context
         )

@@ -364,11 +364,13 @@ class AutoAssociativeLearningMechanism(LearningMechanism):
                                                         format(self.name, variable))
         return variable
 
-    def _execute(self,
-                 variable=None,
-                 runtime_params=None,
-                 context=None
-                 ):
+    def _execute(
+        self,
+        variable=None,
+        execution_id=None,
+        runtime_params=None,
+        context=None
+    ):
         """Execute AutoAssociativeLearningMechanism. function and return learning_signal
 
         :return: (2D np.array) self.learning_signal
@@ -378,10 +380,12 @@ class AutoAssociativeLearningMechanism(LearningMechanism):
         # IMPLEMENTATION NOTE:  skip LearningMechanism's implementation of _execute
         #                       as it assumes projections from other LearningMechanisms
         #                       which are not relevant to an autoassociative projection
-        self.learning_signal = super(LearningMechanism, self)._execute(variable=variable,
-                                                                       runtime_params=runtime_params,
-                                                                       context=context
-                                                                       )
+        self.learning_signal = super(LearningMechanism, self)._execute(
+            variable=variable,
+            execution_id=execution_id,
+            runtime_params=runtime_params,
+            context=context
+        )
 
         if self.context.initialization_status != ContextFlags.INITIALIZING and self.reportOutputPref:
             print("\n{} weight change matrix: \n{}\n".format(self.name, self.learning_signal))
@@ -402,19 +406,19 @@ class AutoAssociativeLearningMechanism(LearningMechanism):
         self.value = [self.learning_signal]
         return self.value
 
-    def _update_output_states(self, runtime_params=None, context=None):
+    def _update_output_states(self, execution_id=None, runtime_params=None, context=None):
         '''Update the weights for the AutoAssociativeProjection for which this is the AutoAssociativeLearningMechanism
 
         Must do this here, so it occurs after LearningMechanism's OutputState has been updated.
         This insures that weights are updated within the same trial in which they have been learned
         '''
 
-        super()._update_output_states(runtime_params, context)
+        super()._update_output_states(execution_id, runtime_params, context)
 
         from psyneulink import Process
         if self.learning_enabled and self.context.composition and not isinstance(self.context.composition, Process):
             learned_projection = self.activity_source.recurrent_projection
-            learned_projection.execute(context=ContextFlags.LEARNING)
+            learned_projection.execute(execution_id=execution_id, context=ContextFlags.LEARNING)
             learned_projection.context.execution_phase = ContextFlags.IDLE
 
     @property

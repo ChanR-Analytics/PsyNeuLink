@@ -1009,9 +1009,11 @@ class TransferMechanism(ProcessingMechanism_Base):
         return current_input
 
     def _execute(self,
-                 variable=None,
-                 runtime_params=None,
-                 context=None):
+        variable=None,
+        execution_id=None,
+        runtime_params=None,
+        context=None
+    ):
         """Execute TransferMechanism function and return transform of input
 
         Execute TransferMechanism function on input, and assign to output_values:
@@ -1063,6 +1065,7 @@ class TransferMechanism(ProcessingMechanism_Base):
         clip = self.get_current_mechanism_param("clip")
 
         value = super(Mechanism, self)._execute(variable=variable,
+                                                execution_id=execution_id,
                                                 runtime_params=runtime_params,
                                                 context=context
                                                 )

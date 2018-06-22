@@ -619,7 +619,7 @@ class MappingProjection(PathwayProjection_Base):
 
         super()._instantiate_receiver(context=context)
 
-    def _execute(self, variable=None, runtime_params=None, context=None):
+    def _execute(self, variable=None, execution_id=None, runtime_params=None, context=None):
 
         self.context.execution_phase = ContextFlags.PROCESSING
         self.context.string = context
@@ -628,6 +628,7 @@ class MappingProjection(PathwayProjection_Base):
 
         return super()._execute(
             variable=variable,
+            execution_id=execution_id,
             runtime_params=runtime_params,
             context=context
         )

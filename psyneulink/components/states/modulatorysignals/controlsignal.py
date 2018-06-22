@@ -946,8 +946,8 @@ class ControlSignal(ModulatorySignal):
 
         return state_spec, params_dict
 
-    def update(self, params=None, context=None):
-        super().update(params=params, context=context)
+    def update(self, execution_id=None, params=None, context=None):
+        super().update(execution_id=execution_id, params=params, context=context)
         if self.cost_options:
             self._compute_costs()
 

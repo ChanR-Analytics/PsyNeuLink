@@ -606,7 +606,7 @@ class LearningProjection(ModulatoryProjection_Base):
         learned_projection.learning_mechanism = learning_mechanism
         learned_projection.has_learning_projection = self
 
-    def _execute(self, variable, runtime_params=None, context=None):
+    def _execute(self, variable, execution_id=None, runtime_params=None, context=None):
         """
         :return: (2D np.array) self.weight_change_matrix
         """
@@ -651,6 +651,7 @@ class LearningProjection(ModulatoryProjection_Base):
         #                       which undermines formatting of it (as learning_signal) above
         self.weight_change_matrix = super(ShellClass, self)._execute(
             variable=learning_signal,
+            execution_id=execution_id,
             runtime_params=runtime_params,
             context=context
         )
