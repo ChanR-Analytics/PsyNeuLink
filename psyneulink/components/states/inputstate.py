@@ -929,23 +929,28 @@ class InputState(State_Base):
                                     runtime_params=runtime_params,
                                     context=context)
         # If there were any PathwayProjections:
-        elif self._path_proj_values:
-            # Combine Projection values
-            # TODO: stateful - this seems dangerous with statefulness,
-            #       maybe safe when self.value is only passed or stateful
-            variable = np.asarray(self._path_proj_values)
-            combined_values = super()._execute(variable=variable,
-                                               execution_id=execution_id,
-                                               runtime_params=runtime_params,
-                                               context=context
-                                               )
-
-            return combined_values
-        # There were no Projections
         else:
-            # mark combined_values as none, so that (after being assigned to self.value)
-            #    it is ignored in execute method (i.e., not combined with base_value)
-            return None
+            path_proj_values = []
+            for pa in self.path_afferents:
+                if self.afferents_info[pa].is_active_in_composition(self.parameters.context.get(execution_id).composition):
+                    path_proj_values.append(pa.parameters.value.get(execution_id))
+
+            if len(path_proj_values) > 0:
+                # Combine Projection values
+                variable = np.asarray(path_proj_values)
+                # print('{0} ({2}): {1}'.format(self, variable, self.owner))
+                combined_values = super()._execute(variable=variable,
+                                                   execution_id=execution_id,
+                                                   runtime_params=runtime_params,
+                                                   context=context
+                                                   )
+
+                return combined_values
+            # There were no Projections
+            else:
+                # mark combined_values as none, so that (after being assigned to self.value)
+                #    it is ignored in execute method (i.e., not combined with base_value)
+                return None
 
     def _get_primary_state(self, mechanism):
         return mechanism.input_state
@@ -1228,10 +1233,14 @@ class InputState(State_Base):
 
     @property
     def label(self):
-        label_dictionary = {}
-        if hasattr(self.owner, "input_labels_dict"):
+        return self.get_label()
+
+    def get_label(self, execution_context=None):
+        try:
             label_dictionary = self.owner.input_labels_dict
-        return self._get_value_label(label_dictionary, self.owner.input_states)
+        except AttributeError:
+            label_dictionary = {}
+        return self._get_value_label(label_dictionary, self.owner.input_states, execution_context=execution_context)
 
     @property
     def position_in_mechanism(self):

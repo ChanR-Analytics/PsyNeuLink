@@ -1230,6 +1230,9 @@ class LearningMechanism(AdaptiveMechanism_Base):
             if isinstance(error_matrices[i], ParameterState):
                 error_matrices[i] = error_matrices[i].value
 
+        summed_learning_signal = 0
+        summed_error_signal = 0
+
         # Compute learning_signal for each error_signal (and corresponding error-Matrix:
         for error_signal_input, error_matrix in zip(error_signal_inputs, error_matrices):
 
@@ -1242,12 +1245,8 @@ class LearningMechanism(AdaptiveMechanism_Base):
                 context=context
             )
             # Sum learning_signals and error_signals
-            try:
-                summed_learning_signal += learning_signal
-                summed_error_signal += error_signal
-            except UnboundLocalError:
-                summed_learning_signal = learning_signal
-                summed_error_signal = error_signal
+            summed_learning_signal += learning_signal
+            summed_error_signal += error_signal
 
         self.learning_signal = summed_learning_signal
         self.error_signal = summed_error_signal
@@ -1255,8 +1254,7 @@ class LearningMechanism(AdaptiveMechanism_Base):
         if self.context.initialization_status != ContextFlags.INITIALIZING and self.reportOutputPref:
             print("\n{} weight change matrix: \n{}\n".format(self.name, self.learning_signal))
 
-        self.value = [self.learning_signal, self.error_signal]
-        return self.value
+        return [self.learning_signal, self.error_signal]
 
     @property
     def learning_enabled(self):

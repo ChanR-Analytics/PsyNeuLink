@@ -1077,7 +1077,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
         self.is_finished = False
 
         # Need to store this, as it will be updated in call to super
-        previous_value = self.previous_value
+        previous_value = self.parameters.previous_value.get(execution_id)
 
         # Note _parse_function_variable selects actual input to function based on execution_phase
         current_activity = super()._execute(variable,
@@ -1093,23 +1093,8 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
         # Set value of primary OutputState to current activity
         self.current_activity = current_activity
 
-        # TEST PRINT:
-        if self.context.initialization_status == ContextFlags.INITIALIZED:
-            print("--------------------------------------------",
-                  "\nTRIAL: {}  PASS: {}  TIME_STEP: {}".format(self.current_execution_time.trial,
-                                                                self.current_execution_time.pass_,
-                                                                self.current_execution_time.time_step),
-                  "\nCONTEXT: {}".format(self.context.flags_string),
-                  '\nphase: ', 'PLUS' if curr_phase == PLUS_PHASE else 'MINUS',
-                  '\nvariable: ', variable,
-                  '\ninput:', self.function_object.variable,
-                  '\nMATRIX:', self.matrix,
-                  '\ncurrent activity: ', self.current_activity,
-                  '\noutput activity: ', self.output_activity,
-                  '\nactivity diff: ', self.output_states[ACTIVITY_DIFFERENCE_OUTPUT].value,
-                  '\ndelta: ', self.delta if self.previous_value is not None else 'None',
-                  '\nis_finished: ', True if self.is_converged and self.execution_phase == MINUS_PHASE else False
-                  )
+        if previous_value is None:
+            return current_activity
 
         # This is the first trial, so can't test for convergence
         #    (since that requires comparison with value from previous trial)

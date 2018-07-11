@@ -1,7 +1,8 @@
 import pytest
 
-import psyneulink as pnl
 import numpy as np
+import psyneulink as pnl
+
 from collections import OrderedDict
 
 class TestLog:
@@ -374,7 +375,7 @@ class TestLog:
         SYS = pnl.System(name='log_test_SYS', processes=[PS])
 
         def pass_threshold(mech, thresh):
-            results = mech.output_states[0].value
+            results = mech.output_states[0].parameters.value.get(SYS)
             for val in results:
                 if abs(val) >= thresh:
                     return True
@@ -424,7 +425,7 @@ class TestLog:
         SYS = pnl.System(name='log_test_SYS', processes=[PS])
 
         def pass_threshold(mech, thresh):
-            results = mech.output_states[0].value
+            results = mech.output_states[0].parameters.value.get(SYS)
             for val in results:
                 if abs(val) >= thresh:
                     return True
@@ -485,7 +486,7 @@ class TestLog:
         SYS = pnl.System(name='log_test_SYS', processes=[PS])
 
         def pass_threshold(mech, thresh):
-            results = mech.output_states[0].value
+            results = mech.output_states[0].parameters.value.get(SYS)
             for val in results:
                 if abs(val) >= thresh:
                     return True

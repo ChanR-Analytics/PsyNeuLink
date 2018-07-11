@@ -6,10 +6,10 @@ from psyneulink.components.mechanisms.processing.transfermechanism import Transf
 from psyneulink.components.process import Process
 from psyneulink.components.projections.modulatory.controlprojection import ControlProjection
 from psyneulink.components.system import System
-from psyneulink.globals.keywords import ALLOCATION_SAMPLES, IDENTITY_MATRIX, MEAN, RESULT, VARIANCE, SLOPE, CONTROL
+from psyneulink.globals.keywords import ALLOCATION_SAMPLES, CONTROL, IDENTITY_MATRIX, MEAN, RESULT, SLOPE, VARIANCE
 from psyneulink.globals.preferences.componentpreferenceset import ComponentPreferenceSet, kpReportOutputPref, kpVerbosePref
-from psyneulink.globals.preferences.systempreferenceset import RECORD_SIMULATION_PREF
 from psyneulink.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel
+from psyneulink.globals.preferences.systempreferenceset import RECORD_SIMULATION_PREF
 from psyneulink.library.mechanisms.processing.integrator.ddm import DDM, DECISION_VARIABLE, PROBABILITY_UPPER_THRESHOLD, RESPONSE_TIME
 from psyneulink.library.subsystems.evc.evccontrolmechanism import EVCControlMechanism
 from psyneulink.scheduling.condition import Never
@@ -174,40 +174,40 @@ def test_EVC():
 
     expected_output = [
         # Decision Output | Second Trial
-        (Decision.output_states[0].value, np.array(1.0)),
+        (Decision.output_states[0].parameters.value.get(mySystem), np.array(1.0)),
 
         # Input Prediction Output | Second Trial
-        (InputPrediction.output_states[0].value, np.array(0.1865)),
+        (InputPrediction.output_states[0].parameters.value.get(mySystem), np.array(0.1865)),
 
         # RewardPrediction Output | Second Trial
-        (RewardPrediction.output_states[0].value, np.array(15.0)),
+        (RewardPrediction.output_states[0].parameters.value.get(mySystem), np.array(15.0)),
 
         # --- Decision Mechanism ---
         #    Output State Values
         #       decision variable
-        (Decision.output_states[DECISION_VARIABLE].value, np.array([1.0])),
+        (Decision.output_states[DECISION_VARIABLE].parameters.value.get(mySystem), np.array([1.0])),
         #       response time
-        (Decision.output_states[RESPONSE_TIME].value, np.array([3.84279648])),
+        (Decision.output_states[RESPONSE_TIME].parameters.value.get(mySystem), np.array([3.84279648])),
         #       upper bound
-        (Decision.output_states[PROBABILITY_UPPER_THRESHOLD].value, np.array([0.81637827])),
+        (Decision.output_states[PROBABILITY_UPPER_THRESHOLD].parameters.value.get(mySystem), np.array([0.81637827])),
         #       lower bound
-        # (round(float(Decision.output_states['DDM_probability_lowerBound'].value),3), 0.184),
+        # (round(float(Decision.output_states['DDM_probability_lowerBound'].parameters.value.get(mySystem)),3), 0.184),
 
         # --- Reward Mechanism ---
         #    Output State Values
         #       transfer mean
-        (Reward.output_states[RESULT].value, np.array([15.])),
+        (Reward.output_states[RESULT].parameters.value.get(mySystem), np.array([15.])),
         #       transfer_result
-        (Reward.output_states[MEAN].value, np.array(15.0)),
+        (Reward.output_states[MEAN].parameters.value.get(mySystem), np.array(15.0)),
         #       transfer variance
-        (Reward.output_states[VARIANCE].value, np.array(0.0)),
+        (Reward.output_states[VARIANCE].parameters.value.get(mySystem), np.array(0.0)),
 
         # System Results Array
-        #   (all intermediate output values of system)
+        #   (all intermediate output.parameters.value.get(mySystem)s of system)
         (results_array, expected_results_array),
 
         # System Simulation Results Array
-        #   (all simulation output values of system)
+        #   (all simulation output.parameters.value.get(mySystem)s of system)
         (sim_results_array, expected_sim_results_array),
 
     ]
@@ -678,50 +678,50 @@ def test_laming_validation_specify_control_signals():
 
     expected_output = [
         # Decision Output | Second Trial
-        (Decision.output_states[0].value, np.array(1.0)),
+        (Decision.output_states[0].parameters.value.get(mySystem), np.array(1.0)),
 
         # Input Prediction Output | Second Trial
-        (InputPrediction.output_states[0].value, np.array(0.1865)),
+        (InputPrediction.output_states[0].parameters.value.get(mySystem), np.array(0.1865)),
 
         # RewardPrediction Output | Second Trial
-        (RewardPrediction.output_states[0].value, np.array(15.0)),
+        (RewardPrediction.output_states[0].parameters.value.get(mySystem), np.array(15.0)),
 
         # --- Decision Mechanism ---
 
         #   ControlSignal Values
         #       drift rate
-        # ALT: float(Decision._parameter_states[DRIFT_RATE].value
-        # (mySystem.controller.control_signals[0].value, np.array(1.0)),
+        # ALT: float(Decision._parameter_states[DRIFT_RATE].parameters.value.get(mySystem)
+        # (mySystem.controller.control_signals[0].parameters.value.get(mySystem), np.array(1.0)),
         # #       threshold
         #
-        # # ALT: float(Decision._parameter_states[THRESHOLD].value
-        # (mySystem.controller.control_signals[1].value, np.array(1.0)),
+        # # ALT: float(Decision._parameter_states[THRESHOLD].parameters.value.get(mySystem)
+        # (mySystem.controller.control_signals[1].parameters.value.get(mySystem), np.array(1.0)),
 
         #    Output State Values
         #       decision variable
-        (Decision.output_states[DECISION_VARIABLE].value, np.array([1.0])),
+        (Decision.output_states[DECISION_VARIABLE].parameters.value.get(mySystem), np.array([1.0])),
         #       response time
-        (Decision.output_states[RESPONSE_TIME].value, np.array([3.84279648])),
+        (Decision.output_states[RESPONSE_TIME].parameters.value.get(mySystem), np.array([3.84279648])),
         #       upper bound
-        (Decision.output_states[PROBABILITY_UPPER_THRESHOLD].value, np.array([0.81637827])),
+        (Decision.output_states[PROBABILITY_UPPER_THRESHOLD].parameters.value.get(mySystem), np.array([0.81637827])),
         #       lower bound
-        # (round(float(Decision.output_states['DDM_probability_lowerBound'].value),3), 0.184),
+        # (round(float(Decision.output_states['DDM_probability_lowerBound'].parameters.value.get(mySystem)),3), 0.184),
 
         # --- Reward Mechanism ---
         #    Output State Values
         #       transfer mean
-        (Reward.output_states[RESULT].value, np.array([15.])),
+        (Reward.output_states[RESULT].parameters.value.get(mySystem), np.array([15.])),
         #       transfer_result
-        (Reward.output_states[MEAN].value, np.array(15.0)),
+        (Reward.output_states[MEAN].parameters.value.get(mySystem), np.array(15.0)),
         #       transfer variance
-        (Reward.output_states[VARIANCE].value, np.array(0.0)),
+        (Reward.output_states[VARIANCE].parameters.value.get(mySystem), np.array(0.0)),
 
         # System Results Array
-        #   (all intermediate output values of system)
+        #   (all intermediate output.parameters.value.get(mySystem)s of system)
         (results_array, expected_results_array),
 
         # System Simulation Results Array
-        #   (all simulation output values of system)
+        #   (all simulation output.parameters.value.get(mySystem)s of system)
         (sim_results_array, expected_sim_results_array),
     ]
 
@@ -730,12 +730,12 @@ def test_laming_validation_specify_control_signals():
         np.testing.assert_allclose(val, expected, atol=1e-08, err_msg='Failed on expected_output[{0}]'.format(i))
 
     np.testing.assert_almost_equal(
-        Decision._parameter_states[DRIFT_RATE].value,
-        Decision._parameter_states[DRIFT_RATE].mod_afferents[0].value * Decision._parameter_states[DRIFT_RATE].function_object.value
+        Decision._parameter_states[DRIFT_RATE].parameters.value.get(mySystem),
+        Decision._parameter_states[DRIFT_RATE].mod_afferents[0].parameters.value.get(mySystem) * Decision._parameter_states[DRIFT_RATE].function_object.parameters.value.get(mySystem)
     )
     np.testing.assert_almost_equal(
-        Decision._parameter_states[THRESHOLD].value,
-        Decision._parameter_states[THRESHOLD].mod_afferents[0].value * Decision._parameter_states[THRESHOLD].function_object.value
+        Decision._parameter_states[THRESHOLD].parameters.value.get(mySystem),
+        Decision._parameter_states[THRESHOLD].mod_afferents[0].parameters.value.get(mySystem) * Decision._parameter_states[THRESHOLD].function_object.parameters.value.get(mySystem)
     )
 
 
@@ -887,40 +887,40 @@ def test_stateful_mechanism_in_simulation():
 
     expected_output = [
         # Decision Output | Second Trial
-        (Decision.output_states[0].value, np.array(1.0)),
+        (Decision.output_states[0].parameters.value.get(mySystem), np.array(1.0)),
 
         # Input Prediction Output | Second Trial
-        (InputPrediction.output_states[0].value, np.array(0.1865)),
+        (InputPrediction.output_states[0].parameters.value.get(mySystem), np.array(0.1865)),
 
         # RewardPrediction Output | Second Trial
-        (RewardPrediction.output_states[0].value, np.array(15.0)),
+        (RewardPrediction.output_states[0].parameters.value.get(mySystem), np.array(15.0)),
 
         # --- Decision Mechanism ---
         #    Output State Values
         #       decision variable
-        (Decision.output_states[DECISION_VARIABLE].value, np.array([1.0])),
+        (Decision.output_states[DECISION_VARIABLE].parameters.value.get(mySystem), np.array([1.0])),
         #       response time
-        (Decision.output_states[RESPONSE_TIME].value, np.array([3.84279648])),
+        (Decision.output_states[RESPONSE_TIME].parameters.value.get(mySystem), np.array([3.84279648])),
         #       upper bound
-        (Decision.output_states[PROBABILITY_UPPER_THRESHOLD].value, np.array([0.81637827])),
+        (Decision.output_states[PROBABILITY_UPPER_THRESHOLD].parameters.value.get(mySystem), np.array([0.81637827])),
         #       lower bound
-        # (round(float(Decision.output_states['DDM_probability_lowerBound'].value),3), 0.184),
+        # (round(float(Decision.output_states['DDM_probability_lowerBound'].parameters.value.get(mySystem)),3), 0.184),
 
         # --- Reward Mechanism ---
         #    Output State Values
         #       transfer mean
-        (Reward.output_states[RESULT].value, np.array([15.])),
+        (Reward.output_states[RESULT].parameters.value.get(mySystem), np.array([15.])),
         #       transfer_result
-        (Reward.output_states[MEAN].value, np.array(15.0)),
+        (Reward.output_states[MEAN].parameters.value.get(mySystem), np.array(15.0)),
         #       transfer variance
-        (Reward.output_states[VARIANCE].value, np.array(0.0)),
+        (Reward.output_states[VARIANCE].parameters.value.get(mySystem), np.array(0.0)),
 
         # System Results Array
-        #   (all intermediate output values of system)
+        #   (all intermediate output.parameters.value.get(mySystem)s of system)
         (results_array, expected_results_array),
 
         # System Simulation Results Array
-        #   (all simulation output values of system)
+        #   (all simulation output.parameters.value.get(mySystem)s of system)
         (sim_results_array, expected_sim_results_array)
     ]
 

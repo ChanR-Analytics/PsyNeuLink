@@ -777,15 +777,14 @@ class Projection_Base(Projection):
         _instantiate_parameter_states(owner=self, function=function, context=context)
 
     def _instantiate_sender(self, sender, context=None):
-        """Assign self.sender to OutputState of sender and insure compatibility with self.instance_defaults.variable
+        """Assign self.sender to OutputState of sender
 
         Assume self.sender has been assigned in _validate_params, from either sender arg or PROJECTION_SENDER
-        Validate, set self.instance_defaults.variable, and assign projection to sender's efferents attribute
+        Validate, and assign projection to sender's efferents attribute
 
         If self.sender is a Mechanism, re-assign it to <Mechanism>.output_state
         If self.sender is a State class reference, validate that it is a OutputState
         Assign projection to sender's efferents attribute
-        If self.value / self.instance_defaults.variable is None, set to sender.value
         """
         from psyneulink.components.states.outputstate import OutputState
 

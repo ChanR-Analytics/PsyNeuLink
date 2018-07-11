@@ -598,12 +598,12 @@ class ParameterState(State_Base):
 
         reference_value is the value of the parameter to which the ParameterState is assigned
         """
-        if reference_value is not None and not iscompatible(np.squeeze(reference_value), np.squeeze(self.value)):
-            iscompatible(np.squeeze(reference_value), np.squeeze(self.value))
+        if reference_value is not None and not iscompatible(np.squeeze(reference_value), np.squeeze(self.defaults.value)):
+            iscompatible(np.squeeze(reference_value), np.squeeze(self.defaults.value))
             name = self.name or ""
             raise ParameterStateError("Value specified for {} {} of {} ({}) is not compatible "
                                       "with its expected format ({})".
-                                      format(name, self.componentName, self.owner.name, self.value, reference_value))
+                                      format(name, self.componentName, self.owner.name, self.defaults.value, reference_value))
 
     def _instantiate_projections(self, projections, context=None):
         """Instantiate Projections specified in PROJECTIONS entry of params arg of State's constructor

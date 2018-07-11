@@ -5468,7 +5468,7 @@ class Integrator(IntegratorFunction):  # ---------------------------------------
 
         return value
 
-    def reinitialize(self, *args):
+    def reinitialize(self, *args, execution_context=None):
         """
             Effectively begins accumulation over again at the specified value(s).
 
@@ -5542,12 +5542,13 @@ class Integrator(IntegratorFunction):  # ---------------------------------------
 
         # rebuilding self.value rather than simply returning reinitialization_values in case any of the stateful
         # attrs are modified during assignment
-        self.value = []
+        value = []
         for i in range(len(self.stateful_attributes)):
             setattr(self, self.stateful_attributes[i], reinitialization_values[i])
-            self.value.append(getattr(self, self.stateful_attributes[i]))
+            value.append(getattr(self, self.stateful_attributes[i]))
 
-        return self.value
+        self.parameters.value.set(value, execution_context, override=True)
+        return value
 
     def function(self, *args, **kwargs):
         raise FunctionError("Integrator is not meant to be called explicitly")
@@ -6142,16 +6143,18 @@ class Buffer(Integrator):  # ---------------------------------------------------
 
         self.has_initializers = True
 
-    def _initialize_previous_value(self, initializer):
+    def _initialize_previous_value(self, initializer, execution_context=None):
         initializer = initializer or []
-        self.previous_value = deque(initializer, maxlen=self.history)
-        return self.previous_value
+        previous_value = deque(initializer, maxlen=self.history)
+
+        self.parameters.previous_value.set(previous_value, execution_context, override=True)
+        return previous_value
 
     def _instantiate_attributes_before_function(self, function=None, context=None):
 
         self.has_initializers = True
 
-    def reinitialize(self, *args):
+    def reinitialize(self, *args, execution_context=None):
         """
 
         Clears the `previous_value <Buffer.previous_value>` deque.
@@ -6180,13 +6183,14 @@ class Buffer(Integrator):  # ---------------------------------------------------
                                                                      self.name))
 
         if reinitialization_value is None or reinitialization_value == []:
-            self.previous_value.clear()
-            self.value = deque([], maxlen=self.history)
+            self.parameters.previous_value.get(execution_context).clear()
+            value = deque([], maxlen=self.history)
 
         else:
-            self.value = self._initialize_previous_value(reinitialization_value)
+            value = self._initialize_previous_value(reinitialization_value)
 
-        return self.value
+        self.parameters.value.set(value, execution_context, override=True)
+        return value
 
     def function(self,
                  variable=None,
@@ -8104,7 +8108,7 @@ class AccumulatorIntegrator(Integrator):  # ------------------------------------
         if increment is None:
             increment = 0.0
 
-        previous_value = np.atleast_2d(self.previous_value)
+        previous_value = np.atleast_2d(self.parameters.previous_value.get(execution_id))
 
         value = previous_value * rate + noise + increment
 
@@ -8112,7 +8116,7 @@ class AccumulatorIntegrator(Integrator):  # ------------------------------------
         # If it IS an initialization run, leave as is
         #    (don't want to count it as an execution step)
         if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = value
+            self.parameters.previous_value.set(value, execution_id, override=True)
 
         return self.convert_output_type(value)
 
@@ -8726,7 +8730,7 @@ class AGTUtilityIntegrator(Integrator):  # -------------------------------------
 
         return value + offset
 
-    def reinitialize(self, short=None, long=None):
+    def reinitialize(self, short=None, long=None, execution_context=None):
 
         """
         Effectively begins accumulation over again at the specified utilities.
@@ -8751,9 +8755,10 @@ class AGTUtilityIntegrator(Integrator):  # -------------------------------------
 
         self.previous_short_term_utility = short
         self.previous_long_term_utility = long
-        self.value = self.combine_utilities(short, long)
+        value = self.combine_utilities(short, long)
 
-        return self.value
+        self.parameters.value.set(value, execution_context, override=True)
+        return value
 
 
 # Note:  For any of these that correspond to args, value must match the name of the corresponding arg in __init__()

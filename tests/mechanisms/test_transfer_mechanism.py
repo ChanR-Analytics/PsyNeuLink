@@ -2,15 +2,15 @@ import numpy as np
 import pytest
 
 from psyneulink.components.component import ComponentError
-from psyneulink.components.functions.function import AdaptiveIntegrator, ConstantIntegrator, Exponential, Linear, Logistic, Reduce, Reinforcement, ReLU, SoftMax, UserDefinedFunction
+from psyneulink.components.functions.function import AdaptiveIntegrator, ConstantIntegrator, Exponential, Linear, Logistic, ReLU, Reduce, Reinforcement, SoftMax, UserDefinedFunction
 from psyneulink.components.functions.function import ExponentialDist, GammaDist, NormalDist, UniformDist, UniformToNormalDist, WaldDist
 from psyneulink.components.functions.function import FunctionError
 from psyneulink.components.mechanisms.mechanism import MechanismError
 from psyneulink.components.states.inputstate import InputState
 from psyneulink.components.mechanisms.processing.transfermechanism import TransferError, TransferMechanism
-from psyneulink.globals.utilities import UtilitiesError
 from psyneulink.components.process import Process
 from psyneulink.components.system import System
+from psyneulink.globals.utilities import UtilitiesError
 from psyneulink.scheduling.condition import Never
 
 VECTOR_SIZE=4
@@ -1080,12 +1080,12 @@ class TestIntegratorMode:
         # linear fn: 0.595*1.0 = 0.595
         assert np.allclose(T.integrator_function.previous_value, 0.595)
 
-        T.integrator_function.reinitialize(0.9)
+        T.integrator_function.reinitialize(0.9, S)
 
         assert np.allclose(T.integrator_function.previous_value, 0.9)
         assert np.allclose(T.parameters.value.get(S), 0.595)
 
-        T.reinitialize(0.5)
+        T.reinitialize(0.5, S)
 
         assert np.allclose(T.integrator_function.previous_value, 0.5)
         assert np.allclose(T.parameters.value.get(S), 0.5)
@@ -1123,12 +1123,12 @@ class TestIntegratorMode:
         # linear fn: 0.595*1.0 = 0.595
         assert np.allclose(T.integrator_function.previous_value, [0.595, 0.595, 0.595])
 
-        T.integrator_function.reinitialize([0.9, 0.9, 0.9])
+        T.integrator_function.reinitialize([0.9, 0.9, 0.9], S, S)
 
         assert np.allclose(T.integrator_function.previous_value, [0.9, 0.9, 0.9])
         assert np.allclose(T.parameters.value.get(S), [0.595, 0.595, 0.595])
 
-        T.reinitialize([0.5, 0.5, 0.5])
+        T.reinitialize([0.5, 0.5, 0.5], S, S)
 
         assert np.allclose(T.integrator_function.previous_value, [0.5, 0.5, 0.5])
         assert np.allclose(T.parameters.value.get(S), [0.5, 0.5, 0.5])
@@ -1168,12 +1168,12 @@ class TestIntegratorMode:
         # linear fn: 0.595*1.0 = 0.595
         assert np.allclose(T.integrator_function.previous_value, [0.595, 0.595, 0.595])
 
-        T.integrator_function.reinitialize([0.9, 0.9, 0.9])
+        T.integrator_function.reinitialize([0.9, 0.9, 0.9], S)
 
         assert np.allclose(T.integrator_function.previous_value, [0.9, 0.9, 0.9])
         assert np.allclose(T.parameters.value.get(S), [0.595, 0.595, 0.595])
 
-        T.reinitialize(initial_val)
+        T.reinitialize(initial_val, S)
 
         assert np.allclose(T.integrator_function.previous_value, initial_val)
         assert np.allclose(T.parameters.value.get(S), initial_val)

@@ -3,9 +3,9 @@ import pytest
 
 from psyneulink.components.mechanisms.processing.processingmechanism import ProcessingMechanism
 from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism
-from psyneulink.globals.keywords import INPUT_LABELS_DICT, OUTPUT_LABELS_DICT, ENABLED
 from psyneulink.components.process import Process
 from psyneulink.components.system import System
+from psyneulink.globals.keywords import ENABLED, INPUT_LABELS_DICT, OUTPUT_LABELS_DICT
 
 
 class TestMechanismInputLabels:
@@ -20,7 +20,7 @@ class TestMechanismInputLabels:
         store_input_labels = []
 
         def call_after_trial():
-            store_input_labels.append(M.input_labels)
+            store_input_labels.append(M.get_input_labels(S))
 
         S.run(inputs=['red', 'green', 'green', 'red'],
               call_after_trial=call_after_trial)
@@ -41,7 +41,7 @@ class TestMechanismInputLabels:
         store_input_labels = []
 
         def call_after_trial():
-            store_input_labels.append(M.input_labels)
+            store_input_labels.append(M.get_input_labels(S))
 
         S.run(inputs=['red', 'green', 'blue', 'red'],
               call_after_trial=call_after_trial)
@@ -68,7 +68,7 @@ class TestMechanismInputLabels:
     #
     #     def call_after_trial():
     #         M_output.append(M.value)
-    #         store_input_labels.append(M.input_labels)
+    #         store_input_labels.append(M.get_input_labels(S))
     #
     #     S.run(inputs=[['red', 'green'], ['green', 'red']],
     #           call_after_trial=call_after_trial)
@@ -94,7 +94,7 @@ class TestMechanismInputLabels:
     #     store_input_labels = []
     #
     #     def call_after_trial():
-    #         store_input_labels.append(M.input_labels)
+    #         store_input_labels.append(M.get_input_labels(S))
     #
     #     S.run(inputs=['red', 'green', 'blue'],
     #           call_after_trial=call_after_trial)
@@ -116,7 +116,7 @@ class TestMechanismInputLabels:
         store_input_labels = []
 
         def call_after_trial():
-            store_input_labels.append(M.input_labels)
+            store_input_labels.append(M.get_input_labels(S))
 
         S.run(inputs=[['red'], ['green'], ['green']],
               call_after_trial=call_after_trial)
@@ -269,7 +269,7 @@ class TestMechanismOutputLabels:
         store_output_labels = []
 
         def call_after_trial():
-            store_output_labels.append(M.output_labels)
+            store_output_labels.append(M.get_output_labels(S))
 
         S.run(inputs=['red', 'green', 'green', 'red'],
               call_after_trial=call_after_trial)
@@ -296,7 +296,7 @@ class TestMechanismOutputLabels:
         store_output_labels = []
 
         def call_after_trial():
-            store_output_labels.append(M.output_labels)
+            store_output_labels.append(M.get_output_labels(S))
 
         S.run(inputs=['red', 'green', 'green', 'red'],
               call_after_trial=call_after_trial)
@@ -325,7 +325,7 @@ class TestMechanismOutputLabels:
         store_output_labels = []
 
         def call_after_trial():
-            store_output_labels.append(M.output_labels)
+            store_output_labels.append(M.get_output_labels(S))
 
         S.run(inputs=['red', 'blue', 'green', 'blue'],
               call_after_trial=call_after_trial)

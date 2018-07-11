@@ -3401,8 +3401,8 @@ class TestCompositionInterface:
 
         output = comp.run(inputs=inputs_dict2, scheduler_processing=sched)
 
-        assert np.allclose(A.input_states[0].value, [2.])
-        assert np.allclose(A.input_states[1].value, [4.])
+        assert np.allclose(A.input_states[0].parameters.value.get(comp), [2.])
+        assert np.allclose(A.input_states[1].parameters.value.get(comp), [4.])
         assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.], [4.]])
         assert np.allclose(output, [np.array([[5.], [5.]]), np.array([[2.], [4.]])])
 
@@ -3438,8 +3438,8 @@ class TestCompositionInterface:
 
         sched = Scheduler(composition=comp)
         output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
-        assert np.allclose(A.input_states[0].value, [5.])
-        assert np.allclose(A.input_states[1].value, [5.])
+        assert np.allclose(A.input_states[0].parameters.value.get(comp), [5.])
+        assert np.allclose(A.input_states[1].parameters.value.get(comp), [5.])
         assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[5.], [5.]])
         assert np.allclose(output, [[50.]])
 
@@ -3466,8 +3466,8 @@ class TestCompositionInterface:
         inputs_dict2 = {A: [[2.], [4.]],
                         D: [[2.], [4.]]}
         output2 = comp.run(inputs=inputs_dict2, scheduler_processing=sched)
-        assert np.allclose(A.input_states[0].value, [2.])
-        assert np.allclose(A.input_states[1].value, [4.])
+        assert np.allclose(A.input_states[0].parameters.value.get(comp), [2.])
+        assert np.allclose(A.input_states[1].parameters.value.get(comp), [4.])
         assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.], [4.]])
 
         assert np.allclose(D.input_states[0].value, [2.])
@@ -3573,8 +3573,8 @@ class TestInputStateSpecifications:
         sched = Scheduler(composition=comp)
         comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
-        assert np.allclose(A.input_states[0].value, [2.0])
-        assert np.allclose(A.input_states[1].value, [4.0])
+        assert np.allclose(A.input_states[0].parameters.value.get(comp), [2.0])
+        assert np.allclose(A.input_states[1].parameters.value.get(comp), [4.0])
         assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
     def test_two_input_states_created_first_with_deferred_init(self):
@@ -3606,8 +3606,8 @@ class TestInputStateSpecifications:
         sched = Scheduler(composition=comp)
         output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
-        assert np.allclose(A.input_states[0].value, [2.0])
-        assert np.allclose(A.input_states[1].value, [4.0])
+        assert np.allclose(A.input_states[0].parameters.value.get(comp), [2.0])
+        assert np.allclose(A.input_states[1].parameters.value.get(comp), [4.0])
         assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
     def test_two_input_states_created_with_keyword(self):
@@ -3632,8 +3632,8 @@ class TestInputStateSpecifications:
         sched = Scheduler(composition=comp)
         output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
-        assert np.allclose(A.input_states[0].value, [2.0])
-        assert np.allclose(A.input_states[1].value, [4.0])
+        assert np.allclose(A.input_states[0].parameters.value.get(comp), [2.0])
+        assert np.allclose(A.input_states[1].parameters.value.get(comp), [4.0])
         assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
         assert np.allclose([[2], [4]], output)
@@ -3661,8 +3661,8 @@ class TestInputStateSpecifications:
         sched = Scheduler(composition=comp)
         output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
-        assert np.allclose(A.input_states[0].value, [2.0])
-        assert np.allclose(A.input_states[1].value, [4.0])
+        assert np.allclose(A.input_states[0].parameters.value.get(comp), [2.0])
+        assert np.allclose(A.input_states[1].parameters.value.get(comp), [4.0])
         assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
     def test_two_input_states_created_with_values(self):
@@ -3687,8 +3687,8 @@ class TestInputStateSpecifications:
         sched = Scheduler(composition=comp)
         output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
-        assert np.allclose(A.input_states[0].value, [2.0])
-        assert np.allclose(A.input_states[1].value, [4.0])
+        assert np.allclose(A.input_states[0].parameters.value.get(comp), [2.0])
+        assert np.allclose(A.input_states[1].parameters.value.get(comp), [4.0])
         assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
 

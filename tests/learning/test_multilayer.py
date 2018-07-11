@@ -5,7 +5,7 @@ from psyneulink.components.mechanisms.processing.transfermechanism import Transf
 from psyneulink.components.process import Process
 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.components.system import System
-from psyneulink.globals.keywords import SOFT_CLAMP, EXECUTION, PROCESSING, LEARNING, VALUE
+from psyneulink.globals.keywords import EXECUTION, LEARNING, PROCESSING, SOFT_CLAMP, VALUE
 from psyneulink.globals.preferences.componentpreferenceset import REPORT_OUTPUT_PREF, VERBOSE_PREF
 from psyneulink.library.mechanisms.processing.objective.comparatormechanism import MSE
 
@@ -105,16 +105,16 @@ def test_multilayer():
 
     def show_target():
         i = s.input
-        t = s.target_input_states[0].value
+        t = s.target_input_states[0].parameters.value.get(s)
         print('\nOLD WEIGHTS: \n')
         print('- Input Weights: \n', Input_Weights.mod_matrix)
         print('- Middle Weights: \n', Middle_Weights.mod_matrix)
         print('- Output Weights: \n', Output_Weights.mod_matrix)
         print('\nSTIMULI:\n\n- Input: {}\n- Target: {}\n'.format(i, t))
         print('ACTIVITY FROM OLD WEIGHTS: \n')
-        print('- Middle 1: \n', Hidden_Layer_1.value)
-        print('- Middle 2: \n', Hidden_Layer_2.value)
-        print('- Output:\n', Output_Layer.value)
+        print('- Middle 1: \n', Hidden_Layer_1.parameters.value.get(s))
+        print('- Middle 2: \n', Hidden_Layer_2.parameters.value.get(s))
+        print('- Output:\n', Output_Layer.parameters.value.get(s))
 
     s = System(
         processes=[p],
@@ -144,8 +144,8 @@ def test_multilayer():
             results_list.extend(nested_elem)
 
     expected_output = [
-        (Output_Layer.output_states.values, [np.array([0.22686074, 0.25270212, 0.91542149])]),
-        (objective_output_layer.output_states[MSE].value, np.array(0.04082589331852094)),
+        (Output_Layer.get_output_values(s), [np.array([0.22686074, 0.25270212, 0.91542149])]),
+        (objective_output_layer.output_states[MSE].parameters.value.get(s), np.array(0.04082589331852094)),
         (Input_Weights.mod_matrix, np.array([
             [ 0.09900247, 0.19839653, 0.29785764, 0.39739191, 0.49700232],
             [ 0.59629092, 0.69403786, 0.79203411, 0.89030237, 0.98885379],

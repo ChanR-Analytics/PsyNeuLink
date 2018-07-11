@@ -545,7 +545,7 @@ class MappingProjection(PathwayProjection_Base):
 
         # Compare length of MappingProjection output and receiver's variable to be sure matrix has proper dimensions
         try:
-            mapping_output_len = len(self.value)
+            mapping_output_len = len(self.defaults.value)
         except TypeError:
             mapping_output_len = 1
 
@@ -615,7 +615,7 @@ class MappingProjection(PathwayProjection_Base):
                 self._matrix = get_matrix(self._matrix_spec, mapping_input_len, receiver_len, context=context)
 
                 # Since matrix shape has changed, output of self.function may have changed, so update self.value
-                self._update_value()
+                self._instantiate_value()
 
         super()._instantiate_receiver(context=context)
 

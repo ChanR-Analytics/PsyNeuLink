@@ -1,8 +1,8 @@
 import numpy as np
 
 from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism
-from psyneulink.scheduling.condition import Any, AtTrial, AfterTrial
 from psyneulink.compositions.composition import Composition
+from psyneulink.scheduling.condition import AfterTrial, Any, AtTrial
 from psyneulink.scheduling.scheduler import Scheduler
 
 class TestRuntimeParams:

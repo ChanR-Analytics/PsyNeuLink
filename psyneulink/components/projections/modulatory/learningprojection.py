@@ -559,7 +559,7 @@ class LearningProjection(ModulatoryProjection_Base):
         super()._instantiate_receiver(context=context)
 
         # Insure that the learning_signal is compatible with the receiver's weight matrix
-        if not iscompatible(self.value, self.receiver.instance_defaults.variable):
+        if not iscompatible(self.defaults.value, self.receiver.instance_defaults.variable):
             raise LearningProjectionError("The learning_signal of {} ({}) is not compatible with the matrix of "
                                           "the MappingProjection ({}) to which it is being assigned ({})".
                                           format(self.name,
@@ -569,11 +569,11 @@ class LearningProjection(ModulatoryProjection_Base):
 
         # Insure that learning_signal has the same shape as the receiver's weight matrix
         try:
-            receiver_weight_matrix_shape = np.array(self.receiver.value).shape
+            receiver_weight_matrix_shape = np.array(self.receiver.defaults.value).shape
         except TypeError:
             receiver_weight_matrix_shape = 1
         try:
-            learning_signal_shape = np.array(self.value).shape
+            learning_signal_shape = np.array(self.defaults.value).shape
         except TypeError:
             learning_signal_shape = 1
 

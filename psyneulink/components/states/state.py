@@ -1954,9 +1954,9 @@ class State_Base(State):
             # Update LearningSignals only if context == LEARNING;  otherwise, assign zero for projection_value
             # Note: done here rather than in its own method in order to exploit parsing of params above
             if isinstance(projection, LearningProjection) and self.parameters.context.get(execution_id).execution_phase != ContextFlags.LEARNING:
-                projection_value = projection.value * 0.0
+                projection_value = projection.parameters.value.get(execution_id) * 0.0
             else:
-                projection_value = projection.execute(variable=projection.sender.value,
+                projection_value = projection.execute(variable=projection.sender.parameters.value.get(execution_id),
                                                       execution_id=execution_id,
                                                       runtime_params=projection_params,
                                                       context=context)
@@ -1998,7 +1998,7 @@ class State_Base(State):
                         continue
                     # Otherwise, for efficiency, assign OVERRIDE value to State here and return
                     else:
-                        self.value = type_match(projection_value, type(self.value))
+                        self.parameters.value.set(type_match(projection_value, type(self.defaults.value)), execution_id, override=True)
                         return
                 else:
                     mod_value = type_match(projection_value, type(mod_param_value))
@@ -2010,7 +2010,7 @@ class State_Base(State):
         # Handle ModulatoryProjection OVERRIDE
         #    if there is one and it wasn't been handled above (i.e., if paramValidation is set)
         if modulatory_override:
-            self.value = type_match(modulatory_override[1], type(self.value))
+            self.parameters.value.get(type_match(modulatory_override[1], type(self.defaults.value)), execution_id, override=True)
             return
 
         # AGGREGATE ModulatoryProjection VALUES  -----------------------------------------------------------------------
@@ -2034,9 +2034,10 @@ class State_Base(State):
         except (KeyError, TypeError):
             function_params = None
 
-        self.value = self.execute(execution_id=execution_id, runtime_params=function_params, context=context)
+        value = self.execute(execution_id=execution_id, runtime_params=function_params, context=context)
+        self.parameters.value.set(value, execution_id, override=True)
 
-    def _get_value_label(self, labels_dict, all_states):
+    def _get_value_label(self, labels_dict, all_states, execution_context=None):
         subdicts = False
         if labels_dict != {}:
             if isinstance(list(labels_dict.values())[0], dict):
@@ -2046,26 +2047,26 @@ class State_Base(State):
             # label dict only applies to index 0 state
             if all_states.index(self) == 0:
                 for label in labels_dict:
-                    if np.allclose(labels_dict[label], self.value):
+                    if np.allclose(labels_dict[label], self.parameters.value.get(execution_context)):
                         return label
             # if this isn't the index 0 state OR a label was not found then just return the original value
-            return self.value
+            return self.parameters.value.get(execution_context)
 
         for state in labels_dict:
             if state is self:
-                return self.find_label_value_match(state, labels_dict)
+                return self.find_label_value_match(state, labels_dict, execution_context)
             elif state == self.name:
-                return self.find_label_value_match(self.name, labels_dict)
+                return self.find_label_value_match(self.name, labels_dict, execution_context)
             elif state == all_states.index(self):
-                return self.find_label_value_match(all_states.index(self), labels_dict)
+                return self.find_label_value_match(all_states.index(self), labels_dict, execution_context)
 
-        return self.value
+        return self.parameters.value.get(execution_context)
 
-    def find_label_value_match(self, key, labels_dict):
+    def find_label_value_match(self, key, labels_dict, execution_context=None):
         for label in labels_dict[key]:
-            if np.allclose(labels_dict[key][label], self.value):
+            if np.allclose(labels_dict[key][label], self.parameters.value.get(execution_context)):
                 return label
-        return self.value
+        return self.parameters.value.get(execution_context)
 
     def _assign_context_values(self, execution_id, base_execution_id=None, **kwargs):
         for eff in self.efferents:

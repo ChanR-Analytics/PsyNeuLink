@@ -1,12 +1,12 @@
 import numpy as np
 
-from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism
-from psyneulink.components.process import Process
-from psyneulink.components.system import System
-from psyneulink.scheduling.condition import AtTrial, Never
-from psyneulink.components.states.outputstate import OutputState
 from psyneulink.components.functions.function import AdaptiveIntegrator, DriftDiffusionIntegrator, Integrator
 from psyneulink.components.mechanisms.processing.integratormechanism import IntegratorMechanism
+from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism
+from psyneulink.components.process import Process
+from psyneulink.components.states.outputstate import OutputState
+from psyneulink.components.system import System
+from psyneulink.scheduling.condition import AtTrial, Never
 
 class TestReinitializeValues:
 
@@ -133,9 +133,9 @@ class TestReinitializeValues:
 
         S.run(inputs={A: [[1.0], [1.0]]})
 
-        run_1_values = [A.value,
-                        B.value[0],
-                        C.value]
+        run_1_values = [A.parameters.value.get(S),
+                        B.parameters.value.get(S)[0],
+                        C.parameters.value.get(S)]
 
         # "Save state" code from EVCaux
 
@@ -160,16 +160,16 @@ class TestReinitializeValues:
         # Allow values to continue accumulating so that we can set them back to the saved state
         S.run(inputs={A: [[1.0], [1.0]]})
 
-        run_2_values = [A.value,
-                        B.value[0],
-                        C.value]
+        run_2_values = [A.parameters.value.get(S),
+                        B.parameters.value.get(S)[0],
+                        C.parameters.value.get(S)]
 
         S.run(inputs={A: [[1.0], [1.0]]},
               reinitialize_values=reinitialization_values)
 
-        run_3_values = [A.value,
-                        B.value[0],
-                        C.value]
+        run_3_values = [A.parameters.value.get(S),
+                        B.parameters.value.get(S)[0],
+                        C.parameters.value.get(S)]
 
         assert np.allclose(run_2_values, run_3_values)
         assert np.allclose(run_1_values, [np.array([[0.36]]), np.array([[0.056]]), np.array([[0.056]])])

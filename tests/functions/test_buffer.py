@@ -1,10 +1,11 @@
+import numpy as np
+
+from collections import deque
 from psyneulink.components.functions.function import Buffer
 from psyneulink.components.mechanisms.processing.processingmechanism import ProcessingMechanism
 from psyneulink.components.process import Process
 from psyneulink.components.system import System
 from psyneulink.scheduling.condition import Never
-from collections import deque
-import numpy as np
 
 class TestBuffer():
 
@@ -47,7 +48,7 @@ class TestBuffer():
         full_result = []
 
         def assemble_full_result():
-            full_result.append(P.value)
+            full_result.append(P.parameters.value.get(system))
 
         result = system.run(inputs={P: [[1.0], [2.0], [3.0], [4.0], [5.0]]},
                             call_after_trial=assemble_full_result)

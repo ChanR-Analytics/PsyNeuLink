@@ -1,5 +1,5 @@
-import psyneulink as pnl
 import numpy as np
+import psyneulink as pnl
 import pytest
 
 class TestContrastiveHebbian:
@@ -18,6 +18,10 @@ class TestContrastiveHebbian:
             # auto=0,
             # hetero=-1,
         )
+
+        # set max passes to ensure failure if no convergence instead of infinite loop
+        m.max_passes = 1000
+
         s = pnl.sys(m, o)
         ms = pnl.Scheduler(system=s)
         ms.add_condition(o, pnl.WhenFinished(m))

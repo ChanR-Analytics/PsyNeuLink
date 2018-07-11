@@ -947,13 +947,7 @@ from psyneulink.components.states.outputstate import OutputState
 from psyneulink.components.states.parameterstate import ParameterState
 from psyneulink.components.states.state import REMOVE_STATES, _parse_state_spec
 from psyneulink.globals.context import ContextFlags
-from psyneulink.globals.keywords import \
-    CHANGED, CURRENT_EXECUTION_COUNT, CURRENT_EXECUTION_TIME, EXECUTION_PHASE, EXECUTION_COUNT, \
-    FUNCTION, FUNCTION_PARAMS, \
-    INITIALIZING, INIT_FUNCTION_METHOD_ONLY, INIT__EXECUTE__METHOD_ONLY, INPUT_LABELS_DICT, INPUT_STATES, \
-    INPUT_STATE_VARIABLES, MONITOR_FOR_CONTROL, MONITOR_FOR_LEARNING, OUTPUT_LABELS_DICT, OUTPUT_STATES, \
-    PARAMETER_STATES, PREVIOUS_VALUE, REFERENCE_VALUE, TARGET_LABELS_DICT, UNCHANGED, \
-    VALUE, VARIABLE, kwMechanismComponentCategory, kwMechanismExecuteFunction
+from psyneulink.globals.keywords import CHANGED, CURRENT_EXECUTION_COUNT, CURRENT_EXECUTION_TIME, EXECUTION_COUNT, EXECUTION_PHASE, FUNCTION, FUNCTION_PARAMS, INITIALIZING, INIT_FUNCTION_METHOD_ONLY, INIT__EXECUTE__METHOD_ONLY, INPUT_LABELS_DICT, INPUT_STATES, INPUT_STATE_VARIABLES, MONITOR_FOR_CONTROL, MONITOR_FOR_LEARNING, OUTPUT_LABELS_DICT, OUTPUT_STATES, PARAMETER_STATES, PREVIOUS_VALUE, REFERENCE_VALUE, TARGET_LABELS_DICT, UNCHANGED, VALUE, VARIABLE, kwMechanismComponentCategory, kwMechanismExecuteFunction
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.registry import register_category, remove_instance_from_registry
 from psyneulink.globals.utilities import ContentAddressableList, ReadOnlyOrderedDict, append_type_to_name, convert_to_np_array, iscompatible, kwCompatibilityNumeric
@@ -1442,10 +1436,10 @@ class Mechanism_Base(Mechanism):
                                              param_defaults=params,
                                              prefs=prefs,
                                              name=name)
-        try:
-            self.instance_defaults.value = self.value.copy()
-        except AttributeError:
-            self.instance_defaults.value = self.value
+        # try:
+        #     self.instance_defaults.value = self.value.copy()
+        # except AttributeError:
+        #     self.instance_defaults.value = self.value
         self.value = self._old_value = None
         # FIX: 10/3/17 - IS THIS CORRECT?  SHOULD IT BE INITIALIZED??
         self._status = INITIALIZING
@@ -2026,7 +2020,7 @@ class Mechanism_Base(Mechanism):
         '''Stub that can be overidden by subclasses that need to know when a projection is added to the Mechanism'''
         pass
 
-    def reinitialize(self, *args):
+    def reinitialize(self, *args, execution_context=None):
         """
             If the mechanism's `function <Mechanism.function>` is an `Integrator`, or if the mechanism has and
             `integrator_function <TransferMechanism.integrator_function>` (see `TransferMechanism`), this method
@@ -2075,8 +2069,8 @@ class Mechanism_Base(Mechanism):
         # If the primary function of the mechanism is an integrator:
         # (1) reinitialize it, (2) update value, (3) update output states
         if isinstance(self.function_object, Integrator):
-            new_value = self.function_object.reinitialize(*args)
-            self.value = np.atleast_2d(new_value)
+            new_value = self.function_object.reinitialize(*args, execution_context=execution_context)
+            self.parameters.value.set(np.atleast_2d(new_value), execution_context=execution_context, override=True)
             self._update_output_states(context="REINITIALIZING")
 
         # If the mechanism has an auxiliary integrator function:
@@ -2084,8 +2078,12 @@ class Mechanism_Base(Mechanism):
         # (3) update value, (4) update output states
         elif hasattr(self, "integrator_function"):
             if isinstance(self.integrator_function, Integrator):
-                new_input = self.integrator_function.reinitialize(*args)[0]
-                self.value = self.function_object.execute(variable=new_input, context="REINITIALIZING")
+                new_input = self.integrator_function.reinitialize(*args, execution_context=execution_context)[0]
+                self.parameters.value.set(
+                    self.function_object.execute(variable=new_input, context="REINITIALIZING"),
+                    execution_context=execution_context,
+                    override=True
+                )
                 self._update_output_states(context="REINITIALIZING")
 
             elif self.integrator_function is None:
@@ -2952,7 +2950,7 @@ class Mechanism_Base(Mechanism):
 
     # @tc.typecheck
     # def _get_state_value_labels(self, state_type:tc.any(InputState, OutputState)):
-    def _get_state_value_labels(self, state_type):
+    def _get_state_value_labels(self, state_type, execution_context=None):
         """Return list of labels for the value of each State of specified state_type.
         If the labels_dict has subdicts (one for each State), get label for the value of each State from its subdict.
         If the labels dict does not have subdicts, then use the same dict for the only (or all) State(s)
@@ -2966,7 +2964,7 @@ class Mechanism_Base(Mechanism):
 
         labels = []
         for state in states:
-            labels.append(state.label)
+            labels.append(state.get_label(execution_context))
         return labels
 
     @tc.typecheck
@@ -3003,6 +3001,10 @@ class Mechanism_Base(Mechanism):
             return self.input_states.values
         except (TypeError, AttributeError):
             return None
+
+    def get_input_values(self, execution_context=None):
+        return [input_state.parameters.value.get(execution_context) for input_state in self.input_states]
+
     @property
     def external_input_states(self):
         try:
@@ -3031,11 +3033,13 @@ class Mechanism_Base(Mechanism):
         of the corresponding InputState, and is populated by a string label (from the input_labels_dict) when one
         exists, and the numeric value otherwise.
         """
+        return self.get_input_labels()
 
+    def get_input_labels(self, execution_context=None):
         if self.input_labels_dict:
-            return self._get_state_value_labels(InputState)
+            return self._get_state_value_labels(InputState, execution_context)
         else:
-            return self.input_values
+            return self.get_input_values(execution_context)
 
     @property
     def parameter_states(self):
@@ -3055,6 +3059,9 @@ class Mechanism_Base(Mechanism):
     def output_values(self):
         return self.output_states.values
 
+    def get_output_values(self, execution_context=None):
+        return [output_state.parameters.value.get(execution_context) for output_state in self.output_states]
+
     @property
     def output_labels(self):
         """
@@ -3062,10 +3069,13 @@ class Mechanism_Base(Mechanism):
         value of the corresponding OutputState, and is populated by a string label (from the output_labels_dict) when
         one exists, and the numeric value otherwise.
         """
+        return self.get_output_labels()
+
+    def get_output_labels(self, execution_context=None):
         if self.output_labels_dict:
-            return self._get_state_value_labels(OutputState)
+            return self._get_state_value_labels(OutputState, execution_context)
         else:
-            return self.output_values
+            return self.get_output_values(execution_context)
 
     @property
     def status(self):

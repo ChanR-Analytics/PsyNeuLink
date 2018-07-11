@@ -440,7 +440,7 @@ import typecheck as tc
 
 from toposort import toposort, toposort_flatten
 
-from psyneulink.components.component import Component, Defaults
+from psyneulink.components.component import Component, Defaults, Param
 from psyneulink.components.mechanisms.adaptive.control.controlmechanism import ControlMechanism, OBJECTIVE_MECHANISM
 from psyneulink.components.mechanisms.adaptive.learning.learningauxiliary import _assign_error_signal_projections, _get_learning_mechanisms
 from psyneulink.components.mechanisms.adaptive.learning.learningmechanism import LearningMechanism, LearningTiming
@@ -1634,7 +1634,6 @@ class System(System_Base):
                 if not mech in self.execution_graph:
                     raise SystemError("{} (entry in initial_values arg) is not a Mechanism in \'{}\'".
                                       format(mech.name, self.name))
-                mech._update_value
                 if not iscompatible(value, mech.instance_defaults.value[0]):
                     raise SystemError("{} (in initial_values arg for \'{}\') is not a valid value for {}".
                                       format(value, self.name, append_type_to_name(self)))
@@ -2868,7 +2867,7 @@ class System(System_Base):
                 execution_runtime_params = {}
                 if mechanism in runtime_params:
                     for param in runtime_params[mechanism]:
-                        if runtime_params[mechanism][param][1].is_satisfied(scheduler=self.scheduler_processing):
+                        if runtime_params[mechanism][param][1].is_satisfied(scheduler=self.scheduler_processing, execution_id=execution_id):
                             execution_runtime_params[param] = runtime_params[mechanism][param][0]
                 mechanism.context.execution_phase = self.context.execution_phase
 
@@ -4943,6 +4942,9 @@ class SystemInputState(OutputState):
     <System.terminal_mechanisms>`.  See `System_Mechanisms` and `System_Execution` for additional details.
 
     """
+    class Params(OutputState.Params):
+        # value just grabs input from the process
+        value = Param(np.array([0]), read_only=True, stateful=False)
 
     def __init__(self, owner=None, variable=None, name=None, prefs=None, context=None):
         """Pass variable to MappingProjection from Process to first Mechanism in Pathway
@@ -4960,7 +4962,8 @@ class SystemInputState(OutputState):
         self.recording = False
         self.efferents = []
         self.owner = owner
-        self.value = variable
 
         self.parameters = self.Params(owner=self, parent=self.class_parameters)
         self.defaults = Defaults(owner=self, variable=variable, value=variable)
+
+        self.parameters.value.set(variable, override=True)

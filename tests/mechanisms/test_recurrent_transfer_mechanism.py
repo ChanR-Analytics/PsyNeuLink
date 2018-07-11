@@ -27,7 +27,7 @@ class TestMatrixSpec:
 
         results = []
         def record_trial():
-            results.append(recurrent_mech.value)
+            results.append(recurrent_mech.parameters.value.get(s))
         s.run(inputs=[[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]],
               call_after_trial=record_trial)
         assert True
@@ -43,7 +43,7 @@ class TestMatrixSpec:
 
         results = []
         def record_trial():
-            results.append(recurrent_mech.value)
+            results.append(recurrent_mech.parameters.value.get(s))
         s.run(inputs=[[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]],
               call_after_trial=record_trial)
 
@@ -60,7 +60,7 @@ class TestMatrixSpec:
 
         results = []
         def record_trial():
-            results.append(recurrent_mech.value)
+            results.append(recurrent_mech.parameters.value.get(s))
         s.run(inputs=[[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]],
               call_after_trial=record_trial)
 
@@ -862,7 +862,7 @@ class TestRecurrentTransferMechanismInSystem:
                 [0.0,        0.0,  0.0,         0.0]
             ]
         )
-        np.testing.assert_allclose(R.output_state.value, [1.18518086, 0.0, 1.18518086, 0.0])
+        np.testing.assert_allclose(R.output_state.parameters.value.get(S), [1.18518086, 0.0, 1.18518086, 0.0])
 
         # Reset state so learning of new pattern is "uncontaminated" by activity from previous one
         R.output_state.value = [0,0,0,0]
@@ -878,7 +878,7 @@ class TestRecurrentTransferMechanismInSystem:
                 [0.0,        0.23700501, 0.0,        0.        ]
             ]
         )
-        np.testing.assert_allclose(R.output_state.value,[0.0, 1.18518086, 0.0, 1.18518086])
+        np.testing.assert_allclose(R.output_state.parameters.value.get(S),[0.0, 1.18518086, 0.0, 1.18518086])
 
 
 # this doesn't work consistently due to EVC's issue with the scheduler
@@ -931,12 +931,12 @@ class TestRecurrentTransferMechanismReinitialize:
         # linear fn: 0.65*1.0 = 0.65
         assert np.allclose(R.integrator_function.previous_value, 0.65)
 
-        R.integrator_function.reinitialize(0.9)
+        R.integrator_function.reinitialize(0.9, S)
 
         assert np.allclose(R.integrator_function.previous_value, 0.9)
         assert np.allclose(R.parameters.value.get(S), 0.65)
 
-        R.reinitialize(0.5)
+        R.reinitialize(0.5, S)
 
         assert np.allclose(R.integrator_function.previous_value, 0.5)
         assert np.allclose(R.parameters.value.get(S), 0.5)
@@ -979,7 +979,7 @@ class TestRecurrentInputState:
         p2 = Process(pathway=[R2])
         s2 = System(processes=[p2])
         s2.run(inputs=[[1, 3, 2]])
-        np.testing.assert_allclose(R2.value, [[14., 12., 13.]])
+        np.testing.assert_allclose(R2.parameters.value.get(s2), [[14., 12., 13.]])
         assert len(R2.input_states) == 2
         assert "Recurrent Input State" not in R2.input_state.name  # make sure recurrent input state isn't primary
 

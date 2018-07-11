@@ -14,7 +14,7 @@ class TestStroop:
 
     def test_stroop_model(self):
         process_prefs = {
-            REPORT_OUTPUT_PREF: True,
+            REPORT_OUTPUT_PREF: False,
             VERBOSE_PREF: False
         }
 

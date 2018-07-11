@@ -459,7 +459,7 @@ from collections import UserList, namedtuple
 import numpy as np
 import typecheck as tc
 
-from psyneulink.components.component import Component, Defaults, function_type
+from psyneulink.components.component import Component, Defaults, Param, function_type
 from psyneulink.components.mechanisms.mechanism import MechanismList, Mechanism_Base
 from psyneulink.components.mechanisms.processing.objectivemechanism import ObjectiveMechanism
 from psyneulink.components.projections.modulatory.learningprojection import LearningProjection
@@ -2622,6 +2622,10 @@ class ProcessInputState(OutputState):
     COMMENT
 
     """
+    class Params(OutputState.Params):
+        # value just grabs input from the process
+        value = Param(np.array([0]), read_only=True, stateful=False)
+
     def __init__(self, owner=None, variable=None, name=None, prefs=None):
         """Pass variable to MappingProjection from Process to first Mechanism in Pathway
 
@@ -2634,10 +2638,11 @@ class ProcessInputState(OutputState):
         self.prefs = prefs
         self.efferents = []
         self.owner = owner
-        self.value = variable
 
         self.parameters = self.Params(owner=self, parent=self.class_parameters)
         self.defaults = Defaults(owner=self, variable=variable, value=variable)
+
+        self.parameters.value.set(variable, override=True)
 
         # MODIFIED 2/17/17 NEW:
         # self.owner.input = self.value

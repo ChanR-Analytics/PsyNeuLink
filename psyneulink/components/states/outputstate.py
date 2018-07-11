@@ -1303,10 +1303,14 @@ class OutputState(State_Base):
 
     @property
     def label(self):
-        label_dictionary = {}
-        if hasattr(self.owner, "output_labels_dict"):
+        return self.get_label()
+
+    def get_label(self, execution_context=None):
+        try:
             label_dictionary = self.owner.output_labels_dict
-        return self._get_value_label(label_dictionary, self.owner.output_states)
+        except AttributeError:
+            label_dictionary = {}
+        return self._get_value_label(label_dictionary, self.owner.output_states, execution_context=execution_context)
 
 
 def _instantiate_output_states(owner, output_states=None, context=None):

@@ -304,20 +304,15 @@ from collections import Iterable
 import numpy as np
 import typecheck as tc
 
-from psyneulink.components.component import function_type, method_type
-from psyneulink.components.functions.function import \
-    AdaptiveIntegrator, Distance, DistributionFunction, Function, Linear, SelectionFunction, TransferFunction, \
-    UserDefinedFunction, is_function_type
+from psyneulink.components.component import Param, function_type, method_type
+from psyneulink.components.functions.function import AdaptiveIntegrator, Distance, DistributionFunction, Function, Linear, SelectionFunction, TransferFunction, UserDefinedFunction, is_function_type
 from psyneulink.components.mechanisms.adaptive.control.controlmechanism import _is_control_spec
 from psyneulink.components.mechanisms.mechanism import Mechanism, MechanismError
 from psyneulink.components.mechanisms.processing.processingmechanism import ProcessingMechanism_Base
 from psyneulink.components.states.inputstate import InputState
 from psyneulink.components.states.outputstate import OutputState, PRIMARY, StandardOutputStates, standard_output_states
 from psyneulink.globals.context import ContextFlags
-from psyneulink.globals.keywords import \
-    DIFFERENCE, FUNCTION, INITIALIZER, MAX_ABS_INDICATOR, MAX_ABS_VAL, MAX_INDICATOR, MAX_VAL, MEAN, MEDIAN, \
-    NAME, NOISE, SELECTION_FUNCTION_TYPE, OWNER_VALUE, PREVIOUS_VALUE, PROB, RATE, RESULT, RESULTS, \
-    STANDARD_DEVIATION, TRANSFER_FUNCTION_TYPE, TRANSFER_MECHANISM, VARIABLE, VARIANCE
+from psyneulink.globals.keywords import DIFFERENCE, FUNCTION, INITIALIZER, MAX_ABS_INDICATOR, MAX_ABS_VAL, MAX_INDICATOR, MAX_VAL, MEAN, MEDIAN, NAME, NOISE, SELECTION_FUNCTION_TYPE, OWNER_VALUE, PREVIOUS_VALUE, PROB, RATE, RESULT, RESULTS, STANDARD_DEVIATION, TRANSFER_FUNCTION_TYPE, TRANSFER_MECHANISM, VARIABLE, VARIANCE
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.utilities import append_type_to_name, iscompatible
@@ -724,6 +719,7 @@ class TransferMechanism(ProcessingMechanism_Base):
         initial_value = None
         clip = None
         noise = 0.0
+        previous_value = Param(None, read_only=True)
 
     @tc.typecheck
     def __init__(self,
@@ -1054,10 +1050,6 @@ class TransferMechanism(ProcessingMechanism_Base):
         # FIX:     WHICH SHOULD BE DEFAULTED TO 0.0??
         # Use self.instance_defaults.variable to initialize state of input
 
-        # # MODIFIED 7/14/18 OLD:
-        # self._update_previous_value()
-        # # MODIFIED 7/14/18 NEW:
-
         # EXECUTE TransferMechanism FUNCTION ---------------------------------------------------------------------
 
         # FIX: JDC 7/2/18 - THIS SHOULD BE MOVED TO AN STANDARD OUTPUT_STATE
@@ -1072,20 +1064,21 @@ class TransferMechanism(ProcessingMechanism_Base):
         value = self._clip_result(clip, value)
 
         # Used by update_previous_value, convergence_function and delta
+        self.parameters.value.set(value, execution_id, override=True)
         self._current_value = np.atleast_2d(value)
 
         return value
 
-    def reinitialize(self, *args):
-        super().reinitialize(*args)
-        self.previous_value = None
+    def reinitialize(self, *args, execution_context=None):
+        super().reinitialize(*args, execution_context=execution_context)
+        self.parameters.previous_value.set(None, execution_context, override=True)
 
-    def _update_previous_value(self):
+    def _update_previous_value(self, execution_id=None):
         if self.integrator_mode:
-            try:
-                self.previous_value = self.value
-            except:
-                self.previous_value = None
+            value = self.parameters.value.get(execution_id)
+            if value is None:
+                value = self.defaults.value
+            self.parameters.previous_value.set(value, execution_id, override=True)
 
     def _parse_function_variable(self, variable, context=None):
         if context is ContextFlags.INSTANTIATE:
@@ -1131,9 +1124,8 @@ class TransferMechanism(ProcessingMechanism_Base):
     def clip(self, value):
         self._clip = value
 
-    @property
-    def delta(self):
-        return self.convergence_function([self._current_value[0], self.previous_value[0]])
+    def delta(self, execution_id=None):
+        return self.convergence_function([self.parameters.value.get(execution_id)[0], self.parameters.previous_value.get(execution_id)[0]])
 
     @property
     def integrator_mode(self):
@@ -1159,13 +1151,14 @@ class TransferMechanism(ProcessingMechanism_Base):
         else:
             raise MechanismError("{}'s integrator_mode attribute may only be True or False.".format(self.name))
 
-    @property
-    def is_converged(self):
+    def is_converged(self, execution_id=None):
         # Check for convergence
-        if (self.convergence_criterion is not None and
-                self.previous_value is not None and
-                self.context.initialization_status != ContextFlags.INITIALIZING):
-            if self.delta <= self.convergence_criterion:
+        if (
+            self.convergence_criterion is not None
+            and self.parameters.previous_value.get(execution_id) is not None
+            and self.context.initialization_status != ContextFlags.INITIALIZING
+        ):
+            if self.delta(execution_id) <= self.convergence_criterion:
                 return True
             elif self.current_execution_time.pass_ >= self.max_passes:
                 raise TransferError("Maximum number of executions ({}) has occurred before reaching "

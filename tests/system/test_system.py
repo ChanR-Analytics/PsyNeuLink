@@ -2,15 +2,15 @@ import numpy as np
 
 from psyneulink.components.functions.function import BogaczEtAl, Linear, Logistic
 from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism
-from psyneulink.library.mechanisms.processing.transfer.recurrenttransfermechanism import RecurrentTransferMechanism
 from psyneulink.components.process import Process
 from psyneulink.components.projections.modulatory.controlprojection import ControlProjection
 from psyneulink.components.system import System
 from psyneulink.globals.keywords import ALLOCATION_SAMPLES
 from psyneulink.globals.keywords import CYCLE, INITIALIZE_CYCLE, INTERNAL, ORIGIN, TERMINAL
 from psyneulink.library.mechanisms.processing.integrator.ddm import DDM
+from psyneulink.library.mechanisms.processing.transfer.recurrenttransfermechanism import RecurrentTransferMechanism
 from psyneulink.library.subsystems.evc.evccontrolmechanism import EVCControlMechanism
-from psyneulink.scheduling.condition import Any, AtTrial, AfterTrial
+from psyneulink.scheduling.condition import AfterTrial, Any, AtTrial
 from psyneulink.scheduling.condition import Never
 
 def test_danglingControlledMech():
@@ -134,8 +134,8 @@ class TestInputSpecsDocumentationExamples:
         check_inputs_dictionary = {a: [],
                                    b: []}
         def store_inputs():
-            check_inputs_dictionary[a].append(a.input_values)
-            check_inputs_dictionary[b].append(b.input_values)
+            check_inputs_dictionary[a].append(a.get_input_values(s))
+            check_inputs_dictionary[b].append(b.get_input_values(s))
 
         s.run(inputs=input_dictionary, call_after_trial=store_inputs)
 
@@ -164,7 +164,7 @@ class TestInputSpecsDocumentationExamples:
         check_inputs = []
 
         def store_inputs():
-            check_inputs.append(a.input_values)
+            check_inputs.append(a.get_input_values(s))
 
         s.run(inputs=input_dictionary,
               num_trials=7,
@@ -190,7 +190,7 @@ class TestInputSpecsDocumentationExamples:
         check_inputs = []
 
         def store_inputs():
-            check_inputs.append(a.input_values)
+            check_inputs.append(a.get_input_values(s))
 
         s.run(inputs=input_dictionary,
               call_after_trial=store_inputs)
@@ -216,7 +216,7 @@ class TestInputSpecsDocumentationExamples:
         check_inputs = []
 
         def store_inputs():
-            check_inputs.append(a.input_values)
+            check_inputs.append(a.get_input_values(s))
 
         s.run(inputs=input_dictionary,
               call_after_trial=store_inputs)
@@ -241,7 +241,7 @@ class TestInputSpecsDocumentationExamples:
         check_inputs = []
 
         def store_inputs():
-            check_inputs.append(a.input_values)
+            check_inputs.append(a.get_input_values(s))
 
         s.run(inputs=input_dictionary,
               call_after_trial=store_inputs)
@@ -265,7 +265,7 @@ class TestInputSpecsDocumentationExamples:
         check_inputs = []
 
         def store_inputs():
-            check_inputs.append(a.input_values)
+            check_inputs.append(a.get_input_values(s))
 
         input_dictionary = {a: [[[1.0], [2.0]]]}
 
@@ -291,7 +291,7 @@ class TestInputSpecsDocumentationExamples:
         check_inputs = []
 
         def store_inputs():
-            check_inputs.append(a.input_values)
+            check_inputs.append(a.get_input_values(s))
 
         input_dictionary = {a: [[1.0], [2.0]]}
 
@@ -317,7 +317,7 @@ class TestInputSpecsDocumentationExamples:
         check_inputs = []
 
         def store_inputs():
-            check_inputs.append(a.input_values)
+            check_inputs.append(a.get_input_values(s))
 
         input_dictionary = {a: [[[1.0], [2.0]], [[1.0], [2.0]], [[1.0], [2.0]], [[1.0], [2.0]], [[1.0], [2.0]]]}
 
@@ -343,7 +343,7 @@ class TestInputSpecsDocumentationExamples:
         check_inputs = []
 
         def store_inputs():
-            check_inputs.append(a.input_values)
+            check_inputs.append(a.get_input_values(s))
 
         input_dictionary = {a: [[1.0], [2.0]]}
 
@@ -370,7 +370,7 @@ class TestInputSpecsDocumentationExamples:
         check_inputs = []
 
         def store_inputs():
-            check_inputs.append(a.input_values)
+            check_inputs.append(a.get_input_values(s))
 
         input_dictionary = {a: [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]}
 
@@ -396,7 +396,7 @@ class TestInputSpecsDocumentationExamples:
         check_inputs = []
 
         def store_inputs():
-            check_inputs.append(a.input_values)
+            check_inputs.append(a.get_input_values(s))
 
         input_list = [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]
 
@@ -419,7 +419,7 @@ class TestInputSpecsDocumentationExamples:
         check_inputs = []
 
         def store_inputs():
-            check_inputs.append(a.input_values)
+            check_inputs.append(a.get_input_values(s))
 
         input_dictionary = [1.0, 2.0, 3.0]
 
@@ -499,8 +499,8 @@ class TestGraphAndInput:
         run_result = S.run(inputs={Origin1: [[5.0, 6.0]]})
         # inputs={Origin1: [[5.0, 6.0], [7.0, 8.0]]}) # NOT currently allowed because inputs would be different lengths
 
-        assert np.allclose(Origin1.value, [[5.0, 6.0]])
-        assert np.allclose(Origin2.value, [[3.0, 4.0]])
+        assert np.allclose(Origin1.parameters.value.get(S), [[5.0, 6.0]])
+        assert np.allclose(Origin2.parameters.value.get(S), [[3.0, 4.0]])
         assert np.allclose(run_result, [[np.array([18.0])]])
 
     def test_branch(self):

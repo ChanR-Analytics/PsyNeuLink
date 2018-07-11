@@ -844,6 +844,7 @@ class Param(types.SimpleNamespace):
 
     def set(self, value, execution_context=None, override=False, skip_history=False, skip_log=False, **kwargs):
         if not override and self.read_only:
+            # NOTE: this warning is primarily for users. read-only parameters are often set internally
             warnings.warn('Parameter \'{0}\' is read-only. Set at your own risk. Pass override=True to suppress this warning.'.format(self.name), stacklevel=2)
 
         execution_id = parse_execution_context(execution_context)
@@ -3234,7 +3235,7 @@ class Component(object, metaclass=ComponentsMeta):
         if value is None:
             raise ComponentError("PROGRAM ERROR: Execute method for {} must return a value".format(self.name))
 
-        self.value = value
+        self.parameters.value.set(value, override=True)
         try:
             # Could be mutable, so assign copy
             self.instance_defaults.value = value.copy()
@@ -3245,7 +3246,7 @@ class Component(object, metaclass=ComponentsMeta):
     def initialize(self):
         raise ComponentError("{} class does not support initialize() method".format(self.__class__.__name__))
 
-    def reinitialize(self, *args):
+    def reinitialize(self, *args, execution_context=None):
         """
             If the component's execute method involves execution of an `Integrator` Function, this method
             effectively begins the function's accumulation over again at the specified value, and may update related
@@ -3254,8 +3255,8 @@ class Component(object, metaclass=ComponentsMeta):
         from psyneulink.components.functions.function import Integrator
         if hasattr(self, "function_object"):
             if isinstance(self.function_object, Integrator):
-                new_value = self.function_object.reinitialize(*args)
-                self.value = np.atleast_2d(new_value)
+                new_value = self.function_object.reinitialize(*args, execution_context=execution_context)
+                self.parameters.value.set(np.atleast_2d(new_value), execution_context, override=True)
             else:
                 ComponentError("Reinitializing {} is not allowed because this Component is not stateful. "
                                "(It does not have an accumulator to reinitialize).".format(self.name))
@@ -3357,11 +3358,6 @@ class Component(object, metaclass=ComponentsMeta):
 
     def _update_current_execution_time(self, context):
         self._current_execution_time = self._get_current_execution_time(context=context)
-
-    def _update_value(self, context=None):
-        """Evaluate execute method
-        """
-        self.value = self.execute(context=context)
 
     def _change_function(self, to_function):
         pass
@@ -3702,6 +3698,8 @@ class Component(object, metaclass=ComponentsMeta):
     def ClassDefaults(self):
         return self.class_defaults
 
+    # left in for backwards compatibility
+    # DEPRECATED
     @property
     def instance_defaults(self):
         return self.defaults

@@ -187,7 +187,7 @@ from psyneulink.components.states.outputstate import PRIMARY, StandardOutputStat
 from psyneulink.components.states.parameterstate import ParameterState
 from psyneulink.components.states.state import _instantiate_state
 from psyneulink.globals.context import ContextFlags
-from psyneulink.globals.keywords import AUTO, ENERGY, ENTROPY, HETERO, HOLLOW_MATRIX, INPUT_STATE, MATRIX, MAX_ABS_DIFF, MEAN, MEDIAN, NAME, PARAMS_CURRENT, RECURRENT_TRANSFER_MECHANISM, RESULT, STANDARD_DEVIATION, VARIANCE
+from psyneulink.globals.keywords import AUTO, ENERGY, ENTROPY, HETERO, HOLLOW_MATRIX, INPUT_STATE, MATRIX, MAX_ABS_DIFF, MEAN, MEDIAN, NAME, PARAMS_CURRENT, PREVIOUS_VALUE, RECURRENT_TRANSFER_MECHANISM, RESULT, STANDARD_DEVIATION, VARIANCE
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.registry import register_instance, remove_instance_from_registry
 from psyneulink.globals.socket import ConnectionInfo
@@ -919,20 +919,20 @@ class RecurrentTransferMechanism(TransferMechanism):
                 if isinstance(comb_fct, type):
                     comb_fct = comb_fct()
                 elif isinstance(comb_fct, (function_type, method_type)):
-                    comb_fct = UserDefinedFunction(comb_fct, self.variable)
+                    comb_fct = UserDefinedFunction(comb_fct, self.defaults.variable)
                 try:
-                    cust_fct_result = comb_fct.execute(self.variable)
+                    cust_fct_result = comb_fct.execute(self.defaults.variable)
                 except:
                     raise RecurrentTransferError("Function specified for {} argument of {} ({}) does not "
                                                  "take an array with two items ({})".
-                                                 format(repr(COMBINATION_FUNCTION),self.name, comb_fct, self.variable))
+                                                 format(repr(COMBINATION_FUNCTION),self.name, comb_fct, self.defaults.variable))
                 try:
-                    assert len(cust_fct_result) == len(self.variable[0])
+                    assert len(cust_fct_result) == len(self.defaults.variable[0])
                 except:
                     raise RecurrentTransferError("Function specified for {} argument of {} ({}) did not return "
                                                  "a result that is the same shape as the input to {} ({})".
                                                  format(repr(COMBINATION_FUNCTION),self.name, comb_fct,
-                                                        self.name, self.variable[0]))
+                                                        self.name, self.defaults.variable[0]))
 
         # Validate DECAY
         # if DECAY in target_set and target_set[DECAY] is not None:
@@ -1063,11 +1063,11 @@ class RecurrentTransferMechanism(TransferMechanism):
             if state.name != AUTO and state.name != HETERO:
                 state.update(execution_id=execution_id, params=runtime_params, context=context)
 
-    def _update_previous_value(self):
-        try:
-            self.previous_value = self.value
-        except:
-            self.previous_value = None
+    def _update_previous_value(self, execution_id=None):
+        value = self.parameters.value.get(execution_id)
+        if value is None:
+            value = self.defaults.value
+        self.parameters.previous_value.set(value, execution_id, override=True)
 
     # 8/2/17 CW: this property is not optimal for performance: if we want to optimize performance we should create a
     # single flag to check whether to get matrix from auto and hetero?
@@ -1190,7 +1190,7 @@ class RecurrentTransferMechanism(TransferMechanism):
         # IMPLEMENTATION NOTE: THIS SHOULD BE MOVED TO COMPOSITION WHEN THAT IS IMPLEMENTED
         if self.has_recurrent_input_state:
             # # FIX: 7/12/18 MAKE THIS A METHOD THAT CAN BE OVERRIDDEN BY CONTRASTIVEHEBBIAN
-            new_input_state = InputState(owner=self, name=RECURRENT, variable=self.variable[0],
+            new_input_state = InputState(owner=self, name=RECURRENT, variable=self.defaults.variable[0],
                                          internal_only=True)
             assert (len(new_input_state.all_afferents) == 0)  # just a sanity check
             assert(self.input_state.name != "Recurrent Input State")
@@ -1322,10 +1322,10 @@ class RecurrentTransferMechanism(TransferMechanism):
 
         return super()._get_variable_from_input(input)
 
-    def reinitialize(self, *args):
+    def reinitialize(self, *args, execution_context=None):
         if self.integrator_mode:
-            super().reinitialize(*args)
-        self.previous_value = None
+            super().reinitialize(*args, execution_context=execution_context)
+        self.parameters.previous_value.set(None, execution_context, override=True)
 
     @property
     def _learning_signal_source(self):
