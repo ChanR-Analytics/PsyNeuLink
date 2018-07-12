@@ -797,7 +797,13 @@ class Function_Base(Function):
             return self.owner.name
         except AttributeError:
             return '<no owner>'
-
+    
+    def execute(self, variable=None, runtime_params=None, context=None, **kwargs):
+        value = self._execute(variable=variable,
+                              runtime_params=runtime_params,
+                              context=context,)
+        self.value = value
+        return value
 # *****************************************   EXAMPLE FUNCTION   *******************************************************
 
 PROPENSITY = "PROPENSITY"
@@ -4892,6 +4898,10 @@ class Integrator(IntegratorFunction):  # ---------------------------------------
                 target_set[NOISE] = noise._execute
             self._validate_noise(target_set[NOISE])
 
+    def _store_stateful_attributes(self):
+        for i in range(len(self.stateful_attributes)):
+            setattr(self, self.stateful_attributes[i], self.value[i])
+
     def _validate_rate(self, rate):
         # kmantel: this duplicates much code in _validate_params above, but that calls _instantiate_defaults
         # which I don't think is the right thing to do here, but if you don't call it in _validate_params
@@ -5140,6 +5150,16 @@ class Integrator(IntegratorFunction):  # ---------------------------------------
 
         return self.value
 
+    def _increment_time(self, variable=None, runtime_params=None, context=None, **kwargs):
+        pass
+
+    def _execute(self, variable=None, runtime_params=None, context=None, **kwargs):
+        if context != ContextFlags.INITIALIZING and context != ContextFlags.COMPONENT:
+            self._store_stateful_attributes()
+            self._increment_time(variable, runtime_params, context, **kwargs)
+        output = super(Integrator, self)._execute(variable, runtime_params, context, **kwargs)
+        self.value = output
+        return output
     def function(self, *args, **kwargs):
         raise FunctionError("Integrator is not meant to be called explicitly")
 
@@ -5325,6 +5345,7 @@ class SimpleIntegrator(Integrator):  # -----------------------------------------
 
         # execute noise if it is a function
         noise = self._try_execute_param(self.get_current_function_param(NOISE), variable)
+
         previous_value = self.previous_value
         new_value = variable
 
@@ -5332,12 +5353,8 @@ class SimpleIntegrator(Integrator):  # -----------------------------------------
 
         adjusted_value = value + offset
 
-        # If this NOT an initialization run, update the old value
-        # If it IS an initialization run, leave as is
-        #    (don't want to count it as an execution step)
-        if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = adjusted_value
-
+        if self.context.initialization_status == ContextFlags.INITIALIZING:
+            return self.reinitialize()
         return adjusted_value
 
 
@@ -5559,11 +5576,8 @@ class ConstantIntegrator(Integrator):  # ---------------------------------------
 
         adjusted_value = value*scale + offset
 
-        # If this NOT an initialization run, update the old value
-        # If it IS an initialization run, leave as is
-        #    (don't want to count it as an execution step)
-        if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = adjusted_value
+        if self.context.initialization_status == ContextFlags.INITIALIZING:
+            return self.reinitialize()
 
         return adjusted_value
 
@@ -6095,11 +6109,8 @@ class AdaptiveIntegrator(Integrator):  # ---------------------------------------
         value = (1-rate)*previous_value + rate*variable + noise
         adjusted_value = value + offset
 
-        # If this NOT an initialization run, update the old value
-        # If it IS an initialization run, leave as is
-        #    (don't want to count it as an execution step)
-        if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = adjusted_value
+        if self.context.initialization_status == ContextFlags.INITIALIZING:
+            return self.reinitialize()
         return adjusted_value
 
 
@@ -6276,6 +6287,7 @@ class DriftDiffusionIntegrator(Integrator):  # ---------------------------------
         if not hasattr(self, "stateful_attributes"):
             self.stateful_attributes = ["previous_value", "previous_time"]
 
+
         # Assign args to params and functionParams dicts (kwConstants must == arg names)
         params = self._assign_args_to_param_dicts(rate=rate,
                                                   time_step_size=time_step_size,
@@ -6285,6 +6297,8 @@ class DriftDiffusionIntegrator(Integrator):  # ---------------------------------
                                                   noise=noise,
                                                   offset=offset,
                                                   params=params)
+
+        self.current_time = t0
 
         # Assign here as default, for use in initialization of function
         super().__init__(
@@ -6302,6 +6316,11 @@ class DriftDiffusionIntegrator(Integrator):  # ---------------------------------
             raise FunctionError(
                 "Invalid noise parameter for {}. DriftDiffusionIntegrator requires noise parameter to be a float. Noise"
                 " parameter is used to construct the standard DDM noise distribution".format(self.name))
+
+    def _increment_time(self, variable=None, runtime_params=None, context=None, **kwargs):
+        self.current_time = self.current_time + self.get_current_function_param(TIME_STEP_SIZE)
+        if not np.isscalar(variable):
+            self.current_time = np.broadcast_to(self.current_time, variable.shape).copy()
 
     def function(self,
                  variable=None,
@@ -6332,6 +6351,7 @@ class DriftDiffusionIntegrator(Integrator):  # ---------------------------------
         updated value of integral : 2d np.array
 
         """
+
         variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
 
         rate = np.array(self.get_current_function_param(RATE)).astype(float)
@@ -6355,13 +6375,17 @@ class DriftDiffusionIntegrator(Integrator):  # ---------------------------------
         # If this NOT an initialization run, update the old value and time
         # If it IS an initialization run, leave as is
         #    (don't want to count it as an execution step)
-        if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = adjusted_value
-            self.previous_time = self.previous_time + time_step_size
-            if not np.isscalar(variable):
-                self.previous_time = np.broadcast_to(self.previous_time, variable.shape).copy()
+        # if self.context.initialization_status != ContextFlags.INITIALIZING:
+        #     self.previous_value = adjusted_value
+        #     self.previous_time = self.previous_time + time_step_size
+        #     if not np.isscalar(variable):
+        #         self.previous_time = np.broadcast_to(self.previous_time, variable.shape).copy()
+        if self.context.initialization_status == ContextFlags.INITIALIZING:
+            return self.reinitialize()
+        if not np.isscalar(variable):
+            self.previous_time = np.broadcast_to(self.previous_time, variable.shape).copy()
 
-        return self.previous_value, self.previous_time
+        return [adjusted_value, self.previous_time]
 
 class OrnsteinUhlenbeckIntegrator(Integrator):  # ----------------------------------------------------------------------
     """
@@ -6539,6 +6563,12 @@ class OrnsteinUhlenbeckIntegrator(Integrator):  # ------------------------------
                 "Invalid noise parameter for {}. OrnsteinUhlenbeckIntegrator requires noise parameter to be a float. "
                 "Noise parameter is used to construct the standard DDM noise distribution".format(self.name))
 
+    def _increment_time(self, variable=None, runtime_params=None, context=None, **kwargs):
+        self.current_time = self.current_time + self.get_current_function_param(TIME_STEP_SIZE)
+        if not np.isscalar(variable):
+            self.current_time = np.broadcast_to(self.current_time, variable.shape).copy()
+
+
     def function(self,
                  variable=None,
                  params=None,
@@ -6588,13 +6618,14 @@ class OrnsteinUhlenbeckIntegrator(Integrator):  # ------------------------------
         #    (don't want to count it as an execution step)
         adjusted_value = value + offset
 
-        if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = adjusted_value
-            self.previous_time = self.previous_time + time_step_size
-            if not np.isscalar(variable):
-                self.previous_time = np.broadcast_to(self.previous_time, variable.shape).copy()
+        # if self.context.initialization_status != ContextFlags.INITIALIZING:
+        #     self.previous_value = adjusted_value
+        #     self.previous_time = self.previous_time + time_step_size
+        #     if not np.isscalar(variable):
+        #         self.previous_time = np.broadcast_to(self.previous_time, variable.shape).copy()
 
-
+        if self.context.initialization_status == ContextFlags.INITIALIZING:
+            return self.reinitialize()
         return self.previous_value, self.previous_time
 
 class FHNIntegrator(Integrator):  # --------------------------------------------------------------------------------
@@ -7244,6 +7275,11 @@ class FHNIntegrator(Integrator):  # --------------------------------------------
 
         return val
 
+    def _increment_time(self, variable=None, runtime_params=None, context=None, **kwargs):
+        self.current_time = self.current_time + self.get_current_function_param(TIME_STEP_SIZE)
+        if not np.isscalar(variable):
+            self.current_time = np.broadcast_to(self.current_time, variable.shape).copy()
+
     def function(self,
                  variable=None,
                  params=None,
@@ -7346,13 +7382,14 @@ class FHNIntegrator(Integrator):  # --------------------------------------------
             raise FunctionError("Invalid integration method ({}) selected for {}".
                                 format(integration_method, self.name))
 
-        if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_v = approximate_values[0]
-            self.previous_w = approximate_values[1]
-            self.previous_time = self.previous_time + time_step_size
-            if not np.isscalar(variable):
-                self.previous_time = np.broadcast_to(self.previous_time, variable.shape).copy()
-
+        # if self.context.initialization_status != ContextFlags.INITIALIZING:
+        #     self.previous_v = approximate_values[0]
+        #     self.previous_w = approximate_values[1]
+        #     self.previous_time = self.previous_time + time_step_size
+        #     if not np.isscalar(variable):
+        #         self.previous_time = np.broadcast_to(self.previous_time, variable.shape).copy()
+        if self.context.initialization_status == ContextFlags.INITIALIZING:
+            return self.reinitialize()
         return self.previous_v, self.previous_w, self.previous_time
 
 class AccumulatorIntegrator(Integrator):  # ----------------------------------------------------------------------------
@@ -7605,11 +7642,8 @@ class AccumulatorIntegrator(Integrator):  # ------------------------------------
 
         value = previous_value * rate + noise + increment
 
-        # If this NOT an initialization run, update the old value
-        # If it IS an initialization run, leave as is
-        #    (don't want to count it as an execution step)
-        if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = value
+        if self.context.initialization_status == ContextFlags.INITIALIZING:
+            return self.reinitialize()
         return value
 
 
@@ -7766,6 +7800,11 @@ class LCAIntegrator(Integrator):  # --------------------------------------------
 
         self.has_initializers = True
 
+    def _increment_time(self, variable=None, runtime_params=None, context=None, **kwargs):
+        self.current_time = self.current_time + self.get_current_function_param(TIME_STEP_SIZE)
+        if not np.isscalar(variable):
+            self.current_time = np.broadcast_to(self.current_time, variable.shape).copy()
+
     def function(self,
                  variable=None,
                  params=None,
@@ -7815,11 +7854,8 @@ class LCAIntegrator(Integrator):  # --------------------------------------------
 
         adjusted_value = value + offset
 
-        # If this NOT an initialization run, update the old value
-        # If it IS an initialization run, leave as is
-        #    (don't want to count it as an execution step)
-        if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = adjusted_value
+        if self.context.initialization_status == ContextFlags.INITIALIZING:
+            return self.reinitialize()
 
         return adjusted_value
 
@@ -8164,9 +8200,8 @@ class AGTUtilityIntegrator(Integrator):  # -------------------------------------
 
         value = self.combine_utilities(short_term_utility, long_term_utility)
 
-        if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_short_term_utility = short_term_utility
-            self.previous_long_term_utility = long_term_utility
+        if self.context.initialization_status == ContextFlags.INITIALIZING:
+            return self.reinitialize()
 
         return value
 
