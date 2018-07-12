@@ -1779,7 +1779,15 @@ class State_Base(State):
                     if not isinstance(projection.receiver, State):
                         projection.receiver = receiver_state
 
-                try:
+                    projection._assign_default_projection_name(
+                        state=self,
+                        sender_name=self.name,
+                        receiver_name=projection.receiver.name
+                    )
+
+                # when this is called during initialization, doesn't make sense to validate here because the projection values
+                # are set later to the values they're being validated against here
+                else:
                     # Validate variable
                     #    - check that input to Projection is compatible with self.value
                     if not iscompatible(self.value, projection.instance_defaults.variable):
@@ -1813,14 +1821,6 @@ class State_Base(State):
                             and not iscompatible(function_param_value, mod_proj_spec_value)):
                             raise StateError("Output of {} ({}) is not compatible with the value of {} ({}).".
                                              format(projection.name,mod_proj_spec_value,receiver.name,function_param_value))
-                except AttributeError:
-                    # sometimes the above attributes like variable and value don't even exist when this is called
-                    # and additionally are set later to the values they're being validated against here
-                    pass
-
-                projection._assign_default_projection_name(state=self,
-                                                           sender_name=self.name,
-                                                           receiver_name=projection.receiver.name)
 
 
             # ASSIGN TO STATE
