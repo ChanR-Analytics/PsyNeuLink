@@ -827,7 +827,7 @@ def run(obj,
             # Reset any mechanisms whose 'reinitialize_when' conditions are satisfied
             for mechanism in obj.mechanisms:
                 if hasattr(mechanism, "reinitialize_when") and mechanism.has_initializers:
-                    if mechanism.reinitialize_when.is_satisfied(scheduler=obj.scheduler_processing):
+                    if mechanism.reinitialize_when.is_satisfied(scheduler=obj.scheduler_processing, execution_id=execution_id):
                         mechanism.reinitialize(None)
 
             input_num = execution%num_inputs_sets

@@ -3049,6 +3049,7 @@ class System(System_Base):
             termination_learning=None,
             runtime_params=None,
             reinitialize_values=None,
+            execution_id=None,
             animate=False,
             context=None):
 
@@ -3177,6 +3178,9 @@ class System(System_Base):
 
         if reinitialize_values is None:
             reinitialize_values = {}
+
+        if execution_id is None:
+            execution_id = self.default_execution_id
 
         for mechanism in reinitialize_values:
             mechanism.reinitialize(*reinitialize_values[mechanism])

@@ -1228,7 +1228,9 @@ class LearningMechanism(AdaptiveMechanism_Base):
         error_matrices = np.array(self.error_matrices)[np.array([c - ERROR_OUTPUT_INDEX for c in curr_indices])]
         for i, matrix in enumerate(error_matrices):
             if isinstance(error_matrices[i], ParameterState):
-                error_matrices[i] = error_matrices[i].parameters.value.get(execution_id)
+                error_matrices[i] = error_matrices[i].value
+                # TODO: stateful - below gets added only when matrix attr becomes stateful
+                # error_matrices[i] = error_matrices[i].parameters.value.get(execution_id)
 
         summed_learning_signal = 0
         summed_error_signal = 0
