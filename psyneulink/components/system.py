@@ -2887,10 +2887,10 @@ class System(System_Base):
 
                 # Reset runtime params and context
                 for key in mechanism._runtime_params_reset:
-                    mechanism._set_parameter_value(key, mechanism._runtime_params_reset[key])
+                    mechanism._set_parameter_value(key, mechanism._runtime_params_reset[key], execution_id)
                 mechanism._runtime_params_reset = {}
                 for key in mechanism.function_object._runtime_params_reset:
-                    mechanism.function_object._set_parameter_value(key, mechanism.function_object._runtime_params_reset[key])
+                    mechanism.function_object._set_parameter_value(key, mechanism.function_object._runtime_params_reset[key], execution_id)
                 mechanism.function_object._runtime_params_reset = {}
                 mechanism.context.execution_phase = ContextFlags.IDLE
 

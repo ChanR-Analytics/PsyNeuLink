@@ -2167,18 +2167,18 @@ class Component(object, metaclass=ComponentsMeta):
             for arg_name, arg_value in kwargs.items():
                 setattr(self, arg_name, arg_value)
 
-    def _set_parameter_value(self, param, val):
+    def _set_parameter_value(self, param, val, execution_context=None):
         setattr(self, param, val)
         if hasattr(self, "parameter_states"):
             if param in self.parameter_states:
                 new_state_value = self.parameter_states[param].execute(context=ContextFlags.EXECUTING)
-                self.parameter_states[param].value = new_state_value
+                self.parameter_states[param].parameters.value.set(new_state_value, execution_context, override=True)
         elif hasattr(self, "owner"):
             if hasattr(self.owner, "parameter_states"):
                 if param in self.owner.parameter_states:
                     new_state_value = self.owner.parameter_states[param].execute(
                         context=ContextFlags.EXECUTING)
-                    self.owner.parameter_states[param].value = new_state_value
+                    self.owner.parameter_states[param].parameters.value.set(new_state_value, execution_context, override=True)
 
     def _check_args(self, variable=None, execution_id=None, params=None, target_set=None, context=None):
         """validate variable and params, instantiate variable (if necessary) and assign any runtime params.
@@ -2240,7 +2240,7 @@ class Component(object, metaclass=ComponentsMeta):
 
         # reset any runtime params that were leftover from a direct call to .execute (atypical)
         for key in self._runtime_params_reset:
-            self._set_parameter_value(key, self._runtime_params_reset[key])
+            self._set_parameter_value(key, self._runtime_params_reset[key], execution_id)
         self._runtime_params_reset = {}
 
         # If params have been passed, treat as runtime params
@@ -2254,7 +2254,7 @@ class Component(object, metaclass=ComponentsMeta):
                     if param_name in {FUNCTION, INPUT_STATES, OUTPUT_STATES}:
                         continue
                     self._runtime_params_reset[param_name] = getattr(self, param_name)
-                    self._set_parameter_value(param_name, runtime_params[param_name])
+                    self._set_parameter_value(param_name, runtime_params[param_name], execution_id)
         elif runtime_params:    # not None
             raise ComponentError("Invalid specification of runtime parameters for {}".format(self.name))
 

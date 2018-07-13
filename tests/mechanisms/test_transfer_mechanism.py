@@ -1080,12 +1080,12 @@ class TestIntegratorMode:
         # linear fn: 0.595*1.0 = 0.595
         assert np.allclose(T.integrator_function.previous_value, 0.595)
 
-        T.integrator_function.reinitialize(0.9, S)
+        T.integrator_function.reinitialize(0.9, execution_context=S)
 
         assert np.allclose(T.integrator_function.previous_value, 0.9)
         assert np.allclose(T.parameters.value.get(S), 0.595)
 
-        T.reinitialize(0.5, S)
+        T.reinitialize(0.5, execution_context=S)
 
         assert np.allclose(T.integrator_function.previous_value, 0.5)
         assert np.allclose(T.parameters.value.get(S), 0.5)
@@ -1123,12 +1123,12 @@ class TestIntegratorMode:
         # linear fn: 0.595*1.0 = 0.595
         assert np.allclose(T.integrator_function.previous_value, [0.595, 0.595, 0.595])
 
-        T.integrator_function.reinitialize([0.9, 0.9, 0.9], S, S)
+        T.integrator_function.reinitialize([0.9, 0.9, 0.9], execution_context=S)
 
         assert np.allclose(T.integrator_function.previous_value, [0.9, 0.9, 0.9])
         assert np.allclose(T.parameters.value.get(S), [0.595, 0.595, 0.595])
 
-        T.reinitialize([0.5, 0.5, 0.5], S, S)
+        T.reinitialize([0.5, 0.5, 0.5], execution_context=S)
 
         assert np.allclose(T.integrator_function.previous_value, [0.5, 0.5, 0.5])
         assert np.allclose(T.parameters.value.get(S), [0.5, 0.5, 0.5])
@@ -1168,12 +1168,12 @@ class TestIntegratorMode:
         # linear fn: 0.595*1.0 = 0.595
         assert np.allclose(T.integrator_function.previous_value, [0.595, 0.595, 0.595])
 
-        T.integrator_function.reinitialize([0.9, 0.9, 0.9], S)
+        T.integrator_function.reinitialize([0.9, 0.9, 0.9], execution_context=S)
 
         assert np.allclose(T.integrator_function.previous_value, [0.9, 0.9, 0.9])
         assert np.allclose(T.parameters.value.get(S), [0.595, 0.595, 0.595])
 
-        T.reinitialize(initial_val, S)
+        T.reinitialize(initial_val, execution_context=S)
 
         assert np.allclose(T.integrator_function.previous_value, initial_val)
         assert np.allclose(T.parameters.value.get(S), initial_val)

@@ -2084,7 +2084,7 @@ class Mechanism_Base(Mechanism):
                     execution_context=execution_context,
                     override=True
                 )
-                self._update_output_states(context="REINITIALIZING")
+                self._update_output_states(execution_id=execution_context, context="REINITIALIZING")
 
             elif self.integrator_function is None:
                 if hasattr(self, "integrator_mode"):

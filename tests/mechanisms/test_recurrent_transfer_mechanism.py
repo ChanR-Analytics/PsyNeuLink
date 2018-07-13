@@ -931,12 +931,12 @@ class TestRecurrentTransferMechanismReinitialize:
         # linear fn: 0.65*1.0 = 0.65
         assert np.allclose(R.integrator_function.previous_value, 0.65)
 
-        R.integrator_function.reinitialize(0.9, S)
+        R.integrator_function.reinitialize(0.9, execution_context=S)
 
         assert np.allclose(R.integrator_function.previous_value, 0.9)
         assert np.allclose(R.parameters.value.get(S), 0.65)
 
-        R.reinitialize(0.5, S)
+        R.reinitialize(0.5, execution_context=S)
 
         assert np.allclose(R.integrator_function.previous_value, 0.5)
         assert np.allclose(R.parameters.value.get(S), 0.5)

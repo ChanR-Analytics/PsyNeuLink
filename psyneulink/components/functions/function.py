@@ -8027,7 +8027,7 @@ class AccumulatorIntegrator(Integrator):  # ------------------------------------
 
         self.has_initializers = True
 
-    def _accumulator_check_args(self, variable=None, params=None, target_set=None, context=None):
+    def _accumulator_check_args(self, variable=None, execution_id=None, params=None, target_set=None, context=None):
         """validate params and assign any runtime params.
 
         Called by AccumulatorIntegrator to validate params
@@ -8060,7 +8060,7 @@ class AccumulatorIntegrator(Integrator):  # ------------------------------------
         # If params have been passed, treat as runtime params and assign to paramsCurrent
         #   (relabel params as runtime_params for clarity)
         for key in self._runtime_params_reset:
-            self._set_parameter_value(key, self._runtime_params_reset[key])
+            self._set_parameter_value(key, self._runtime_params_reset[key], execution_id)
         self._runtime_params_reset = {}
 
         runtime_params = params
@@ -8070,7 +8070,7 @@ class AccumulatorIntegrator(Integrator):  # ------------------------------------
                     if param_name in {FUNCTION, INPUT_STATES, OUTPUT_STATES}:
                         continue
                     self._runtime_params_reset[param_name] = getattr(self, param_name)
-                    self._set_parameter_value(param_name, runtime_params[param_name])
+                    self._set_parameter_value(param_name, runtime_params[param_name], execution_id)
 
     def function(self,
                  variable=None,
@@ -8096,7 +8096,7 @@ class AccumulatorIntegrator(Integrator):  # ------------------------------------
         updated value of integral : 2d np.array
 
         """
-        self._accumulator_check_args(variable, params=params, context=context)
+        self._accumulator_check_args(variable, execution_id=execution_id, params=params, context=context)
 
         rate = self.get_current_function_param(RATE)
         increment = self.get_current_function_param(INCREMENT)

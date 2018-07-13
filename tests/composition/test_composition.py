@@ -3470,8 +3470,8 @@ class TestCompositionInterface:
         assert np.allclose(A.input_states[1].parameters.value.get(comp), [4.])
         assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.], [4.]])
 
-        assert np.allclose(D.input_states[0].value, [2.])
-        assert np.allclose(D.input_states[1].value, [4.])
+        assert np.allclose(D.input_states[0].parameters.value.get(comp), [2.])
+        assert np.allclose(D.input_states[1].parameters.value.get(comp), [4.])
         assert np.allclose(D.parameters.variable.get(comp.default_execution_id), [[2.], [4.]])
 
         assert np.allclose([np.array([[50.]]), np.array([[40.]])], output2)
