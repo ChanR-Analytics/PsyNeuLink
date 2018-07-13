@@ -446,7 +446,7 @@ from psyneulink.components.mechanisms.adaptive.learning.learningauxiliary import
 from psyneulink.components.mechanisms.adaptive.learning.learningmechanism import LearningMechanism, LearningTiming
 from psyneulink.components.mechanisms.mechanism import MechanismList
 from psyneulink.components.mechanisms.processing.objectivemechanism import DEFAULT_MONITORED_STATE_EXPONENT, DEFAULT_MONITORED_STATE_MATRIX, DEFAULT_MONITORED_STATE_WEIGHT, OUTCOME, ObjectiveMechanism
-from psyneulink.components.process import Process, ProcessList, ProcessTuple
+from psyneulink.components.process import Process, ProcessInputState, ProcessList, ProcessTuple
 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.components.projections.projection import Projection
 from psyneulink.components.shellclasses import Mechanism, Process_Base, System_Base
@@ -1191,7 +1191,8 @@ class System(System_Base):
 
             process._all_mechanisms = MechanismList(process, components_list=process._mechs)
             for proj in process.projections:
-                proj._enable_for_compositions(self)
+                if not isinstance(proj.sender, ProcessInputState):
+                    proj._enable_for_compositions(self)
 
         # Call all ControlMechanisms to allow them to implement specification of ALL
         #    in monitor_for_control and/or control_signals arguments of their constructors
