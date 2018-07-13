@@ -786,9 +786,9 @@ OutputState(s).
 >>> S = pnl.System(processes=[P])
 >>> input_dictionary =  {M: [[1, 0, 0]]}
 >>> results = S.run(inputs=input_dictionary)
->>> M.output_labels
+>>> M.get_output_labels(S)
 ['red']
->>> M.output_states[0].label
+>>> M.output_states[0].get_label(S)
 'red'
 
 Labels may be used to visualize the input and outputs of Mechanisms in a System via the **show_structure** option of the
