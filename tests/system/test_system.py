@@ -483,7 +483,7 @@ class TestGraphAndInput:
         S = System(processes=[P])
         run_result = S.run()
 
-        assert np.allclose(T.value, [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+        assert np.allclose(T.parameters.value.get(S), [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
         assert np.allclose(run_result, [[np.array([2.0, 4.0])]])
 
     def test_some_inputs_not_provided_to_run(self):
