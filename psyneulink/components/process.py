@@ -1362,6 +1362,7 @@ class Process(Process_Base):
                         #     from the preceding Mechanism in the pathway
                         # if not any(projection.sender.owner is preceding_item
                         #            for projection in item.objective_mechanism.input_state.path_afferents):
+                        item._objective_projection._enable_for_compositions(self)
                         if (
                             not any(
                                 any(
@@ -1376,6 +1377,10 @@ class Process(Process_Base):
 
                         else:
                             # Ignore (ObjectiveMechanism already as a projection from the Mechanism)
+                            for input_state in item.objective_mechanism.input_states:
+                                for projection in input_state.path_afferents:
+                                    if projection.sender.owner is preceding_item:
+                                        projection._enable_for_compositions(self)
                             continue
                     else:
                         receiver = item
