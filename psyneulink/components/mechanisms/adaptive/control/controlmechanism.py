@@ -1047,6 +1047,11 @@ class ControlMechanism(AdaptiveMechanism_Base):
         if monitored_output_states:
             self.add_monitored_output_states(monitored_output_states)
 
+        # assign any deferred init objective mech monitored output state projections to this system
+        for output_state in self.objective_mechanism.monitored_output_states:
+            for eff in output_state.efferents:
+                eff._enable_for_compositions(system)
+
         # The system does NOT already have a controller,
         #    so assign it ControlSignals for any parameters in the System specified for control
         if system.controller is None:

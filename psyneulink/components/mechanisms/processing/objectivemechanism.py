@@ -818,11 +818,14 @@ def _objective_mechanism_role(mech, role):
 # IMPLEMENTATION NOTE:  THIS SHOULD BE MOVED TO COMPOSITION ONCE THAT IS IMPLEMENTED
 #                      ??MAYBE INTEGRATE INTO State MODULE (IN _instantate_state)
 @tc.typecheck
-def _instantiate_monitoring_projections(owner,
-                                        sender_list:tc.any(list, ContentAddressableList),
-                                        receiver_list:tc.any(list, ContentAddressableList),
-                                        receiver_projection_specs:tc.optional(list)=None,
-                                        context=None):
+def _instantiate_monitoring_projections(
+    owner,
+    sender_list: tc.any(list, ContentAddressableList),
+    receiver_list: tc.any(list, ContentAddressableList),
+    receiver_projection_specs: tc.optional(list)=None,
+    system=None,
+    context=None
+):
 
     from psyneulink.components.states.outputstate import OutputState
     from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
@@ -880,7 +883,8 @@ def _instantiate_monitoring_projections(owner,
                 receiver.path_afferents[0].init_args[SENDER] = sender
                 receiver.path_afferents[0]._deferred_init()
             else:
-                MappingProjection(sender=sender,
+                proj = MappingProjection(sender=sender,
                                   receiver=receiver,
                                   matrix=projection_spec,
                                   name = sender.name + ' monitor')
+                proj._enable_for_compositions(system)

@@ -903,6 +903,9 @@ class System(System_Base):
         #    (can't actually assign ControlMechanism as controller here, as _instantiate_controller needs parsed graph)
         if isinstance(controller, ControlMechanism):
             controller.objective_mechanism.for_controller = True
+            for proj in controller.objective_mechanism.path_afferents:
+                proj._enable_for_compositions(self)
+
         self.projections = set()
 
         # Assign args to params and functionParams dicts (kwConstants must == arg names)
@@ -2024,9 +2027,10 @@ class System(System_Base):
 
                 # Add MappingProjection from system_target_input_state to TARGET mechanism's target inputState
                 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
-                MappingProjection(sender=system_target_input_state,
+                proj = MappingProjection(sender=system_target_input_state,
                         receiver=TARGET_input_state,
                         name=self.name+' Input Projection to '+TARGET_input_state.name)
+                proj._enable_for_compositions(self)
 
         elif isinstance(self.targets, list):
 

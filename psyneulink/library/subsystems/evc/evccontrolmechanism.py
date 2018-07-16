@@ -836,6 +836,9 @@ class EVCControlMechanism(ControlMechanism):
             context:
         """
 
+        from psyneulink.components.process import ProcessInputState
+        from psyneulink.components.system import SystemInputState
+
         # FIX: 1/16/18 - Should should check for any new origin_mechs? What if origin_mech deleted?
         # If system's controller already has prediction_mechanisms, use those
         if hasattr(system, CONTROLLER) and hasattr(system.controller, PREDICTION_MECHANISMS):
@@ -918,7 +921,10 @@ class EVCControlMechanism(ControlMechanism):
                                       receiver=prediction_input_state,
                                       matrix=projection.matrix)
 
-                    proj._enable_for_compositions(system)
+                    if isinstance(proj.sender, (ProcessInputState, SystemInputState)):
+                        proj._enable_for_compositions(proj.sender.owner)
+                    else:
+                        proj._enable_for_compositions(system)
 
             # Assign list of processes for which prediction_mechanism will provide input during the simulation
             # - used in _get_simulation_system_inputs()
@@ -1010,7 +1016,7 @@ class EVCControlMechanism(ControlMechanism):
         """
 
         if context != ContextFlags.PROPERTY:
-            self._update_predicted_input()
+            self._update_predicted_input(execution_id=execution_id)
         # self.system._cache_state()
 
         # CONSTRUCT SEARCH SPACE
@@ -1050,7 +1056,7 @@ class EVCControlMechanism(ControlMechanism):
 
         return allocation_policy
 
-    def _update_predicted_input(self):
+    def _update_predicted_input(self, execution_id=None):
         """Assign values of prediction mechanisms to predicted_input
 
         Assign value of each predictionMechanism.value to corresponding item of self.predictedIinput
@@ -1070,7 +1076,7 @@ class EVCControlMechanism(ControlMechanism):
         for origin_mech in self.system.origin_mechanisms:
             # Get origin Mechanism for each process
             # Assign value of predictionMechanism to the entry of predicted_input for the corresponding ORIGIN Mechanism
-            self.predicted_input[origin_mech] = self.origin_prediction_mechanisms[origin_mech].value
+            self.predicted_input[origin_mech] = self.origin_prediction_mechanisms[origin_mech].parameters.value.get(execution_id)
             # self.predicted_input[origin_mech] = self.origin_prediction_mechanisms[origin_mech].output_state.value
 
     def run_simulation(self,
