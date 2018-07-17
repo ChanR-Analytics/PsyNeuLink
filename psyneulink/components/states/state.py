@@ -2068,6 +2068,12 @@ class State_Base(State):
                 return label
         return self.parameters.value.get(execution_context)
 
+    def _initialize_from_context(self, execution_context=None, base_execution_context=None):
+        for eff in self.efferents:
+            eff._initialize_from_context(execution_context, base_execution_context)
+
+        super()._initialize_from_context(execution_context, base_execution_context)
+
     def _assign_context_values(self, execution_id, base_execution_id=None, **kwargs):
         for eff in self.efferents:
             eff._assign_context_values(execution_id, base_execution_id, **kwargs)

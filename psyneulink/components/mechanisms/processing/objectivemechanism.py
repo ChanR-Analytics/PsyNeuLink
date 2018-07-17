@@ -767,6 +767,12 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
                 self.function_object.exponents = [[exponent or DEFAULT_EXPONENT] for exponent in exponents]
         assert True
 
+    def _initialize_from_context(self, execution_context, base_execution_context):
+        for state in self.monitored_output_states:
+            state._initialize_from_context(execution_context, base_execution_context)
+
+        super()._initialize_from_context(execution_context, base_execution_context)
+
     def _assign_context_values(self, execution_id, base_execution_id=None, **kwargs):
         for state in self.monitored_output_states:
             state._assign_context_values(execution_id, base_execution_id, **kwargs)

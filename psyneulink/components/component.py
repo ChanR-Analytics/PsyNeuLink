@@ -2653,6 +2653,10 @@ class Component(object, metaclass=ComponentsMeta):
             self.params_current = self.paramClassDefaults.copy()
             self.paramInstanceDefaults = self.paramClassDefaults.copy()
 
+    def _initialize_from_context(self, execution_context, base_execution_context):
+        for param in self.stateful_parameters:
+            param._initialize_from_context(execution_context, base_execution_context)
+
     def _assign_context_values(self, execution_id, base_execution_id=None, **kwargs):
         context_param = self.parameters.context.get(execution_id)
         if context_param is None:
@@ -3680,6 +3684,10 @@ class Component(object, metaclass=ComponentsMeta):
     @property
     def class_parameters(self):
         return self.__class__.parameters
+
+    @property
+    def stateful_parameters(self):
+        return [param for param in self.parameters if param.stateful]
 
     @property
     def function_parameters(self):

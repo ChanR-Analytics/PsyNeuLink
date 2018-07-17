@@ -1898,6 +1898,15 @@ class Composition(object):
                                        .format(stimulus, node.name, input_must_match))
         return adjusted_stimuli
 
+    def _initialize_from_context(self, execution_context, base_execution_context):
+        for mech in self.c_nodes:
+            mech._initialize_from_context(execution_context, base_execution_context)
+
+        for proj in self.projections:
+            proj._initialize_from_context(execution_context, base_execution_context)
+
+        super()._initialize_from_context(execution_context, base_execution_context)
+
     @property
     def input_states(self):
         """Returns all InputStates that belong to the Input CompositionInterfaceMechanism"""

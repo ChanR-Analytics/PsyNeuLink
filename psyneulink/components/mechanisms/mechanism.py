@@ -2118,6 +2118,19 @@ class Mechanism_Base(Mechanism):
         except (AttributeError, TypeError):
             return getattr(self, param_name)
 
+    # below two methods are repetitive. A combined version of them is welcome
+    def _initialize_from_context(self, execution_context, base_execution_context):
+        for input_state in self.input_states:
+            input_state._initialize_from_context(execution_context, base_execution_context)
+
+        for output_state in self.output_states:
+            output_state._initialize_from_context(execution_context, base_execution_context)
+
+        for parameter_state in self.parameter_states:
+            parameter_state._initialize_from_context(execution_context, base_execution_context)
+
+        super()._initialize_from_context(execution_context, base_execution_context)
+
     def _assign_context_values(self, execution_id, base_execution_id=None, **kwargs):
         for input_state in self.input_states:
             input_state._assign_context_values(execution_id, base_execution_id, **kwargs)

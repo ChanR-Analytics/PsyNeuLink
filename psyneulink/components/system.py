@@ -3558,6 +3558,15 @@ class System(System_Base):
     def _add_projection(self, projection):
         self.projections.add(projection)
 
+    def _initialize_from_context(self, execution_context, base_execution_context):
+        for mech in self.mechanisms:
+            mech._initialize_from_context(execution_context, base_execution_context)
+
+        for proj in self.projections:
+            proj._initialize_from_context(execution_context, base_execution_context)
+
+        super()._initialize_from_context(execution_context, base_execution_context)
+
     @property
     def function(self):
         return self.execute
