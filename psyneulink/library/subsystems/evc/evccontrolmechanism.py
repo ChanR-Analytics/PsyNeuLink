@@ -1079,12 +1079,15 @@ class EVCControlMechanism(ControlMechanism):
             self.predicted_input[origin_mech] = self.origin_prediction_mechanisms[origin_mech].parameters.value.get(execution_id)
             # self.predicted_input[origin_mech] = self.origin_prediction_mechanisms[origin_mech].output_state.value
 
-    def run_simulation(self,
-                       inputs,
-                       allocation_vector,
-                       runtime_params=None,
-                       reinitialize_values=None,
-                       context=None):
+    def run_simulation(
+        self,
+        inputs,
+        allocation_vector,
+        execution_id=None,
+        runtime_params=None,
+        reinitialize_values=None,
+        context=None
+    ):
         """
         Run simulation of `System` for which the EVCControlMechanism is the `controller <System.controller>`.
 
@@ -1107,14 +1110,14 @@ class EVCControlMechanism(ControlMechanism):
 
         """
 
-        if self.value is None:
+        if self.parameters.value.get(execution_id) is None:
             # Initialize value if it is None
-            self.value = np.empty(len(self.control_signals))
+            self.parameters.value.set(np.empty(len(self.control_signals)), execution_id, override=True)
 
         # Implement the current allocation_policy over ControlSignals (OutputStates),
         #    by assigning allocation values to EVCControlMechanism.value, and then calling _update_output_states
         for i in range(len(self.control_signals)):
-            self.value[i] = np.atleast_1d(allocation_vector[i])
+            self.parameters.value.get(execution_id)[i] = np.atleast_1d(allocation_vector[i])
         self._update_output_states(runtime_params=runtime_params, context=context)
 
         # RUN SIMULATION
@@ -1125,10 +1128,13 @@ class EVCControlMechanism(ControlMechanism):
 
         # Run simulation
         self.system.context.execution_phase = ContextFlags.SIMULATION
-        self.system.run(inputs=inputs,
-                        reinitialize_values=reinitialize_values,
-                        animate=False,
-                        context=context)
+        self.system.run(
+            inputs=inputs,
+            execution_id=execution_id,
+            reinitialize_values=reinitialize_values,
+            animate=False,
+            context=context
+        )
         self.system.context.execution_phase = ContextFlags.CONTROL
 
         # Restore System attributes
@@ -1138,7 +1144,7 @@ class EVCControlMechanism(ControlMechanism):
         # Get outcomes for current allocation_policy
         #    = the values of the monitored output states (self.input_states)
         # self.objective_mechanism.execute(context=EVC_SIMULATION)
-        monitored_states = self._update_input_states(runtime_params=runtime_params, context=context)
+        monitored_states = self._update_input_states(execution_id=execution_id, runtime_params=runtime_params, context=context)
 
         for i in range(len(self.control_signals)):
             self.control_signal_costs[i] = self.control_signals[i].cost

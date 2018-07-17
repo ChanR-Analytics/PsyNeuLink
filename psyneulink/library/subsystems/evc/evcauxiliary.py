@@ -22,6 +22,7 @@ from psyneulink.components.mechanisms.processing.integratormechanism import Inte
 from psyneulink.components.mechanisms.processing.objectivemechanism import OUTCOME
 from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.defaults import MPI_IMPLEMENTATION, defaultControlAllocation
+from psyneulink.globals.environment import _get_unique_id
 from psyneulink.globals.keywords import COMBINE_OUTCOME_AND_COST_FUNCTION, COST_FUNCTION, EVC_SIMULATION, FUNCTION, FUNCTION_OUTPUT_TYPE_CONVERSION, FUNCTION_PARAMS, NOISE, PARAMETER_STATE_PARAMS, PREDICTION_MECHANISM, RATE, SAVE_ALL_VALUES_AND_POLICIES, VALUE_FUNCTION, kwPreferenceSetName, kwProgressBarChar
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set, kpReportOutputPref
 from psyneulink.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel
@@ -342,7 +343,7 @@ class ControlSignalGridSearch(EVCAuxiliaryFunction):
         if PY_MULTIPROCESSING:
             EVC_pool = Pool()
             results = EVC_pool.map(_compute_EVC, [(controller, arg, runtime_params, context)
-                                                 for arg in controller.control_signal_search_space])
+                                                 for arg in controller.control_signal_search_space], execution_id=execution_id)
 
         else:
 
@@ -401,7 +402,7 @@ class ControlSignalGridSearch(EVCAuxiliaryFunction):
                 sample +=1
 
                 # Calculate EVC for specified allocation policy
-                result_tuple = _compute_EVC(controller, allocation_vector, runtime_params, context)
+                result_tuple = _compute_EVC(controller, allocation_vector, runtime_params, context, execution_id=execution_id)
                 EVC, outcome, cost = result_tuple
 
                 EVC_max = max(EVC, EVC_max)
@@ -507,12 +508,12 @@ class ControlSignalGridSearch(EVCAuxiliaryFunction):
         #     assign to controller.allocation_policy, and return (where it will be assigned to controller.value).
         #     (note:  the conversion is to be consistent with use of controller.value for assignments to control_signals.value)
         allocation_policy = np.array(controller.EVC_max_policy).reshape(len(controller.EVC_max_policy), -1)
-        controller.value = allocation_policy
+        controller.parameters.value.set(allocation_policy, execution_id, override=True)
         return allocation_policy
         #endregion
 
 
-def _compute_EVC(ctlr, allocation_vector, runtime_params, context):
+def _compute_EVC(ctlr, allocation_vector, runtime_params, context, execution_id=None):
     """Compute EVC for a specified `allocation_policy <EVCControlMechanism.allocation_policy>`.
 
     IMPLEMENTATION NOTE:  implemented as a function so it can be used with multiprocessing Pool
@@ -564,21 +565,36 @@ def _compute_EVC(ctlr, allocation_vector, runtime_params, context):
 
         reinitialization_values[mechanism] = reinitialization_value
 
-
     # Run simulation trial by trial in order to get EVC for each trial
     # IMPLEMENTATION NOTE:  Consider calling execute rather than run (for efficiency)
     for i in range(num_trials):
+        sim_execution_id = _get_unique_id()
+        try:
+            ctlr.parameters.simulation_ids.get(execution_id).append(sim_execution_id)
+        except AttributeError:
+            ctlr.parameters.simulation_ids.set([sim_execution_id], execution_id)
+
+
+
         inputs = {key:value[i] for key, value in ctlr.predicted_input.items()}
 
-        outcome = ctlr.run_simulation(inputs=inputs,
-                                      allocation_vector=allocation_vector,
-                                      runtime_params=runtime_params,
-                                      reinitialize_values=reinitialization_values,
-                                      context=context)
-        EVC_list.append(ctlr.paramsCurrent[VALUE_FUNCTION].function(controller=ctlr,
-                                                                  outcome=outcome,
-                                                                  costs=ctlr.control_signal_costs,
-                                                                  context=context))
+        outcome = ctlr.run_simulation(
+            inputs=inputs,
+            allocation_vector=allocation_vector,
+            execution_id=sim_execution_id,
+            runtime_params=runtime_params,
+            reinitialize_values=reinitialization_values,
+            context=context
+        )
+        EVC_list.append(
+            ctlr.paramsCurrent[VALUE_FUNCTION].function(
+                controller=ctlr,
+                outcome=outcome,
+                costs=ctlr.control_signal_costs,
+                execution_id=sim_execution_id,
+                context=context
+            )
+        )
         # assert True
         # # TEST PRINT EVC:
         # print ("Trial: {}\tInput: {}\tAllocation: {}\tOutcome: {}\tCost: {}\tEVC: {}".
@@ -587,7 +603,7 @@ def _compute_EVC(ctlr, allocation_vector, runtime_params, context):
 
     # Re-assign values of reinitialization attributes to their value at entry
     for mechanism in reinitialization_values:
-        mechanism.reinitialize(*reinitialization_values[mechanism])
+        mechanism.reinitialize(*reinitialization_values[mechanism], execution_context=execution_id)
 
     EVC_avg = list(map(lambda x: (sum(x))/num_trials, zip(*EVC_list)))
     # TEST PRINT EVC:
