@@ -1255,6 +1255,7 @@ class Process(Process_Base):
                                 )
                                 for proj in projs:
                                     proj._enable_for_compositions(self)
+                                    self._add_projection(proj)
                     continue
 
                 # Preceding item was a Mechanism, so check if a Projection needs to be instantiated between them
@@ -1861,6 +1862,7 @@ class Process(Process_Base):
                     try:
                         if self in projection.sender.owner.processes:
                             projections.append(projection)
+                            self._add_projection(projection)
                     except AttributeError:
                         pass
                 self._instantiate__deferred_init_projections(projections, context=context)
@@ -1961,9 +1963,11 @@ class Process(Process_Base):
                                 lc._activation_mech_output_projection,
                             ]:
                                 proj._enable_for_compositions(self)
+                                self._add_projection(proj)
 
                             for proj in lc.learning_mechanism.projections:
                                 proj._enable_for_compositions(self)
+                                self._add_projection(proj)
                         except AttributeError:
                             pass
 
