@@ -1954,7 +1954,7 @@ class State_Base(State):
             # Update LearningSignals only if context == LEARNING;  otherwise, assign zero for projection_value
             # Note: done here rather than in its own method in order to exploit parsing of params above
             if isinstance(projection, LearningProjection) and self.parameters.context.get(execution_id).execution_phase != ContextFlags.LEARNING:
-                projection_value = projection.parameters.value.get(execution_id) * 0.0
+                projection_value = projection.defaults.value * 0.0
             else:
                 projection_value = projection.execute(variable=projection.sender.parameters.value.get(execution_id),
                                                       execution_id=execution_id,

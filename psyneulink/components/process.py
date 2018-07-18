@@ -2213,6 +2213,9 @@ class Process(Process_Base):
             mech._execution_id = execution_id
             mech._assign_context_values(execution_id, composition=self)
 
+        for proj in self.projections:
+            proj._assign_context_values(execution_id, composition=self)
+
         # Report output if reporting preference is on and this is not an initialization run
         report_output = self.prefs.reportOutputPref and self.context.initialization_status == ContextFlags.INITIALIZED
 
