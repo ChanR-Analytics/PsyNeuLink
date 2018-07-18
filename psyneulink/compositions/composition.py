@@ -1898,7 +1898,7 @@ class Composition(object):
                                        .format(stimulus, node.name, input_must_match))
         return adjusted_stimuli
 
-    def _initialize_from_context(self, execution_context, base_execution_context):
+    def _initialize_from_context(self, execution_context, base_execution_context=None):
         for mech in self.c_nodes:
             mech._initialize_from_context(execution_context, base_execution_context)
 

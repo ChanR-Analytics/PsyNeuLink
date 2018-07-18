@@ -1100,7 +1100,7 @@ class ControlMechanism(AdaptiveMechanism_Base):
         if context != ContextFlags.PROPERTY:
             system._controller = self
 
-    def _initialize_from_context(self, execution_context, base_execution_context):
+    def _initialize_from_context(self, execution_context, base_execution_context=None):
         self.objective_mechanism._initialize_from_context(execution_context, base_execution_context)
 
         super()._initialize_from_context(execution_context, base_execution_context)

@@ -2119,7 +2119,7 @@ class Mechanism_Base(Mechanism):
             return getattr(self, param_name)
 
     # below two methods are repetitive. A combined version of them is welcome
-    def _initialize_from_context(self, execution_context, base_execution_context):
+    def _initialize_from_context(self, execution_context, base_execution_context=None):
         for input_state in self.input_states:
             input_state._initialize_from_context(execution_context, base_execution_context)
 

@@ -2653,7 +2653,7 @@ class Component(object, metaclass=ComponentsMeta):
             self.params_current = self.paramClassDefaults.copy()
             self.paramInstanceDefaults = self.paramClassDefaults.copy()
 
-    def _initialize_from_context(self, execution_context, base_execution_context):
+    def _initialize_from_context(self, execution_context, base_execution_context=None):
         for param in self.stateful_parameters:
             param._initialize_from_context(execution_context, base_execution_context)
 
