@@ -574,7 +574,7 @@ def _compute_EVC(ctlr, allocation_vector, runtime_params, context, execution_id=
         except AttributeError:
             ctlr.parameters.simulation_ids.set([sim_execution_id], execution_id)
 
-
+        ctlr.system._initialize_from_context(sim_execution_id, execution_id)
 
         inputs = {key:value[i] for key, value in ctlr.predicted_input.items()}
 
@@ -861,9 +861,9 @@ class PredictionMechanism(IntegratorMechanism):
     def _execute(self, variable=None, execution_id=None, runtime_params=None, context=None):
         '''Update predicted value on "real" but not simulation runs '''
 
-        if self.context.execution_phase == ContextFlags.SIMULATION:
+        if self.parameters.context.get(execution_id).execution_phase == ContextFlags.SIMULATION:
             # Just return current value for simulation runs
-            value = self.value
+            value = self.parameters.value.get(execution_id)
         else:
             # Update deque with new input for any other type of run
             value = super()._execute(variable=variable, execution_id=execution_id, runtime_params=runtime_params, context=context)
