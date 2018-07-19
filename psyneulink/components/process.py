@@ -2359,7 +2359,7 @@ class Process(Process_Base):
 
                             # NOTE: This will need to be updated when runtime params are re-enabled
                             # parameter_state.update(params=params, context=context)
-                            parameter_state.update(context=context)
+                            parameter_state.update(execution_id=execution_id, context=context)
 
                     # Not all Projection subclasses instantiate ParameterStates
                     except AttributeError as e:
