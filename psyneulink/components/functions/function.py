@@ -5420,8 +5420,8 @@ class Integrator(IntegratorFunction):  # ---------------------------------------
                 raise FunctionError("{}'s {} ({}) must be a number or a list/array of numbers."
                                     .format(self.name, initial_value_name, initial_value))
 
-    def _initialize_previous_value(self, initializer):
-        self.previous_value = np.atleast_1d(initializer)
+    def _initialize_previous_value(self, initializer, execution_context=None):
+        self.parameters.previous_value.set(np.atleast_1d(initializer), execution_context)
 
     def _try_execute_param(self, param, var):
 
@@ -5747,7 +5747,7 @@ class SimpleIntegrator(Integrator):  # -----------------------------------------
 
         # execute noise if it is a function
         noise = self._try_execute_param(self.get_current_function_param(NOISE), variable)
-        previous_value = self.previous_value
+        previous_value = self.parameters.previous_value.get(execution_id)
         new_value = variable
 
         value = previous_value + (new_value * rate) + noise
@@ -5758,7 +5758,7 @@ class SimpleIntegrator(Integrator):  # -----------------------------------------
         # If it IS an initialization run, leave as is
         #    (don't want to count it as an execution step)
         if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = adjusted_value
+            self.parameters.previous_value.set(adjusted_value, execution_id)
 
         return self.convert_output_type(adjusted_value)
 
@@ -5981,7 +5981,7 @@ class ConstantIntegrator(Integrator):  # ---------------------------------------
         scale = self.get_current_function_param(SCALE)
         noise = self._try_execute_param(self.noise, variable)
 
-        previous_value = np.atleast_2d(self.previous_value)
+        previous_value = np.atleast_2d(self.parameters.previous_value.get(execution_id))
 
         value = previous_value + rate + noise
 
@@ -5991,7 +5991,7 @@ class ConstantIntegrator(Integrator):  # ---------------------------------------
         # If it IS an initialization run, leave as is
         #    (don't want to count it as an execution step)
         if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = adjusted_value
+            self.parameters.previous_value.set(adjusted_value, execution_id)
 
         return self.convert_output_type(adjusted_value)
 
@@ -6195,7 +6195,7 @@ class Buffer(Integrator):  # ---------------------------------------------------
             value = deque([], maxlen=self.history)
 
         else:
-            value = self._initialize_previous_value(reinitialization_value)
+            value = self._initialize_previous_value(reinitialization_value, execution_context=execution_context)
 
         self.parameters.value.set(value, execution_context, override=True)
         return value
@@ -6241,17 +6241,19 @@ class Buffer(Integrator):  # ---------------------------------------------------
         if self.context.initialization_status == ContextFlags.INITIALIZING:
             return variable
 
-        self.previous_value.append(variable)
+        previous_value = self.parameters.previous_value.get(execution_id)
+        previous_value.append(variable)
 
         # Apply rate and/or noise if they are specified
         if rate != 1.0:
-            self.previous_value *= rate
+            previous_value *= rate
         if noise:
-            self.previous_value += noise
+            previous_value += noise
 
-        self.previous_value = deque(self.previous_value, maxlen=self.history)
+        previous_value = deque(previous_value, maxlen=self.history)
 
-        return self.convert_output_type(self.previous_value)
+        self.parameters.previous_value.set(previous_value, execution_id)
+        return self.convert_output_type(previous_value)
 
 
 class AdaptiveIntegrator(Integrator):  # -------------------------------------------------------------------------------
@@ -6529,7 +6531,7 @@ class AdaptiveIntegrator(Integrator):  # ---------------------------------------
         # execute noise if it is a function
         noise = self._try_execute_param(self.get_current_function_param(NOISE), variable)
 
-        previous_value = np.atleast_2d(self.previous_value)
+        previous_value = np.atleast_2d(self.parameters.previous_value.get(execution_id))
 
         value = (1 - rate) * previous_value + rate * variable + noise
         adjusted_value = value + offset
@@ -6538,7 +6540,7 @@ class AdaptiveIntegrator(Integrator):  # ---------------------------------------
         # If it IS an initialization run, leave as is
         #    (don't want to count it as an execution step)
         if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = adjusted_value
+            self.parameters.previous_value.set(adjusted_value, execution_id)
 
         return self.convert_output_type(adjusted_value)
 
@@ -6799,7 +6801,7 @@ class DriftDiffusionIntegrator(Integrator):  # ---------------------------------
         threshold = self.get_current_function_param(THRESHOLD)
         time_step_size = self.get_current_function_param(TIME_STEP_SIZE)
 
-        previous_value = np.atleast_2d(self.previous_value)
+        previous_value = np.atleast_2d(self.parameters.previous_value.get(execution_id))
 
         value = previous_value + rate * variable * time_step_size \
                 + np.sqrt(time_step_size * noise) * np.random.normal()
@@ -6815,12 +6817,13 @@ class DriftDiffusionIntegrator(Integrator):  # ---------------------------------
         # If it IS an initialization run, leave as is
         #    (don't want to count it as an execution step)
         if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = adjusted_value
+            previous_value = adjusted_value
             self.previous_time = self.previous_time + time_step_size
             if not np.isscalar(variable):
                 self.previous_time = np.broadcast_to(self.previous_time, variable.shape).copy()
 
-        return self.previous_value, self.previous_time
+        self.parameters.previous_value.set(previous_value, execution_id)
+        return previous_value, self.previous_time
 
 
 class OrnsteinUhlenbeckIntegrator(Integrator):  # ----------------------------------------------------------------------
@@ -7054,7 +7057,7 @@ class OrnsteinUhlenbeckIntegrator(Integrator):  # ------------------------------
         decay = self.get_current_function_param(DECAY)
         noise = self.get_current_function_param(NOISE)
 
-        previous_value = np.atleast_2d(self.previous_value)
+        previous_value = np.atleast_2d(self.parameters.previous_value.get(execution_id))
 
         # dx = (lambda*x + A)dt + c*dW
         value = previous_value + (decay * previous_value - rate * variable) * time_step_size + np.sqrt(
@@ -7066,13 +7069,13 @@ class OrnsteinUhlenbeckIntegrator(Integrator):  # ------------------------------
         adjusted_value = value + offset
 
         if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = adjusted_value
+            previous_value = adjusted_value
             self.previous_time = self.previous_time + time_step_size
             if not np.isscalar(variable):
                 self.previous_time = np.broadcast_to(self.previous_time, variable.shape).copy()
 
-        return self.previous_value, self.previous_time
-
+        self.parameters.previous_value.set(previous_value, execution_id)
+        return previous_value, self.previous_time
 
 class FHNIntegrator(Integrator):  # --------------------------------------------------------------------------------
     """
@@ -8328,7 +8331,7 @@ class LCAIntegrator(Integrator):  # --------------------------------------------
 
         # execute noise if it is a function
         noise = self._try_execute_param(self.get_current_function_param(NOISE), variable)
-        previous_value = self.previous_value
+        previous_value = self.parameters.previous_value.get(execution_id)
         new_value = variable
 
         # Gilzenrat: previous_value + (-previous_value + variable)*self.time_step_size + noise --> rate = -1
@@ -8340,7 +8343,7 @@ class LCAIntegrator(Integrator):  # --------------------------------------------
         # If it IS an initialization run, leave as is
         #    (don't want to count it as an execution step)
         if self.context.initialization_status != ContextFlags.INITIALIZING:
-            self.previous_value = adjusted_value
+            self.parameters.previous_value.set(adjusted_value, execution_id)
 
         return self.convert_output_type(adjusted_value)
 
