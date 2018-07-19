@@ -1953,7 +1953,7 @@ class State_Base(State):
 
             # Update LearningSignals only if context == LEARNING;  otherwise, assign zero for projection_value
             # Note: done here rather than in its own method in order to exploit parsing of params above
-            if isinstance(projection, LearningProjection) and self.parameters.context.get(execution_id).execution_phase != ContextFlags.LEARNING:
+            if isinstance(projection, LearningProjection) and self.parameters.context.get().execution_phase != ContextFlags.LEARNING:
                 projection_value = projection.defaults.value * 0.0
             else:
                 projection_value = projection.execute(variable=projection.sender.parameters.value.get(execution_id),
@@ -1963,7 +1963,7 @@ class State_Base(State):
 
             # If this is initialization run and projection initialization has been deferred, pass
             try:
-                if projection.parameters.context.get(execution_id).initialization_status == ContextFlags.DEFERRED_INIT:
+                if projection.parameters.context.get().initialization_status == ContextFlags.DEFERRED_INIT:
                     continue
             except AttributeError:
                 pass
