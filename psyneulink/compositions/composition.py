@@ -1905,8 +1905,6 @@ class Composition(object):
         for proj in self.projections:
             proj._initialize_from_context(execution_context, base_execution_context)
 
-        super()._initialize_from_context(execution_context, base_execution_context)
-
     @property
     def input_states(self):
         """Returns all InputStates that belong to the Input CompositionInterfaceMechanism"""
