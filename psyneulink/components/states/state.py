@@ -1931,7 +1931,7 @@ class State_Base(State):
                                                                                      self.owner.name))
                 continue
 
-            if not self.afferents_info[projection].is_active_in_composition(self.parameters.context.get(execution_id).composition):
+            if not self.afferents_info[projection].is_active_in_composition(self.parameters.context.get().composition):
                 continue
 
             # Only accept projections from a Process to which the owner Mechanism belongs

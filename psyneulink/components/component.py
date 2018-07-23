@@ -2219,10 +2219,10 @@ class Component(object, metaclass=ComponentsMeta):
         # IMPLEMENTATION NOTE:  context is used here just for reporting;  it is not tested in any of the methods called
         if self.prefs.paramValidationPref and variable is not None:
             try:
-                self.parameters.context.get(execution_id).add_to_string(FUNCTION_CHECK_ARGS)
+                self.parameters.context.get().add_to_string(FUNCTION_CHECK_ARGS)
             except AttributeError:
                 self._assign_context_values(execution_id)
-                self.parameters.context.get(execution_id).add_to_string(FUNCTION_CHECK_ARGS)
+                self.parameters.context.get().add_to_string(FUNCTION_CHECK_ARGS)
 
             variable = self._validate_variable(variable, context=context)
 
@@ -2659,10 +2659,10 @@ class Component(object, metaclass=ComponentsMeta):
             param._initialize_from_context(execution_context, base_execution_context, override)
 
     def _assign_context_values(self, execution_id, base_execution_id=None, **kwargs):
-        context_param = self.parameters.context.get(execution_id)
+        context_param = self.parameters.context.get()
         if context_param is None:
             self.parameters.context._initialize_from_context(execution_id, base_execution_id)
-            context_param = self.parameters.context.get(execution_id)
+            context_param = self.parameters.context.get()
             context_param.execution_id = execution_id
 
         for context_item, value in kwargs.items():
