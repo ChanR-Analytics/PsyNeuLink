@@ -2749,10 +2749,10 @@ class System(System_Base):
 
                     if system_input_state:
                         if isinstance(input, dict):
-                            system_input_state.value = input[origin_mech][j]
+                            system_input_state.parameters.value.set(input[origin_mech][j], execution_id, override=True)
 
                         else:
-                            system_input_state.value = input[j]
+                            system_input_state.parameters.value.set(input[j], execution_id, context=True)
                     else:
                         logger.warning("Failed to find expected SystemInputState "
                                        "for {} at input state number ({}), ({})".
@@ -2769,7 +2769,7 @@ class System(System_Base):
         self.termination_learning = termination_learning
 
         if self._report_system_output:
-            self._report_system_initiation()
+            self._report_system_initiation(execution_id)
 
 
         # Generate first frame of animation without any active_items
@@ -2839,7 +2839,7 @@ class System(System_Base):
 
         # Report completion of system execution and value of designated outputs
         if self._report_system_output:
-            self._report_system_completion()
+            self._report_system_completion(execution_id)
 
         return outcome
 
@@ -3037,7 +3037,7 @@ class System(System_Base):
                       # format(append_type_to_name(target_mech),
                       format(target_mech.name,
                              re.sub(r'[\[,\],\n]','',str([float("{:0.3}".format(float(i)))
-                                                         for i in target_mech.output_state.value])),
+                                                         for i in target_mech.output_state.parameters.value.get(execution_id)])),
                              ))
                              # process_names))
 
@@ -3280,7 +3280,7 @@ class System(System_Base):
 
         return result
 
-    def _report_system_initiation(self):
+    def _report_system_initiation(self, execution_id=None):
         """Prints iniiation message, time_step, and list of Processes in System being executed
         """
 
@@ -3303,10 +3303,15 @@ class System(System_Base):
             print("- input{}: {}".format(input_string, self.input))
 
         else:
-            print("\n\'{}\'{} executing ********** (Time: {}) ".
-                  format(self.name, system_string, self.scheduler_processing.clock.simple_time))
+            try:
+                time = self.scheduler_processing.get_clock(execution_id).simple_time
+            except KeyError:
+                time = self.scheduler_processing.clock.simple_time
 
-    def _report_system_completion(self):
+            print("\n\'{}\'{} executing ********** (Time: {}) ".
+                  format(self.name, system_string, time))
+
+    def _report_system_completion(self, execution_id=None):
         """Prints completion message and output_values of system
         """
 
@@ -3317,14 +3322,14 @@ class System(System_Base):
 
         # Print output value of primary (first) outputState of each terminal Mechanism in System
         # IMPLEMENTATION NOTE:  add options for what to print (primary, all or monitored outputStates)
-        print("\n\'{}\'{} completed ***********(Time: {})".format(self.name, system_string, self.scheduler_processing.clock.simple_time))
+        print("\n\'{}\'{} completed ***********(Time: {})".format(self.name, system_string, self.scheduler_processing.get_clock(execution_id).simple_time))
         if self.learning:
             from psyneulink.library.mechanisms.processing.objective.comparatormechanism import MSE
             for mech in self.target_mechanisms:
                 if not MSE in mech.output_states:
                     continue
                 print("\n- MSE: {:0.3}".
-                      format(float(mech.output_states[MSE].value)))
+                      format(float(mech.output_states[MSE].parameters.value.get(execution_id))))
 
 
     # TBI:
