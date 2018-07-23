@@ -323,9 +323,9 @@ class AutoAssociativeProjection(MappingProjection):
     #                                        " the sender is {}".
     #                                        format(self.__class__.__name__, self.name, self.sender))
     #     if AUTO in owner_mech._parameter_states and HETERO in owner_mech._parameter_states:
-    #         owner_mech._parameter_states[AUTO].update(params=runtime_params, time_scale=time_scale,
+    #         owner_mech._parameter_states[AUTO].update(execution_id=execution_id, params=runtime_params, time_scale=time_scale,
     #                                                   context=context + INITIALIZING)
-    #         owner_mech._parameter_states[HETERO].update(params=runtime_params, time_scale=time_scale,
+    #         owner_mech._parameter_states[HETERO].update(execution_id=execution_id, params=runtime_params, time_scale=time_scale,
     #                                                     context=context + INITIALIZING)
     #
 
@@ -356,8 +356,8 @@ class AutoAssociativeProjection(MappingProjection):
     #                                    format(self.__class__.__name__, self.name, self.sender))
     #
     #     if AUTO in owner_mech._parameter_states and HETERO in owner_mech._parameter_states:
-    #         owner_mech._parameter_states[AUTO].update(params=runtime_params, context=context + INITIALIZING)
-    #         owner_mech._parameter_states[HETERO].update(params=runtime_params, context=context + INITIALIZING)
+    #         owner_mech._parameter_states[AUTO].update(execution_id=execution_id, params=runtime_params, context=context + INITIALIZING)
+    #         owner_mech._parameter_states[HETERO].update(execution_id=execution_id, params=runtime_params, context=context + INITIALIZING)
     #     else:
     #         raise AutoAssociativeError("Auto or Hetero ParameterState not found in {0} \"{1}\"; here are names of the "
     #                                    "current ParameterStates for {1}: {2}".format(owner_mech.__class__.__name__,
