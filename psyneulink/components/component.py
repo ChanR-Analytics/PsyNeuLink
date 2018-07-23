@@ -912,9 +912,10 @@ class Param(types.SimpleNamespace):
                     )
                 )
 
-    def _initialize_from_context(self, execution_context=None, base_execution_context=None):
+    def _initialize_from_context(self, execution_context=None, base_execution_context=None, override=True):
         try:
-            self.set(value=copy.deepcopy(self.get(base_execution_context)), execution_context=execution_context, override=True, skip_history=True, skip_log=True)
+            if self.get(execution_context) is None or override:
+                self.set(value=copy.deepcopy(self.get(base_execution_context)), execution_context=execution_context, override=True, skip_history=True, skip_log=True)
         except ComponentError as e:
             raise ComponentError('Error when attempting to initialize from {0}: {1}'.format(base_execution_context, e))
 
@@ -2653,9 +2654,9 @@ class Component(object, metaclass=ComponentsMeta):
             self.params_current = self.paramClassDefaults.copy()
             self.paramInstanceDefaults = self.paramClassDefaults.copy()
 
-    def _initialize_from_context(self, execution_context, base_execution_context=None):
+    def _initialize_from_context(self, execution_context, base_execution_context=None, override=True):
         for param in self.stateful_parameters:
-            param._initialize_from_context(execution_context, base_execution_context)
+            param._initialize_from_context(execution_context, base_execution_context, override)
 
     def _assign_context_values(self, execution_id, base_execution_id=None, **kwargs):
         context_param = self.parameters.context.get(execution_id)
@@ -2702,7 +2703,7 @@ class Component(object, metaclass=ComponentsMeta):
     # Misc parsers
     # ---------------------------------------------------------
 
-    def _parse_function_variable(self, variable, context=None):
+    def _parse_function_variable(self, variable, execution_id=None, context=None):
         """
             Parses the **variable** passed in to a Component into a function_variable that can be used with the
             Function associated with this Component
@@ -3225,6 +3226,7 @@ class Component(object, metaclass=ComponentsMeta):
         if hasattr(self, "_parameter_states"):
             for param_state in self._parameter_states:
                 setattr(self.__class__, "mod_"+param_state.name, make_property_mod(param_state.name))
+                setattr(self.__class__, "get_mod_" + param_state.name, make_stateful_getter_mod(param_state.name))
 
     def _instantiate_value(self, context=None):
         #  - call self.execute to get value, since the value of a Component is defined as what is returned by its
@@ -3314,7 +3316,7 @@ class Component(object, metaclass=ComponentsMeta):
         # IMPLEMENTATION NOTE:  **kwargs is included to accommodate required arguments
         #                     that are specific to particular class of Functions
         #                     (e.g., error_matrix for LearningMechanism and controller for EVCControlMechanism)
-        function_variable = self._parse_function_variable(variable, context)
+        function_variable = self._parse_function_variable(variable, execution_id=execution_id, context=context)
         value = self.function(variable=function_variable, execution_id=execution_id, params=runtime_params, context=context, **kwargs)
         fct_context_attrib.execution_phase = ContextFlags.IDLE
 
@@ -3762,6 +3764,7 @@ def make_property(name):
     # prop.__doc__ = docs[name]
     return prop
 
+
 def make_property_mod(param_name):
 
     def getter(self):
@@ -3778,3 +3781,15 @@ def make_property_mod(param_name):
     prop = property(getter).setter(setter)
 
     return prop
+
+
+def make_stateful_getter_mod(param_name):
+
+    def getter(self, execution_context=None):
+        try:
+            return self._parameter_states[param_name].parameters.value.get(execution_context)
+        except TypeError:
+            raise ComponentError("{} does not have a '{}' ParameterState."
+                                 .format(self.name, param_name))
+
+    return getter

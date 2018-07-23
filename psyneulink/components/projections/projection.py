@@ -696,7 +696,7 @@ class Projection_Base(Projection):
         # FIX: NEED TO KNOW HERE IF SENDER IS SPECIFIED AS A MECHANISM OR STATE
         try:
             # this should become _default_value when that is fully implemented
-            variable = self.sender.instance_defaults.value
+            variable = self.sender.defaults.value
         except AttributeError:
             if receiver.prefs.verbosePref:
                 warnings.warn("Unable to get value of sender ({0}) for {1};  will assign default ({2})".
@@ -897,19 +897,19 @@ class Projection_Base(Projection):
     def _execute(self, variable=None, execution_id=None, runtime_params=None, context=None):
 
         if variable is None:
-            variable = self.sender.value
+            variable = self.sender.parameters.value.get(execution_id)
 
         self.context.execution_phase = ContextFlags.PROCESSING
         self.context.string = context
 
-        self.value = super()._execute(
+        value = super()._execute(
             variable=variable,
             execution_id=execution_id,
             runtime_params=runtime_params,
             context=context
         )
         self.context.execution_phase = ContextFlags.IDLE
-        return self.value
+        return value
 
     def _enable_for_compositions(self, composition):
         try:
@@ -951,11 +951,11 @@ class Projection_Base(Projection):
         raise ProjectionError("PROGRAM ERROR: {} must implement _assign_default_projection_name().".
                               format(self.__class__.__name__))
 
-    def _initialize_from_context(self, execution_context=None, base_execution_context=None):
+    def _initialize_from_context(self, execution_context=None, base_execution_context=None, override=True):
         for parameter_state in self.parameter_states:
-            parameter_state._initialize_from_context(execution_context, base_execution_context)
+            parameter_state._initialize_from_context(execution_context, base_execution_context, override)
 
-        super()._initialize_from_context(execution_context, base_execution_context)
+        super()._initialize_from_context(execution_context, base_execution_context, override)
 
     def _assign_context_values(self, execution_id, base_execution_id=None, **kwargs):
         for parameter_state in self.parameter_states:

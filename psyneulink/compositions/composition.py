@@ -1388,6 +1388,9 @@ class Composition(object):
         # run scheduler to receive sets of nodes that may be executed at this time step in any order
         execution_scheduler = scheduler_processing
 
+        # initialize from null context but don't overwrite any values already set for this execution_id
+        self._initialize_from_context(execution_id, None, override=False)
+
         if call_before_pass:
             call_with_pruned_args(call_before_pass, execution_id=execution_id)
 
@@ -1426,10 +1429,11 @@ class Composition(object):
                         if node in hard_clamp_inputs:
                             # clamp = HARD_CLAMP --> "turn off" recurrent projection
                             if hasattr(node, "recurrent_projection"):
-                                node.recurrent_projection.sender.value = [0.0]
+                                node.recurrent_projection.sender.parameters.value.set([0.0], execution_id, override=True)
                         elif node in no_clamp_inputs:
                             for input_state in node.input_states:
-                                self.input_CIM_states[input_state][1].value = 0.0
+                                self.input_CIM_states[input_state][1].parameters.value.set(0.0, execution_id, override=True)
+                            # self.input_mechanisms[mechanism]._output_states[0].value = 0.0
 
                 if isinstance(node, Mechanism):
 
@@ -1453,7 +1457,8 @@ class Composition(object):
 
 
                     for key in node._runtime_params_reset:
-                        node._set_parameter_value(key, node._runtime_params_reset[key], execution_id)
+                        node._set_parameter_value(key, node._runtime_params_reset[key], execution_id
+                        )
                     node._runtime_params_reset = {}
 
                     for key in node.function_object._runtime_params_reset:
@@ -1471,7 +1476,7 @@ class Composition(object):
                         if node in pulse_clamp_inputs:
                             for input_state in node.input_states:
                             # clamp = None --> "turn off" input node
-                                self.input_CIM_states[input_state][1].value = 0
+                                self.input_CIM_states[input_state][1].parameters.value.set(0, execution_id, override=True)
                 new_values[node] = node.output_values
 
                 for i in range(len(node.output_states)):
@@ -1898,12 +1903,12 @@ class Composition(object):
                                        .format(stimulus, node.name, input_must_match))
         return adjusted_stimuli
 
-    def _initialize_from_context(self, execution_context, base_execution_context=None):
+    def _initialize_from_context(self, execution_context, base_execution_context=None, override=True):
         for mech in self.c_nodes:
-            mech._initialize_from_context(execution_context, base_execution_context)
+            mech._initialize_from_context(execution_context, base_execution_context, override)
 
         for proj in self.projections:
-            proj._initialize_from_context(execution_context, base_execution_context)
+            proj._initialize_from_context(execution_context, base_execution_context, override)
 
     @property
     def input_states(self):

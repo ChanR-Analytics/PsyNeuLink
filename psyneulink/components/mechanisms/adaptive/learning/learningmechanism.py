@@ -988,7 +988,7 @@ class LearningMechanism(AdaptiveMechanism_Base):
                                          format(self.__class__.__name__, LearningMechanism.__name__,
                                                 repr(LEARNING_TIMING)))
 
-    def _parse_function_variable(self, variable, context=None):
+    def _parse_function_variable(self, variable, execution_id=None, context=None):
         function_variable = np.zeros_like(
             variable[np.array([ACTIVATION_INPUT_INDEX, ACTIVATION_OUTPUT_INDEX, ERROR_OUTPUT_INDEX])]
         )

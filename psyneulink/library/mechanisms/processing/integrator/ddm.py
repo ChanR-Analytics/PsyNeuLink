@@ -1116,10 +1116,9 @@ class DDM(ProcessingMechanism_Base):
             self.value = np.array(new_values)
             self._update_output_states(context="REINITIALIZING")
 
-    @property
-    def is_finished(self):
+    def is_finished(self, execution_context=None):
         # find the single numeric entry in previous_value
-        single_value = self.function_object.previous_value
+        single_value = self.function_object.get_previous_value(execution_context)
         # indexing into a matrix doesn't reduce dimensionality
         if not isinstance(single_value, (np.matrix, str)):
             while True:
@@ -1136,5 +1135,5 @@ class DDM(ProcessingMechanism_Base):
                                                                    self.function_object.get_current_function_param(
                                                                        THRESHOLD)))
             return True
-        return self._is_finished
 
+        return False

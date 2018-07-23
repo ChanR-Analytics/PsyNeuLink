@@ -90,9 +90,7 @@ from psyneulink.components.mechanisms.adaptive.learning.learningmechanism import
 from psyneulink.components.mechanisms.processing.objectivemechanism import ObjectiveMechanism
 from psyneulink.components.projections.projection import Projection_Base, projection_keywords
 from psyneulink.globals.context import ContextFlags
-from psyneulink.globals.keywords import \
-    AUTOASSOCIATIVE_LEARNING_MECHANISM, CONTROL_PROJECTIONS, INPUT_STATES, \
-    LEARNING, LEARNING_PROJECTION, LEARNING_SIGNAL, NAME, OUTPUT_STATES, OWNER_VALUE, VARIABLE
+from psyneulink.globals.keywords import AUTOASSOCIATIVE_LEARNING_MECHANISM, CONTROL_PROJECTIONS, INPUT_STATES, LEARNING, LEARNING_PROJECTION, LEARNING_SIGNAL, NAME, OUTPUT_STATES, OWNER_VALUE, VARIABLE
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.utilities import is_numeric, parameter_spec
@@ -344,7 +342,7 @@ class AutoAssociativeLearningMechanism(LearningMechanism):
                          prefs=prefs,
                          context=ContextFlags.CONSTRUCTOR)
 
-    def _parse_function_variable(self, variable, context=None):
+    def _parse_function_variable(self, variable, execution_id=None, context=None):
         return variable
 
     def _validate_variable(self, variable, context=None):

@@ -30,13 +30,13 @@ logger = logging.getLogger(__name__)
 # see http://doc.pytest.org/en/latest/skipping.html
 
 
-def record_values(d, time_scale, *mechs, execution_id=None):
+def record_values(d, time_scale, *mechs, comp=None):
     if time_scale not in d:
         d[time_scale] = {}
     for mech in mechs:
         if mech not in d[time_scale]:
             d[time_scale][mech] = []
-        mech_value = mech.parameters.value.get(execution_id)
+        mech_value = mech.parameters.value.get(comp)
         if mech_value is None:
             d[time_scale][mech].append(np.nan)
         else:
@@ -1947,13 +1947,16 @@ class TestCallBeforeAfterTimescale:
             },
         }
 
-        comp.run(inputs=inputs_dict, scheduler_processing=sched,
-                 call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B),
-                 call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B),
-                 call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B),
-                 call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B),
-                 call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B),
-                 call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B))
+        comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched,
+            call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B, comp=comp),
+            call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B, comp=comp),
+            call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B, comp=comp),
+            call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B, comp=comp),
+            call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B, comp=comp),
+            call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B, comp=comp),
+        )
 
         for ts in before_expected:
             for mech in before_expected[ts]:
@@ -2039,13 +2042,16 @@ class TestCallBeforeAfterTimescale:
             },
         }
 
-        comp.run(inputs=inputs_dict, scheduler_processing=sched,
-                 call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B),
-                 call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B),
-                 call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B),
-                 call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B),
-                 call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B),
-                 call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B))
+        comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched,
+            call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B, comp=comp),
+            call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B, comp=comp),
+            call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B, comp=comp),
+            call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B, comp=comp),
+            call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B, comp=comp),
+            call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B, comp=comp),
+        )
 
         for ts in before_expected:
             for mech in before_expected[ts]:
@@ -2096,7 +2102,7 @@ class TestCallBeforeAfterTimescale:
     #         default_variable=[0, 0, 0, 0],
     #     )
     #
-    #     Output_Layer = TransferMechanism(
+    #     Output_Layerrecord_values = TransferMechanism(
     #         name='Output Layer',
     #         function=Logistic,
     #         default_variable=[0, 0, 0],
@@ -2451,13 +2457,16 @@ class TestSystemComposition:
             },
         }
 
-        comp.run(inputs=inputs_dict, scheduler_processing=sched,
-                 call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B),
-                 call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B),
-                 call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B),
-                 call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B),
-                 call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B),
-                 call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B))
+        comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched,
+            call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B, comp=comp),
+            call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B, comp=comp),
+            call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B, comp=comp),
+            call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B, comp=comp),
+            call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B, comp=comp),
+            call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B, comp=comp),
+        )
 
         for ts in before_expected:
             for mech in before_expected[ts]:
@@ -2544,13 +2553,16 @@ class TestSystemComposition:
             },
         }
 
-        comp.run(inputs=inputs_dict, scheduler_processing=sched,
-                 call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B),
-                 call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B),
-                 call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B),
-                 call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B),
-                 call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B),
-                 call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B))
+        comp.run(
+            inputs=inputs_dict,
+            scheduler_processing=sched,
+            call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B, comp=comp),
+            call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B, comp=comp),
+            call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B, comp=comp),
+            call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B, comp=comp),
+            call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B, comp=comp),
+            call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B, comp=comp),
+        )
 
         for ts in before_expected:
             for mech in before_expected[ts]:

@@ -1304,11 +1304,11 @@ class RecurrentTransferMechanism(TransferMechanism):
     #     return self._output
     #     # return super()._execute(variable, runtime_params, context)
 
-    def _parse_function_variable(self, variable, context=None):
+    def _parse_function_variable(self, variable, execution_id=None, context=None):
         if self.has_recurrent_input_state:
-            variable = self.combination_function.execute(variable=variable)
+            variable = self.combination_function.execute(variable=variable, execution_id=execution_id)
 
-        return super()._parse_function_variable(variable, context)
+        return super()._parse_function_variable(variable, execution_id=execution_id, context=context)
 
     def _get_variable_from_input(self, input):
         if self.has_recurrent_input_state:

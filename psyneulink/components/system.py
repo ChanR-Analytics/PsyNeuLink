@@ -2702,6 +2702,9 @@ class System(System_Base):
                         projection.sender.owner._execution_id = execution_id
                         projection.sender.owner._assign_context_values(execution_id, composition=self)
 
+        # initialize from null context but don't overwrite any values already set for this execution_id
+        self._initialize_from_context(execution_id, None, override=False)
+
         self._report_system_output = (self.prefs.reportOutputPref and
                                       self.context.execution_phase & (ContextFlags.PROCESSING | ContextFlags.LEARNING))
 
@@ -2944,13 +2947,13 @@ class System(System_Base):
                 terminal_mechanism = self.target_mechanisms[i].input_states[SAMPLE].path_afferents[0].sender.owner
                 target_value = self.current_targets[terminal_mechanism]
                 if callable(target_value):
-                    self.target_input_states[i].value = target_value()
+                    self.target_input_states[i].parameters.value.set(target_value(), execution_id, override=True)
                 else:
-                    self.target_input_states[i].value = target_value
+                    self.target_input_states[i].parameters.value.set(target_value, execution_id, override=True)
 
         elif isinstance(self.target, (list, np.ndarray)):
             for i in range(len(self.target_mechanisms)):
-                self.target_input_states[i].value = self.current_targets[i]
+                self.target_input_states[i].parameters.value.set(self.current_targets[i], execution_id, override=True)
 
         # THEN, execute all components involved in learning
         if self.scheduler_learning is None:
@@ -3558,14 +3561,14 @@ class System(System_Base):
     def _add_projection(self, projection):
         self.projections.add(projection)
 
-    def _initialize_from_context(self, execution_context, base_execution_context=None):
+    def _initialize_from_context(self, execution_context, base_execution_context=None, override=True):
         for mech in self.mechanisms:
-            mech._initialize_from_context(execution_context, base_execution_context)
+            mech._initialize_from_context(execution_context, base_execution_context, override)
 
         for proj in self.projections:
-            proj._initialize_from_context(execution_context, base_execution_context)
+            proj._initialize_from_context(execution_context, base_execution_context, override)
 
-        super()._initialize_from_context(execution_context, base_execution_context)
+        super()._initialize_from_context(execution_context, base_execution_context, override)
 
     @property
     def function(self):
@@ -4961,7 +4964,8 @@ class SystemInputState(OutputState):
 
     """
     class Params(OutputState.Params):
-        # value just grabs input from the process
+        # just grabs input from the process
+        variable = Param(np.array([0]), read_only=True, stateful=False)
         value = Param(np.array([0]), read_only=True, stateful=False)
 
     def __init__(self, owner=None, variable=None, name=None, prefs=None, context=None):

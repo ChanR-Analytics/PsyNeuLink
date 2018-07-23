@@ -1068,13 +1068,13 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
         # USED FOR TEST PRINT BELOW:
         curr_phase = self.execution_phase
 
-        if self.is_finished == True:
+        if self._is_finished is True:
             # If current execution follows completion of a previous trial,
             #    zero activity for input from recurrent projection so that
             #    input does not contain residual activity of previous trial
             variable[RECURRENT_INDEX] = self.input_states[RECURRENT].socket_template
 
-        self.is_finished = False
+        self._is_finished = False
 
         # Need to store this, as it will be updated in call to super
         previous_value = self.parameters.previous_value.get(execution_id)
@@ -1124,7 +1124,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
                 self.current_activity = current_activity
                 self.output_activity = current_activity[self.target_start:self.target_end]
                 # self.execution_phase = None
-                self.is_finished = True
+                self._is_finished = True
 
             # Otherwise, prepare for start of plus phase on next execution
             else:
@@ -1146,7 +1146,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
         return current_activity
         # return self.current_activity
 
-    def _parse_function_variable(self, variable, context=None):
+    def _parse_function_variable(self, variable, execution_id=None, context=None):
         function_variable = self.combination_function(variable, context)
         return super(RecurrentTransferMechanism, self)._parse_function_variable(function_variable, context)
 

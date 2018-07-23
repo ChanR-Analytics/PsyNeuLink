@@ -620,8 +620,8 @@ class LearningProjection(ModulatoryProjection_Base):
         if variable is not None:
             learning_signal = variable
         else:
-            learning_signal = self.sender.value
-        matrix = self.receiver.value
+            learning_signal = self.sender.parameters.value.get(execution_id)
+        matrix = self.receiver.parameters.value.get(execution_id)
         # If learning_signal is lower dimensional than matrix being trained
         #    and the latter is a diagonal matrix (square, with values only along the main diagonal)
         #    and the learning_signal is the same as the matrix,

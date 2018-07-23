@@ -643,14 +643,14 @@ def _instantiate_error_signal_projection(sender, receiver):
         raise LearningAuxiliaryError("Receiver of the error signal Projection "
                                      "{} must be a LearningMechanism".format(receiver))
 
-    if len(sender.value) != len(receiver.value):
+    if len(sender.defaults.value) != len(receiver.defaults.value):
         raise LearningAuxiliaryError("The length of the OutputState ({}) for "
                                      "the sender ({}) of the error signal "
                                      "Projection does not match the length of "
                                      "the InputState ({}) for the receiver "
-                                     "({})".format(len(sender.value),
+                                     "({})".format(len(sender.defaults.value),
                                                    sender.owner.name,
-                                                   len(receiver.value),
+                                                   len(receiver.defaults.value),
                                                    receiver.owner.name))
 
     return MappingProjection(sender=sender,

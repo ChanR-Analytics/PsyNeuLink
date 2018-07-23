@@ -140,7 +140,7 @@ import numpy as np
 import typecheck as tc
 
 from psyneulink.components.component import Param
-from psyneulink.components.functions.function import LCAIntegrator, Logistic, max_vs_avg, max_vs_next, SelectionFunction
+from psyneulink.components.functions.function import LCAIntegrator, Logistic, max_vs_avg, max_vs_next
 from psyneulink.components.states.outputstate import PRIMARY, StandardOutputStates
 from psyneulink.globals.keywords import BETA, ENERGY, ENTROPY, FUNCTION, INITIALIZER, LCA_MECHANISM, MEAN, MEDIAN, NAME, NOISE, RATE, RESULT, STANDARD_DEVIATION, TIME_STEP_SIZE, VARIANCE
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
@@ -578,8 +578,8 @@ class LCAMechanism(RecurrentTransferMechanism):
 
     def _get_integrated_function_input(self, function_variable, initial_value, noise, context, execution_id=None):
 
-        leak = self.get_current_mechanism_param("leak")
-        time_step_size = self.get_current_mechanism_param("time_step_size")
+        leak = self.get_current_mechanism_param("leak", execution_id)
+        time_step_size = self.get_current_mechanism_param("time_step_size", execution_id)
 
         if not self.integrator_function:
             self.integrator_function = LCAIntegrator(

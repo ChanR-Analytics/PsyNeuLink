@@ -1199,11 +1199,6 @@ class Mechanism_Base(Mechanism):
         Condition for a `Component` is used.  It can be overridden in a given `System` by assigning a Condition for
         the Mechanism directly to a Scheduler that is then assigned to the System.
 
-    is_finished : bool : default False
-        set by a Mechanism to signal completion of its `execution <Mechanism_Execution>` in a `trial`; used by
-        `Component-based Conditions <Conditions_Component_Based>` to predicate the execution of one or more other
-        Components on the Mechanism.
-
     COMMENT:
         phaseSpec : int or float :  default 0
             determines the `TIME_STEP` (s) at which the Mechanism is executed as part of a System
@@ -2107,29 +2102,29 @@ class Mechanism_Base(Mechanism):
         # if hasattr(self, PREVIOUS_VALUE):
         #     self.previous_value = None
 
-    def get_current_mechanism_param(self, param_name):
+    def get_current_mechanism_param(self, param_name, execution_id=None):
         if param_name == "variable":
             raise MechanismError("The method 'get_current_mechanism_param' is intended for retrieving the current "
                                  "value of a mechanism parameter. 'variable' is not a mechanism parameter. If looking "
                                  "for {}'s default variable, try {}.instance_defaults.variable."
                                  .format(self.name, self.name))
         try:
-            return self._parameter_states[param_name].value
+            return self._parameter_states[param_name].parameters.value.get(execution_id)
         except (AttributeError, TypeError):
-            return getattr(self, param_name)
+            return getattr(self.parameters, param_name).get(execution_id)
 
     # below two methods are repetitive. A combined version of them is welcome
-    def _initialize_from_context(self, execution_context, base_execution_context=None):
+    def _initialize_from_context(self, execution_context, base_execution_context=None, override=True):
         for input_state in self.input_states:
-            input_state._initialize_from_context(execution_context, base_execution_context)
+            input_state._initialize_from_context(execution_context, base_execution_context, override)
 
         for output_state in self.output_states:
-            output_state._initialize_from_context(execution_context, base_execution_context)
+            output_state._initialize_from_context(execution_context, base_execution_context, override)
 
         for parameter_state in self.parameter_states:
-            parameter_state._initialize_from_context(execution_context, base_execution_context)
+            parameter_state._initialize_from_context(execution_context, base_execution_context, override)
 
-        super()._initialize_from_context(execution_context, base_execution_context)
+        super()._initialize_from_context(execution_context, base_execution_context, override)
 
     def _assign_context_values(self, execution_id, base_execution_id=None, **kwargs):
         for input_state in self.input_states:
@@ -2996,13 +2991,13 @@ class Mechanism_Base(Mechanism):
                                  format(Mechanism.__name__, system, System.__name__))
         self.systems.__additem__(system, role)
 
-    @property
-    def is_finished(self):
+    def is_finished(self, execution_context=None):
+        """
+            set by a Mechanism to signal completion of its `execution <Mechanism_Execution>` in a `trial`; used by
+            `Component-based Conditions <Conditions_Component_Based>` to predicate the execution of one or more other
+            Components on the Mechanism.
+        """
         return self._is_finished
-
-    @is_finished.setter
-    def is_finished(self, value):
-        self._is_finished = value
 
     @property
     def input_state(self):

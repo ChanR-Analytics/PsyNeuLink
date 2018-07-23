@@ -949,12 +949,12 @@ class ControlSignal(ModulatorySignal):
     def update(self, execution_id=None, params=None, context=None):
         super().update(execution_id=execution_id, params=params, context=context)
         if self.cost_options:
-            self._compute_costs()
+            self._compute_costs(execution_id)
 
-    def _compute_costs(self):
+    def _compute_costs(self, execution_id=None):
         """Compute costs based on self.value."""
 
-        intensity = self.value
+        intensity = self.parameters.value.get(execution_id)
 
         try:
             intensity_change = intensity-self.last_intensity

@@ -1474,7 +1474,7 @@ class State_Base(State):
                 # PathwayProjection:
                 #    - check that projection's value is compatible with the State's variable
                 if isinstance(projection, PathwayProjection_Base):
-                    if not iscompatible(projection.value, self.instance_defaults.variable[0]):
+                    if not iscompatible(projection.defaults.value, self.instance_defaults.variable[0]):
                     # if len(projection.value) != self.instance_defaults.variable.shape[-1]:
                         raise StateError("Output of function for {} ({}) is not compatible with value of {} ({}).".
                                          format(projection.name, projection.value, self.name, self.value))
@@ -1484,11 +1484,11 @@ class State_Base(State):
                 elif isinstance(projection, ModulatoryProjection_Base):
                     function_param_value = _get_modulated_param(self, projection).function_param_val
                     # Match the projection's value with the value of the function parameter
-                    mod_proj_spec_value = type_match(projection.value, type(function_param_value))
+                    mod_proj_spec_value = type_match(projection.defaults.value, type(function_param_value))
                     if (function_param_value is not None
                         and not iscompatible(function_param_value, mod_proj_spec_value)):
                         raise StateError("Output of function for {} ({}) is not compatible with value of {} ({}).".
-                                             format(projection.name, projection.value, self.name, self.value))
+                                             format(projection.name, projection.defaults.value, self.name, self.defaults.value))
 
                 # projection._assign_default_projection_name(state=self,
                 #                                            sender_name=projection.sender.name,
@@ -1866,8 +1866,8 @@ class State_Base(State):
     """
 
         # Set context to owner's context:
-        self.parameters.context.get(execution_id).execution_phase = self.owner.parameters.context.get(execution_id).execution_phase
-        self.parameters.context.get(execution_id).string = self.owner.parameters.context.get(execution_id).string
+        self.parameters.context.get().execution_phase = self.owner.parameters.context.get().execution_phase
+        self.parameters.context.get().string = self.owner.parameters.context.get().string
 
         # SET UP ------------------------------------------------------------------------------------------------
 
@@ -1982,7 +1982,7 @@ class State_Base(State):
             elif isinstance(projection, ModulatoryProjection_Base):
                 # Get the meta_param to be modulated from modulation attribute of the  projection's ModulatorySignal
                 #    and get the function parameter to be modulated to type_match the projection value below
-                mod_meta_param, mod_param_name, mod_param_value = _get_modulated_param(self, projection)
+                mod_meta_param, mod_param_name, mod_param_value = _get_modulated_param(self, projection, execution_id)
                 # If meta_param is DISABLE, ignore the ModulatoryProjection
                 if mod_meta_param is Modulation.DISABLE:
                     continue
@@ -2068,11 +2068,11 @@ class State_Base(State):
                 return label
         return self.parameters.value.get(execution_context)
 
-    def _initialize_from_context(self, execution_context=None, base_execution_context=None):
+    def _initialize_from_context(self, execution_context=None, base_execution_context=None, override=True):
         for eff in self.efferents:
-            eff._initialize_from_context(execution_context, base_execution_context)
+            eff._initialize_from_context(execution_context, base_execution_context, override)
 
-        super()._initialize_from_context(execution_context, base_execution_context)
+        super()._initialize_from_context(execution_context, base_execution_context, override)
 
     def _assign_context_values(self, execution_id, base_execution_id=None, **kwargs):
         for eff in self.efferents:

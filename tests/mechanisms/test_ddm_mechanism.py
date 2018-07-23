@@ -6,7 +6,6 @@ from psyneulink.components.component import ComponentError
 from psyneulink.components.functions.function import BogaczEtAl, DriftDiffusionIntegrator, FunctionError, NormalDist
 from psyneulink.components.process import Process
 from psyneulink.components.system import System
-
 from psyneulink.library.mechanisms.processing.integrator.ddm import DDM, ARRAY, DDMError, SELECTED_INPUT_ARRAY
 from psyneulink.scheduling.condition import WhenFinished, Never
 from psyneulink.scheduling.time import TimeScale
@@ -78,7 +77,6 @@ class TestReinitialize:
         assert np.allclose(D.output_states[1].value[0], 0.0)
 
 
-
 class TestThreshold:
     def test_threshold_param(self):
         D = DDM(name='DDM',
@@ -93,13 +91,13 @@ class TestThreshold:
         D = DDM(name='DDM',
                 function=DriftDiffusionIntegrator(threshold=5.0))
         D.execute(2.0)  # 2.0 < 5.0
-        assert not D.is_finished
+        assert not D.is_finished()
 
         D.execute(2.0)  # 4.0 < 5.0
-        assert not D.is_finished
+        assert not D.is_finished()
 
         D.execute(2.0)   # 5.0 = threshold
-        assert D.is_finished
+        assert D.is_finished()
 
     def test_threshold_stops_accumulation(self):
         D = DDM(name='DDM',

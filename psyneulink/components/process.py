@@ -2220,6 +2220,9 @@ class Process(Process_Base):
         for proj in self.projections:
             proj._assign_context_values(execution_id, composition=self)
 
+        # initialize from null context but don't overwrite any values already set for this execution_id
+        self._initialize_from_context(execution_id, None, override=False)
+
         # Report output if reporting preference is on and this is not an initialization run
         report_output = self.prefs.reportOutputPref and self.context.initialization_status == ContextFlags.INITIALIZED
 
@@ -2264,7 +2267,7 @@ class Process(Process_Base):
             self._execute_learning(execution_id=execution_id, target=target, context=context)
 
         if report_output:
-            self._report_process_completion(separator=True)
+            self._report_process_completion(separator=True, execution_context=execution_id)
 
         # FIX:  WHICH SHOULD THIS BE?
         return self.output_state.parameters.value.get(execution_id)
@@ -2517,11 +2520,11 @@ class Process(Process_Base):
         #              re.sub('[\[,\],\n]','',
         #                     str(mechanism.outputState.value))))
 
-    def _report_process_completion(self, separator=False):
+    def _report_process_completion(self, execution_context=None, separator=False):
 
         print("\n\'{}' completed:\n- output: {}".
               format(append_type_to_name(self),
-                     re.sub(r'[\[,\],\n]','',str([float("{:0.3}".format(float(i))) for i in self.output_state.value]))))
+                     re.sub(r'[\[,\],\n]','',str([float("{:0.3}".format(float(i))) for i in self.output_state.parameters.value.get(execution_context)]))))
 
         if self.learning:
             from psyneulink.library.mechanisms.processing.objective.comparatormechanism import MSE
@@ -2529,7 +2532,7 @@ class Process(Process_Base):
                 if not MSE in mech.output_states:
                     continue
                 print("\n- MSE: {:0.3}".
-                      format(float(mech.output_states[MSE].value)))
+                      format(float(mech.output_states[MSE].parameters.value.get(execution_context))))
 
         elif separator:
             print("\n\n****************************************\n")
@@ -2644,7 +2647,8 @@ class ProcessInputState(OutputState):
 
     """
     class Params(OutputState.Params):
-        # value just grabs input from the process
+        # just grabs input from the process
+        variable = Param(np.array([0]), read_only=True, stateful=False)
         value = Param(np.array([0]), read_only=True, stateful=False)
 
     def __init__(self, owner=None, variable=None, name=None, prefs=None):

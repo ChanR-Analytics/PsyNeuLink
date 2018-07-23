@@ -388,7 +388,7 @@ def _is_modulation_param(val):
 ModulatedParam = namedtuple('ModulatedParam', 'meta_param, function_param, function_param_val')
 
 
-def _get_modulated_param(owner, mod_proj):
+def _get_modulated_param(owner, mod_proj, execution_context=None):
     """Return ModulationParam object, function param name and value of param modulated by ModulatoryProjection
     """
 
@@ -411,7 +411,7 @@ def _get_modulated_param(owner, mod_proj):
         from psyneulink.globals.utilities import Modulation
         function_mod_meta_param_obj = getattr(Modulation, function_mod_meta_param_obj)
         function_param_name = function_mod_meta_param_obj
-        function_param_value = mod_proj.sender.value
+        function_param_value = mod_proj.sender.parameters.value.get(execution_context)
     else:
         # Get the actual parameter of owner.function_object to be modulated
         function_param_name = owner.function_object.params[function_mod_meta_param_obj.attrib_name]
@@ -743,13 +743,13 @@ class Function_Base(Function):
             raise FunctionError("{} is not a valid specification for the {} argument of {}{}".
                                 format(param, param_name, self.__class__.__name__, owner_name))
 
-    def get_current_function_param(self, param_name):
+    def get_current_function_param(self, param_name, execution_context=None):
         if param_name == "variable":
             raise FunctionError("The method 'get_current_function_param' is intended for retrieving the current value "
                                 "of a function parameter. 'variable' is not a function parameter. If looking for {}'s "
                                 "default variable, try {}.instance_defaults.variable.".format(self.name, self.name))
         try:
-            return self.owner._parameter_states[param_name].value
+            return self.owner._parameter_states[param_name].parameters.value.get(execution_context)
         except (AttributeError, TypeError):
             return getattr(self, param_name)
 
@@ -4688,8 +4688,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
 
         # Note: this calls _validate_variable and _validate_params which are overridden above;
         variable = self._check_args(variable=variable, execution_id=execution_id, params=params, context=context)
-        matrix = self.get_current_function_param(MATRIX)
-
+        matrix = self.get_current_function_param(MATRIX, execution_id)
         result = np.dot(variable, matrix)
         return self.convert_output_type(result)
 
@@ -5747,7 +5746,7 @@ class SimpleIntegrator(Integrator):  # -----------------------------------------
 
         # execute noise if it is a function
         noise = self._try_execute_param(self.get_current_function_param(NOISE), variable)
-        previous_value = self.parameters.previous_value.get(execution_id)
+        previous_value = self.get_previous_value(execution_id)
         new_value = variable
 
         value = previous_value + (new_value * rate) + noise
@@ -5981,7 +5980,7 @@ class ConstantIntegrator(Integrator):  # ---------------------------------------
         scale = self.get_current_function_param(SCALE)
         noise = self._try_execute_param(self.noise, variable)
 
-        previous_value = np.atleast_2d(self.parameters.previous_value.get(execution_id))
+        previous_value = np.atleast_2d(self.get_previous_value(execution_id))
 
         value = previous_value + rate + noise
 
@@ -6191,7 +6190,7 @@ class Buffer(Integrator):  # ---------------------------------------------------
                                                                      self.name))
 
         if reinitialization_value is None or reinitialization_value == []:
-            self.parameters.previous_value.get(execution_context).clear()
+            self.get_previous_value(execution_context).clear()
             value = deque([], maxlen=self.history)
 
         else:
@@ -6241,7 +6240,7 @@ class Buffer(Integrator):  # ---------------------------------------------------
         if self.context.initialization_status == ContextFlags.INITIALIZING:
             return variable
 
-        previous_value = self.parameters.previous_value.get(execution_id)
+        previous_value = self.get_previous_value(execution_id)
         previous_value.append(variable)
 
         # Apply rate and/or noise if they are specified
@@ -6531,7 +6530,7 @@ class AdaptiveIntegrator(Integrator):  # ---------------------------------------
         # execute noise if it is a function
         noise = self._try_execute_param(self.get_current_function_param(NOISE), variable)
 
-        previous_value = np.atleast_2d(self.parameters.previous_value.get(execution_id))
+        previous_value = np.atleast_2d(self.get_previous_value(execution_id))
 
         value = (1 - rate) * previous_value + rate * variable + noise
         adjusted_value = value + offset
@@ -6601,8 +6600,8 @@ class DriftDiffusionIntegrator(Integrator):  # ---------------------------------
         Once the magnitude of the decision variable has exceeded the threshold, the function will simply return the
         threshold magnitude (with the appropriate sign) for that execution and any future executions.
 
-        If the function is in a `DDM mechanism <DDM>`, crossing the threshold will also switch the `is_finished`
-        attribute from False to True. This attribute may be important for the `Scheduler <Scheduler>` when using
+        If the function is in a `DDM mechanism <DDM>`, crossing the threshold will also cause the return value of `is_finished`
+        from False to True. This value may be important for the `Scheduler <Scheduler>` when using
          `Conditions <Condition>` such as `WhenFinished <WhenFinished>`.
 
     params : Dict[param keyword: param value] : default None
@@ -6801,7 +6800,7 @@ class DriftDiffusionIntegrator(Integrator):  # ---------------------------------
         threshold = self.get_current_function_param(THRESHOLD)
         time_step_size = self.get_current_function_param(TIME_STEP_SIZE)
 
-        previous_value = np.atleast_2d(self.parameters.previous_value.get(execution_id))
+        previous_value = np.atleast_2d(self.get_previous_value(execution_id))
 
         value = previous_value + rate * variable * time_step_size \
                 + np.sqrt(time_step_size * noise) * np.random.normal()
@@ -7057,7 +7056,7 @@ class OrnsteinUhlenbeckIntegrator(Integrator):  # ------------------------------
         decay = self.get_current_function_param(DECAY)
         noise = self.get_current_function_param(NOISE)
 
-        previous_value = np.atleast_2d(self.parameters.previous_value.get(execution_id))
+        previous_value = np.atleast_2d(self.get_previous_value(execution_id))
 
         # dx = (lambda*x + A)dt + c*dW
         value = previous_value + (decay * previous_value - rate * variable) * time_step_size + np.sqrt(
@@ -8331,7 +8330,7 @@ class LCAIntegrator(Integrator):  # --------------------------------------------
 
         # execute noise if it is a function
         noise = self._try_execute_param(self.get_current_function_param(NOISE), variable)
-        previous_value = self.parameters.previous_value.get(execution_id)
+        previous_value = self.get_previous_value(execution_id)
         new_value = variable
 
         # Gilzenrat: previous_value + (-previous_value + variable)*self.time_step_size + noise --> rate = -1
@@ -10266,10 +10265,7 @@ COMMENT
         variable = self._check_args(variable=variable, execution_id=execution_id, params=params, context=context)
 
         from psyneulink.components.states.parameterstate import ParameterState
-        if isinstance(self.matrix, ParameterState):
-            matrix = self.matrix.value
-        else:
-            matrix = self.matrix
+        matrix = self.get_current_function_param(MATRIX, execution_id)
 
         current = variable
         if self.transfer_fct is not None:

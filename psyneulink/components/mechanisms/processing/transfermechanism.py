@@ -717,9 +717,12 @@ class TransferMechanism(ProcessingMechanism_Base):
 
     class Params(ProcessingMechanism_Base.Params):
         initial_value = None
-        clip = None
-        noise = 0.0
         previous_value = Param(None, read_only=True)
+        clip = None
+        noise = Param(0.0, modulable=True)
+        convergence_criterion = Param(0.01, modulable=True)
+        integration_rate = Param(0.5, modulable=True)
+        max_passes = Param(1000, modulable=True)
 
     @tc.typecheck
     def __init__(self,
@@ -974,9 +977,9 @@ class TransferMechanism(ProcessingMechanism_Base):
 
         return current_input
 
-    def _get_integrated_function_input(self, function_variable, initial_value, noise, context, **kwargs):
+    def _get_integrated_function_input(self, function_variable, initial_value, noise, context, execution_id=None, **kwargs):
 
-        integration_rate = self.get_current_mechanism_param("integration_rate")
+        integration_rate = self.get_current_mechanism_param("integration_rate", execution_id)
 
         if not self.integrator_function:
 
@@ -987,12 +990,17 @@ class TransferMechanism(ProcessingMechanism_Base):
                                                           owner=self)
 
             self.original_integrator_function = self.integrator_function
-        current_input = self.integrator_function.execute(function_variable,
-                                                         # Should we handle runtime params?
-                                                         runtime_params={INITIALIZER: initial_value,
-                                                                         NOISE: noise,
-                                                                         RATE: integration_rate},
-                                                         context=context)
+        current_input = self.integrator_function.execute(
+            function_variable,
+            execution_id=execution_id,
+            # Should we handle runtime params?
+            runtime_params={
+                INITIALIZER: initial_value,
+                NOISE: noise,
+                RATE: integration_rate
+            },
+            context=context
+        )
 
         return current_input
 
@@ -1054,7 +1062,7 @@ class TransferMechanism(ProcessingMechanism_Base):
 
         # FIX: JDC 7/2/18 - THIS SHOULD BE MOVED TO AN STANDARD OUTPUT_STATE
         # Clip outputs
-        clip = self.get_current_mechanism_param("clip")
+        clip = self.get_current_mechanism_param("clip", execution_id)
 
         value = super(Mechanism, self)._execute(variable=variable,
                                                 execution_id=execution_id,
@@ -1080,24 +1088,27 @@ class TransferMechanism(ProcessingMechanism_Base):
                 value = self.defaults.value
             self.parameters.previous_value.set(value, execution_id, override=True)
 
-    def _parse_function_variable(self, variable, context=None):
+    def _parse_function_variable(self, variable, execution_id=None, context=None):
         if context is ContextFlags.INSTANTIATE:
 
-            return super(TransferMechanism, self)._parse_function_variable(variable=variable, context=context)
+            return super(TransferMechanism, self)._parse_function_variable(variable=variable, execution_id=execution_id, context=context)
 
         # FIX: NEED TO GET THIS TO WORK WITH CALL TO METHOD:
         integrator_mode = self.integrator_mode
-        noise = self.get_current_mechanism_param("noise")
+        noise = self.get_current_mechanism_param("noise", execution_id)
 
         # FIX: SHOULD UPDATE PARAMS PASSED TO integrator_function WITH ANY RUNTIME PARAMS THAT ARE RELEVANT TO IT
         # Update according to time-scale of integration
         if integrator_mode:
-            initial_value = self.get_current_mechanism_param("initial_value")
+            initial_value = self.get_current_mechanism_param("initial_value", execution_id)
 
-            self.integrator_function_value = self._get_integrated_function_input(variable,
-                                                                                 initial_value,
-                                                                                 noise,
-                                                                                 context)
+            self.integrator_function_value = self._get_integrated_function_input(
+                variable,
+                initial_value,
+                noise,
+                context,
+                execution_id=execution_id
+            )
             return self.integrator_function_value
 
         else:

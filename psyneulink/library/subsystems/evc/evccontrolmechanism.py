@@ -731,8 +731,8 @@ class EVCControlMechanism(ControlMechanism):
     componentType = EVC_MECHANISM
     initMethod = INIT_FUNCTION_METHOD_ONLY
 
-
     classPreferenceLevel = PreferenceLevel.SUBTYPE
+
     # classPreferenceLevel = PreferenceLevel.TYPE
     # Any preferences specified below will override those specified in TypeDefaultPreferences
     # Note: only need to specify setting;  level will be assigned to Type automatically

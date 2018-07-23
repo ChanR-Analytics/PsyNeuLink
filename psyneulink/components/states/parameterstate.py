@@ -773,7 +773,7 @@ class ParameterState(State_Base):
                                                                      mod_projection, state_dict[NAME], owner.name))
                                 elif mod_projection.context.initialization_status == ContextFlags.DEFERRED_INIT:
                                     continue
-                                mod_proj_value = mod_projection.value
+                                mod_proj_value = mod_projection.defaults.value
                             else:
                                 raise ParameterStateError("Unrecognized Projection specification for {} of {} ({})".
                                                       format(self.name, owner.name, projection_spec))
