@@ -201,9 +201,9 @@ class TestStroop:
         )
 
         def show_target():
-            print('\nColor Naming\n\tInput: {}\n\tTarget: {}'.format(colors.input_states.values_as_lists, s.targets))
-            print('Wording Reading:\n\tInput: {}\n\tTarget: {}\n'.format(words.input_states.values_as_lists, s.targets))
-            print('Response: \n', response.output_values[0])
+            print('\nColor Naming\n\tInput: {}\n\tTarget: {}'.format([np.ndarray.tolist(item.parameters.value.get(s)) for item in colors.input_states], s.targets))
+            print('Wording Reading:\n\tInput: {}\n\tTarget: {}\n'.format([np.ndarray.tolist(item.parameters.value.get(s)) for item in words.input_states], s.targets))
+            print('Response: \n', response.output_state.parameters.value.get(s))
             print('Hidden-Output:')
             print(HO_Weights.get_mod_matrix(s))
             print('Color-Hidden:')
