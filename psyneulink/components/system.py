@@ -2752,7 +2752,7 @@ class System(System_Base):
                             system_input_state.parameters.value.set(input[origin_mech][j], execution_id, override=True)
 
                         else:
-                            system_input_state.parameters.value.set(input[j], execution_id, context=True)
+                            system_input_state.parameters.value.set(input[j], execution_id, override=True)
                     else:
                         logger.warning("Failed to find expected SystemInputState "
                                        "for {} at input state number ({}), ({})".
