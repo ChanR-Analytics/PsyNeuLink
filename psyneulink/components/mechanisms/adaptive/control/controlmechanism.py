@@ -600,6 +600,9 @@ class ControlMechanism(AdaptiveMechanism_Base):
         if system is not None:
             for eff in self.efferents:
                 eff._enable_for_compositions(system)
+            for aff in self._objective_mechanism.afferents:
+                aff._enable_for_compositions(system)
+
 
     def _validate_params(self, request_set, target_set=None, context=None):
         """Validate SYSTEM, MONITOR_FOR_CONTROL and CONTROL_SIGNALS
