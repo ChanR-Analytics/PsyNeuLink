@@ -1026,7 +1026,8 @@ class OutputState(State_Base):
                          function=function,
                          )
 
-        self.parameters.variable.getter = variable_getter
+        if variable_getter is not None:
+            self.parameters.variable.getter = variable_getter
 
     def _validate_against_reference_value(self, reference_value):
         """Validate that State.variable is compatible with the reference_value
@@ -1045,6 +1046,7 @@ class OutputState(State_Base):
         #    the value was a reference_value generated during initialization/parsing and passed in the constructor
         if self._variable_spec is None or is_numeric(self._variable_spec):
             self._variable_spec = DEFAULT_VARIABLE_SPEC
+            self.parameters.variable.getter = functools.partial(self.class_parameters.variable.getter, variable=self._variable_spec)
 
     def _instantiate_projections(self, projections, context=None):
         """Instantiate Projections specified in PROJECTIONS entry of params arg of State's constructor
