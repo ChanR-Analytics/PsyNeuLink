@@ -3190,7 +3190,7 @@ class System(System_Base):
             execution_id = self.default_execution_id
 
         for mechanism in reinitialize_values:
-            mechanism.reinitialize(*reinitialize_values[mechanism])
+            mechanism.reinitialize(*reinitialize_values[mechanism], execution_context=execution_id)
 
         self.initial_values = initial_values
 
@@ -3262,6 +3262,7 @@ class System(System_Base):
                    termination_processing=termination_processing,
                    termination_learning=termination_learning,
                    runtime_params=runtime_params,
+                   execution_id=execution_id,
                    context=ContextFlags.COMPOSITION)
 
         if self._animate is not False:
