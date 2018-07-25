@@ -1085,6 +1085,8 @@ class ControlMechanism(AdaptiveMechanism_Base):
                               "".format(ControlSignal.__name__, system.name,
                                         control_signal.name, self.name, system.__class__.__name__))
             self.control_signals.append(control_signal)
+            for eff in control_signal.efferents:
+                eff._enable_for_compositions(system)
 
         # If it HAS been assigned a System, make sure it is the current one
         if self.system and not self.system is system:
