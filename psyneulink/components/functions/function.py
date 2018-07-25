@@ -6950,6 +6950,7 @@ class OrnsteinUhlenbeckIntegrator(Integrator):  # ------------------------------
         time_step_size = Param(1.0, modulable=True)
         decay = Param(1.0, modulable=True)
         t0 = 0.0
+        previous_time = 0.0
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     paramClassDefaults.update({
