@@ -1043,8 +1043,8 @@ class OutputState(State_Base):
 
         # If variable has not been assigned, or it is numeric (in which case it can be assumed that
         #    the value was a reference_value generated during initialization/parsing and passed in the constructor
-        # if self.instance_defaults.variable is None or is_numeric(self.instance_defaults.variable):
-        #     self.instance_defaults.variable = DEFAULT_VARIABLE_SPEC
+        if self._variable_spec is None or is_numeric(self._variable_spec):
+            self._variable_spec = DEFAULT_VARIABLE_SPEC
 
     def _instantiate_projections(self, projections, context=None):
         """Instantiate Projections specified in PROJECTIONS entry of params arg of State's constructor
