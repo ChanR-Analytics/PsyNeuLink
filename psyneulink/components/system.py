@@ -3573,6 +3573,11 @@ class System(System_Base):
         for proj in self.projections:
             proj._initialize_from_context(execution_context, base_execution_context, override)
 
+        try:
+            self.controller._initialize_from_context(execution_context, base_execution_context, override)
+        except AttributeError:
+            pass
+
         super()._initialize_from_context(execution_context, base_execution_context, override)
 
     @property
