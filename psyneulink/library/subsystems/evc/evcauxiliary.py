@@ -486,7 +486,7 @@ class ControlSignalGridSearch(EVCAuxiliaryFunction):
 
         # Assign max values for optimal allocation policy to controller.input_states (for reference only)
         for i in range(len(controller.input_states)):
-            controller.input_states[controller.input_states.names[i]].value = np.atleast_1d(next(EVC_maxStateValue))
+            controller.input_states[controller.input_states.names[i]].parameters.value.set(np.atleast_1d(next(EVC_maxStateValue)), execution_id, override=True)
 
 
         # Report EVC max info

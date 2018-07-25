@@ -814,9 +814,9 @@ class InputState(State_Base):
         proj_spec = _parse_connection_specs(InputState, self, projections)[0]
 
         if isinstance(proj_spec.projection, Projection):
-            variable = proj_spec.projection.value
+            variable = proj_spec.projection.defaults.value
         elif isinstance(proj_spec.state, OutputState):
-            variable = proj_spec.state.value
+            variable = proj_spec.state.defaults.value
         else:
             raise InputStateError("Unrecognized specification for \'{}\' arg of {}".format(PROJECTIONS, self.name))
 
