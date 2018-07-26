@@ -950,7 +950,7 @@ from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.keywords import CHANGED, CURRENT_EXECUTION_COUNT, CURRENT_EXECUTION_TIME, EXECUTION_COUNT, EXECUTION_PHASE, FUNCTION, FUNCTION_PARAMS, INITIALIZING, INIT_FUNCTION_METHOD_ONLY, INIT__EXECUTE__METHOD_ONLY, INPUT_LABELS_DICT, INPUT_STATES, INPUT_STATE_VARIABLES, MONITOR_FOR_CONTROL, MONITOR_FOR_LEARNING, OUTPUT_LABELS_DICT, OUTPUT_STATES, PARAMETER_STATES, PREVIOUS_VALUE, REFERENCE_VALUE, TARGET_LABELS_DICT, UNCHANGED, VALUE, VARIABLE, kwMechanismComponentCategory, kwMechanismExecuteFunction
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.registry import register_category, remove_instance_from_registry
-from psyneulink.globals.utilities import ContentAddressableList, ReadOnlyOrderedDict, append_type_to_name, convert_to_np_array, iscompatible, kwCompatibilityNumeric
+from psyneulink.globals.utilities import ContentAddressableList, ReadOnlyOrderedDict, append_type_to_name, convert_to_np_array, iscompatible, kwCompatibilityNumeric, parse_execution_context
 
 __all__ = [
     'Mechanism_Base', 'MechanismError'
@@ -2066,7 +2066,7 @@ class Mechanism_Base(Mechanism):
         if isinstance(self.function_object, Integrator):
             new_value = self.function_object.reinitialize(*args, execution_context=execution_context)
             self.parameters.value.set(np.atleast_2d(new_value), execution_context=execution_context, override=True)
-            self._update_output_states(context="REINITIALIZING")
+            self._update_output_states(context="REINITIALIZING", execution_id=parse_execution_context(execution_context))
 
         # If the mechanism has an auxiliary integrator function:
         # (1) reinitialize it, (2) run the primary function with the new "previous_value" as input
@@ -2079,7 +2079,7 @@ class Mechanism_Base(Mechanism):
                     execution_context=execution_context,
                     override=True
                 )
-                self._update_output_states(execution_id=execution_context, context="REINITIALIZING")
+                self._update_output_states(context="REINITIALIZING", execution_id=parse_execution_context(execution_context))
 
             elif self.integrator_function is None:
                 if hasattr(self, "integrator_mode"):
