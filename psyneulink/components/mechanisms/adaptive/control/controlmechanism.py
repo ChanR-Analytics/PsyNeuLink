@@ -1050,11 +1050,6 @@ class ControlMechanism(AdaptiveMechanism_Base):
         if monitored_output_states:
             self.add_monitored_output_states(monitored_output_states)
 
-        # assign any deferred init objective mech monitored output state projections to this system
-        for output_state in self.objective_mechanism.monitored_output_states:
-            for eff in output_state.efferents:
-                eff._enable_for_compositions(system)
-
         # The system does NOT already have a controller,
         #    so assign it ControlSignals for any parameters in the System specified for control
         if system.controller is None:
@@ -1085,8 +1080,6 @@ class ControlMechanism(AdaptiveMechanism_Base):
                               "".format(ControlSignal.__name__, system.name,
                                         control_signal.name, self.name, system.__class__.__name__))
             self.control_signals.append(control_signal)
-            for eff in control_signal.efferents:
-                eff._enable_for_compositions(system)
 
         # If it HAS been assigned a System, make sure it is the current one
         if self.system and not self.system is system:
@@ -1100,10 +1093,22 @@ class ControlMechanism(AdaptiveMechanism_Base):
         # Flag ObjectiveMechanism as associated with a ControlMechanism that is a controller for the System
         self._objective_mechanism.for_controller = True
 
-        self._objective_projection._enable_for_compositions(system)
-
         if context != ContextFlags.PROPERTY:
             system._controller = self
+
+        self._enable_projections_for_compositions(system)
+
+    def _enable_projections_for_compositions(self, compositions=None):
+        self._objective_projection._enable_for_compositions(compositions)
+
+        for cs in self.control_signals:
+            for eff in cs.efferents:
+                eff._enable_for_compositions(compositions)
+
+        # assign any deferred init objective mech monitored output state projections to this system
+        for output_state in self.objective_mechanism.monitored_output_states:
+            for eff in output_state.efferents:
+                eff._enable_for_compositions(compositions)
 
     def _initialize_from_context(self, execution_context, base_execution_context=None, override=True):
         self.objective_mechanism._initialize_from_context(execution_context, base_execution_context, override)

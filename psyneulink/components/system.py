@@ -2122,6 +2122,7 @@ class System(System_Base):
                     system=self,
                     objective_mechanism=self._get_monitored_output_states_for_system(context=context),
                     control_signals=self._get_control_signals_for_system(self.control_signals_arg, context=context))
+            controller._enable_projections_for_compositions(self)
 
         else:
             raise SystemError("Specification for {} of {} ({}) is not ControlMechanism".
