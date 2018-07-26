@@ -962,6 +962,9 @@ class OutputState(State_Base):
                 function=function,
                 params=params)
 
+        # setting here to ensure even deferred init states have this attribute
+        self._variable_spec = None
+
         # If owner or reference_value has not been assigned, defer init to State._instantiate_projection()
         # if owner is None or reference_value is None:
         if owner is None:

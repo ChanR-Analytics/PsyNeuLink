@@ -1,6 +1,7 @@
 import numpy as np
 import psyneulink as pnl
 import pytest
+import functools
 
 
 class TestLCControlMechanism:
@@ -49,7 +50,7 @@ class TestLCControlMechanism:
         mod_gain_assigned_to_B = []
         base_gain_assigned_to_B = []
 
-        def report_trial():
+        def report_trial(system):
             gain_created_by_LC_output_state_1.append(LC.output_states[0].value[0])
             mod_gain_assigned_to_A.append(A.mod_gain)
             mod_gain_assigned_to_B.append(B.mod_gain)
@@ -57,7 +58,7 @@ class TestLCControlMechanism:
             base_gain_assigned_to_B.append(B.function_object.gain)
 
         benchmark(S.run, inputs={A: [[1.0], [1.0], [1.0], [1.0], [1.0]]},
-              call_after_trial=report_trial)
+              call_after_trial=functools.partial(report_trial, S))
 
         # (1) First value of gain in mechanisms A and B must be whatever we hardcoded for LC starting value
         assert mod_gain_assigned_to_A[0] == starting_value_LC

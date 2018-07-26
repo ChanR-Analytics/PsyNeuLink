@@ -85,10 +85,10 @@ def test_reinforcement():
     reward_prediction_weights = action_selection.input_states[0].path_afferents[0]
 
     expected_output = [
-        (input_layer.get_output_state_values(s), [np.array([1., 1., 1.])]),
-        (action_selection.get_output_state_values(s), [np.array([0.      , 0.      , 2.283625])]),
-        (pytest.helpers.expand_np_ndarray(mech_objective_action.get_output_state_values(s)), pytest.helpers.expand_np_ndarray([np.array([7.716375]), np.array(59.542443140625004)])),
-        (pytest.helpers.expand_np_ndarray(mech_learning_input_to_action.get_output_state_values(s)), pytest.helpers.expand_np_ndarray([
+        (input_layer.get_output_values(s), [np.array([1., 1., 1.])]),
+        (action_selection.get_output_values(s), [np.array([0.      , 0.      , 2.283625])]),
+        (pytest.helpers.expand_np_ndarray(mech_objective_action.get_output_values(s)), pytest.helpers.expand_np_ndarray([np.array([7.716375]), np.array(59.542443140625004)])),
+        (pytest.helpers.expand_np_ndarray(mech_learning_input_to_action.get_output_values(s)), pytest.helpers.expand_np_ndarray([
             [np.array([0.        , 0.        , 0.38581875]), np.array([0.        , 0.        , 0.38581875])]
         ])),
         (reward_prediction_weights.get_mod_matrix(s), np.array([

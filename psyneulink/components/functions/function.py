@@ -3431,8 +3431,8 @@ class Linear(TransferFunction):  # ---------------------------------------------
         """
 
         variable = self._check_args(variable=variable, execution_id=execution_id, params=params, context=context)
-        slope = self.get_current_function_param(SLOPE)
-        intercept = self.get_current_function_param(INTERCEPT)
+        slope = self.get_current_function_param(SLOPE, execution_id)
+        intercept = self.get_current_function_param(INTERCEPT, execution_id)
 
         # MODIFIED 11/9/17 NEW:
         try:

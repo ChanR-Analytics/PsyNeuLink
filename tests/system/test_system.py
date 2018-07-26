@@ -419,7 +419,7 @@ class TestInputSpecsDocumentationExamples:
         check_inputs = []
 
         def store_inputs():
-            check_inputs.append(a.get_input_values(s))
+            check_inputs.append(a.get_input_values(p1))
 
         input_dictionary = [1.0, 2.0, 3.0]
 
