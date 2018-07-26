@@ -6535,7 +6535,7 @@ class AdaptiveIntegrator(Integrator):  # ---------------------------------------
         """
         variable = self._check_args(variable=variable, execution_id=execution_id, params=params, context=context)
 
-        rate = np.array(self.get_current_function_param(RATE)).astype(float)
+        rate = np.array(self.get_current_function_param(RATE, execution_id)).astype(float)
         offset = self.get_current_function_param(OFFSET)
         # execute noise if it is a function
         noise = self._try_execute_param(self.get_current_function_param(NOISE), variable)
