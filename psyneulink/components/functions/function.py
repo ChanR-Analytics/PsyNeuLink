@@ -753,7 +753,7 @@ class Function_Base(Function):
         except (AttributeError, TypeError):
             return getattr(self, param_name)
 
-    def get_previous_value(self, execution_context):
+    def get_previous_value(self, execution_context=None):
         # temporary method until previous values are integrated for all parameters
         value = self.parameters.previous_value.get(execution_context)
         if value is None:
