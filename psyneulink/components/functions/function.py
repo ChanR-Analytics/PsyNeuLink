@@ -5420,7 +5420,12 @@ class Integrator(IntegratorFunction):  # ---------------------------------------
                                     .format(self.name, initial_value_name, initial_value))
 
     def _initialize_previous_value(self, initializer, execution_context=None):
-        self.parameters.previous_value.set(np.atleast_1d(initializer), execution_context)
+        if execution_context is None:
+            # if this is run during initialization, self.parameters will refer to self.class_parameters
+            # because self.parameters has not been created yet
+            self.previous_value = np.atleast_1d(initializer)
+        else:
+            self.parameters.previous_value.set(np.atleast_1d(initializer), execution_context)
 
     def _try_execute_param(self, param, var):
 
@@ -6155,7 +6160,11 @@ class Buffer(Integrator):  # ---------------------------------------------------
         initializer = initializer or []
         previous_value = deque(initializer, maxlen=self.history)
 
-        self.parameters.previous_value.set(previous_value, execution_context, override=True)
+        if execution_context is None:
+            self.previous_value = previous_value
+        else:
+            self.parameters.previous_value.set(previous_value, execution_context, override=True)
+
         return previous_value
 
     def _instantiate_attributes_before_function(self, function=None, context=None):
