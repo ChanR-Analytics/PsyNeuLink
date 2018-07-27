@@ -4707,10 +4707,10 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
         cols = None
         # use of variable attribute here should be ok because it's using it as a format/type
         if isinstance(obj, MappingProjection):
-            if isinstance(obj.sender.value, numbers.Number):
+            if isinstance(obj.sender.defaults.value, numbers.Number):
                 rows = 1
             else:
-                rows = len(obj.sender.value)
+                rows = len(obj.sender.defaults.value)
             if isinstance(obj.receiver.instance_defaults.variable, numbers.Number):
                 cols = 1
             else:
@@ -4724,7 +4724,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
             return matrix
 
     def param_function(owner, function):
-        sender_len = len(owner.sender.value)
+        sender_len = len(owner.sender.defaults.value)
         receiver_len = len(owner.receiver.instance_defaults.variable)
         return function(sender_len, receiver_len)
 

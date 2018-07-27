@@ -1262,7 +1262,7 @@ class OutputState(State_Base):
 
     @property
     def socket_width(self):
-        return self.value.shape[-1]
+        return self.defaults.value.shape[-1]
 
     @property
     def owner_value_index(self):
