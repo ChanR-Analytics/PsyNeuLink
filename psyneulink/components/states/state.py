@@ -2019,8 +2019,10 @@ class State_Base(State):
         #    combine any values received from the relevant projections into a single modulation value
         #    and assign that to the relevant entry in the params dict for the State's function.
         for mod_param, value_list in self._mod_proj_values.items():
+            # check if override or disable ever have a nonempty value_list here..
             if value_list:
                 aggregated_mod_val = mod_param.reduce(value_list)
+                getattr(self.function_object.parameters, mod_param.attrib_name).set(aggregated_mod_val, execution_id)
                 function_param = self.function_object.params[mod_param.attrib_name]
                 if not FUNCTION_PARAMS in self.stateParams:
                     self.stateParams[FUNCTION_PARAMS] = {function_param: aggregated_mod_val}
@@ -2028,6 +2030,10 @@ class State_Base(State):
                     self.stateParams[FUNCTION_PARAMS].update({function_param: aggregated_mod_val})
 
         # CALL STATE'S function TO GET ITS VALUE  ----------------------------------------------------------------------
+        # KDM 7/26/18: even though we pass these as runtime_params, those don't actually get used by the function; these
+        # values instead apparently are being set to attributes elsewhere. Though, these runtime_params could be helpful
+        # if trying to truly functionalize functions, as they could be passed in as proper arguments (e.g. runtime_params
+        # may be {'slope': 2}, which could be passed as **runtime_params to a Linear function with parameter slope)
         try:
             # pass only function params (which implement the effects of any ModulatoryProjections)
             function_params = self.stateParams[FUNCTION_PARAMS]
