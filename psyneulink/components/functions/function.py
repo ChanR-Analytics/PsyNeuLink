@@ -6814,7 +6814,7 @@ class DriftDiffusionIntegrator(Integrator):  # ---------------------------------
         rate = np.array(self.get_current_function_param(RATE)).astype(float)
         offset = self.get_current_function_param(OFFSET)
         noise = self.get_current_function_param(NOISE)
-        threshold = self.get_current_function_param(THRESHOLD)
+        threshold = self.get_current_function_param(THRESHOLD, execution_id)
         time_step_size = self.get_current_function_param(TIME_STEP_SIZE)
 
         previous_value = np.atleast_2d(self.get_previous_value(execution_id))
@@ -8919,6 +8919,7 @@ class BogaczEtAl(IntegratorFunction):  # ---------------------------------------
         threshold = Param(1.0, modulable=True)
         noise = Param(0.5, modulable=True)
         t0 = .200
+        bias = 0.0
 
     @tc.typecheck
     def __init__(self,
@@ -8985,13 +8986,13 @@ class BogaczEtAl(IntegratorFunction):  # ---------------------------------------
 
         variable = self._check_args(variable=variable, execution_id=execution_id, params=params, context=context)
 
-        attentional_drift_rate = float(self.get_current_function_param(DRIFT_RATE))
+        attentional_drift_rate = float(self.get_current_function_param(DRIFT_RATE, execution_id))
         stimulus_drift_rate = float(variable)
         drift_rate = attentional_drift_rate * stimulus_drift_rate
-        threshold = float(self.get_current_function_param(THRESHOLD))
-        starting_point = float(self.get_current_function_param(STARTING_POINT))
-        noise = float(self.get_current_function_param(NOISE))
-        t0 = float(self.get_current_function_param(NON_DECISION_TIME))
+        threshold = float(self.get_current_function_param(THRESHOLD, execution_id))
+        starting_point = float(self.get_current_function_param(STARTING_POINT, execution_id))
+        noise = float(self.get_current_function_param(NOISE, execution_id))
+        t0 = float(self.get_current_function_param(NON_DECISION_TIME, execution_id))
 
         # drift_rate = float(self.drift_rate) * float(variable)
         # threshold = float(self.threshold)
@@ -8999,7 +9000,9 @@ class BogaczEtAl(IntegratorFunction):  # ---------------------------------------
         # noise = float(self.noise)
         # t0 = float(self.t0)
 
-        self.bias = bias = (starting_point + threshold) / (2 * threshold)
+        bias = (starting_point + threshold) / (2 * threshold)
+        self.bias = bias
+        self.parameters.bias.set(bias, execution_id)
 
         # Prevents div by 0 issue below:
         if bias <= 0:
