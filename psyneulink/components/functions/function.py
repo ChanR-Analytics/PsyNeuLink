@@ -751,7 +751,14 @@ class Function_Base(Function):
         try:
             return self.owner._parameter_states[param_name].parameters.value.get(execution_context)
         except (AttributeError, TypeError):
-            return getattr(self, param_name)
+            try:
+                val = getattr(self.parameters, param_name).get(execution_context)
+                if val is None:
+                    raise AttributeError
+                else:
+                    return val
+            except (AttributeError, TypeError):
+                return getattr(self, param_name)
 
     def get_previous_value(self, execution_context=None):
         # temporary method until previous values are integrated for all parameters

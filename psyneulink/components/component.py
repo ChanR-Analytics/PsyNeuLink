@@ -2658,6 +2658,11 @@ class Component(object, metaclass=ComponentsMeta):
             self.paramInstanceDefaults = self.paramClassDefaults.copy()
 
     def _initialize_from_context(self, execution_context, base_execution_context=None, override=True):
+        try:
+            self.function_object._initialize_from_context(execution_context, base_execution_context, override)
+        except AttributeError:
+            pass
+
         for param in self.stateful_parameters:
             param._initialize_from_context(execution_context, base_execution_context, override)
 

@@ -557,11 +557,11 @@ def _compute_EVC(ctlr, allocation_vector, runtime_params, context, execution_id=
 
         if isinstance(mechanism.function_object, Integrator):
             for attr in mechanism.function_object.stateful_attributes:
-                reinitialization_value.append(getattr(mechanism.function_object, attr))
+                reinitialization_value.append(mechanism.function_object.get_current_function_param(attr, execution_id))
         elif hasattr(mechanism, "integrator_function"):
             if isinstance(mechanism.integrator_function, Integrator):
                 for attr in mechanism.integrator_function.stateful_attributes:
-                    reinitialization_value.append(getattr(mechanism.integrator_function, attr))
+                    reinitialization_value.append(mechanism.integrator_function.get_current_function_param(attr, execution_id))
 
         reinitialization_values[mechanism] = reinitialization_value
 
