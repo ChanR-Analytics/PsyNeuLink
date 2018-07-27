@@ -59,14 +59,14 @@ class TestContrastiveHebbian:
         inputs_dict = {R:[1,0,1,0]}
         S.run(num_trials=4,
               inputs=inputs_dict)
-        assert R.current_execution_time.pass_ == 5
-        np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].value,
+        assert S.scheduler_processing.get_clock(S).get_total_times_relative(pnl.TimeScale.PASS, pnl.TimeScale.TRIAL, 3) == 5
+        np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].parameters.value.get(S),
                                    [1.20074767, 0.0, 1.20074767, 0.0])
         np.testing.assert_allclose(R.plus_phase_activity, [1.20074767, 0.0, 1.20074767, 0.0])
         np.testing.assert_allclose(R.minus_phase_activity, [0.0, 0.0, 0.0, 0.0])
-        np.testing.assert_allclose(R.output_states[pnl.CURRENT_ACTIVITY_OUTPUT].value, [1.20074767, 0.0, 1.20074767, 0.0])
+        np.testing.assert_allclose(R.output_states[pnl.CURRENT_ACTIVITY_OUTPUT].parameters.value.get(S), [1.20074767, 0.0, 1.20074767, 0.0])
         np.testing.assert_allclose(
-            R.recurrent_projection.mod_matrix,
+            R.recurrent_projection.get_mod_matrix(S),
             [
                 [0.0,         0.0,         0.2399363,  0.0 ],
                 [0.0,         0.0,         0.0,       0.0  ],
@@ -76,12 +76,12 @@ class TestContrastiveHebbian:
         )
 
         # Reset state so learning of new pattern is "uncontaminated" by activity from previous one
-        R.output_state.value = [0,0,0,0]
+        R.output_state.reinitialize([0, 0, 0, 0], execution_context=S)
         inputs_dict = {R:[0,1,0,1]}
         S.run(num_trials=4,
               inputs=inputs_dict)
         np.testing.assert_allclose(
-            R.recurrent_projection.mod_matrix,
+            R.recurrent_projection.get_mod_matrix(S),
             [
                 [0.0,        0.0,        0.2399363,   0.0      ],
                 [0.0,        0.0,        0.0,        0.2399363 ],
@@ -89,9 +89,7 @@ class TestContrastiveHebbian:
                 [0.0,        0.2399363,   0.0,        0.0      ]
             ]
         )
-        np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].value, [0.0, 1.20074767, 0.0, 1.20074767])
-        np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].value,
-                                   [ 0.0, 1.20074767, 0.0, 1.20074767])
+        np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].parameters.value.get(S), [0.0, 1.20074767, 0.0, 1.20074767])
         np.testing.assert_allclose(R.plus_phase_activity, [0.0, 1.20074767, 0.0, 1.20074767])
         np.testing.assert_allclose(R.minus_phase_activity, [0.0, 0.0, 0.0, 0.0])
 
@@ -124,15 +122,15 @@ class TestContrastiveHebbian:
         inputs_dict = {R:[1,0,1,0]}
         S.run(num_trials=4,
               inputs=inputs_dict)
-        assert R.current_execution_time.pass_ == 18
-        np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].value,
+        assert R.get_current_execution_time(S).pass_ == 18
+        np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].parameters.value.get(S),
                                    [1.14142296, 0.0, 1.14142296, 0.0])
         np.testing.assert_allclose(R.plus_phase_activity, [1.14142296, 0.0, 1.14142296, 0.0])
         np.testing.assert_allclose(R.minus_phase_activity, [0.0, 0.0, 0.0, 0.0])
-        np.testing.assert_allclose(R.output_states[pnl.CURRENT_ACTIVITY_OUTPUT].value,
+        np.testing.assert_allclose(R.output_states[pnl.CURRENT_ACTIVITY_OUTPUT].parameters.value.get(S),
                                    [1.1414229612568625, 0.0, 1.1414229612568625, 0.0])
         np.testing.assert_allclose(
-            R.recurrent_projection.mod_matrix,
+            R.recurrent_projection.get_mod_matrix(S),
             [
                 [0.0,         0.0,         0.22035998,  0.0        ],
                 [0.0,         0.0,         0.0,         0.0        ],
@@ -141,12 +139,12 @@ class TestContrastiveHebbian:
             ]
         )
         # Reset state so learning of new pattern is "uncontaminated" by activity from previous one
-        R.output_state.value = [0,0,0,0]
+        R.output_state.reinitialize([0, 0, 0, 0], execution_context=S)
         inputs_dict = {R:[0,1,0,1]}
         S.run(num_trials=4,
               inputs=inputs_dict)
         np.testing.assert_allclose(
-            R.recurrent_projection.mod_matrix,
+            R.recurrent_projection.get_mod_matrix(S),
             [
                 [0.0,        0.0,        0.22035998, 0.0       ],
                 [0.0,        0.0,        0.0,        0.22035998],
@@ -154,9 +152,9 @@ class TestContrastiveHebbian:
                 [0.0,        0.22035998, 0.0,        0.        ]
             ]
         )
-        np.testing.assert_allclose(R.output_states[pnl.CURRENT_ACTIVITY_OUTPUT].value,
+        np.testing.assert_allclose(R.output_states[pnl.CURRENT_ACTIVITY_OUTPUT].parameters.value.get(S),
                                    [0.0, 1.1414229612568625, 0.0, 1.1414229612568625])
-        np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].value,
+        np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].parameters.value.get(S),
                                    [ 0.0, 1.14142296, 0.0, 1.14142296])
         np.testing.assert_allclose(R.plus_phase_activity, [0.0, 1.14142296, 0.0, 1.14142296])
         np.testing.assert_allclose(R.minus_phase_activity, [0.0, 0.0, 0.0, 0.0])

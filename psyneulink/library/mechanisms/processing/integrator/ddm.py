@@ -346,7 +346,7 @@ from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.keywords import ALLOCATION_SAMPLES, FUNCTION, FUNCTION_PARAMS, INITIALIZING, INPUT_STATE_VARIABLES, NAME, OUTPUT_STATES, OWNER_VALUE, VARIABLE, kwPreferenceSetName
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set, kpReportOutputPref
 from psyneulink.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel
-from psyneulink.globals.utilities import is_numeric, is_same_function_spec, object_has_single_value
+from psyneulink.globals.utilities import is_numeric, is_same_function_spec, object_has_single_value, parse_execution_context
 
 __all__ = [
     'DDM', 'DDM_OUTPUT', 'DDM_standard_output_states', 'DDMError',
@@ -1107,14 +1107,14 @@ class DDM(ProcessingMechanism_Base):
             #     """
             #     # IMPLEMENTATION NOTE:  TBI when time_step is implemented for DDM
 
-    def reinitialize(self, *args):
+    def reinitialize(self, *args, execution_context=None):
         from psyneulink.components.functions.function import Integrator
 
         # (1) reinitialize function, (2) update mechanism value, (3) update output states
         if isinstance(self.function_object, Integrator):
-            new_values = self.function_object.reinitialize(*args)
-            self.value = np.array(new_values)
-            self._update_output_states(context="REINITIALIZING")
+            new_values = self.function_object.reinitialize(*args, execution_context=execution_context)
+            self.parameters.value.set(np.array(new_values), execution_context, override=True)
+            self._update_output_states(execution_id=parse_execution_context(execution_context), context="REINITIALIZING")
 
     def is_finished(self, execution_context=None):
         # find the single numeric entry in previous_value

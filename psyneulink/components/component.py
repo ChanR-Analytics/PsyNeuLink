@@ -995,6 +995,9 @@ class ParamAlias(types.SimpleNamespace, metaclass=_ParamAliasMeta):
     def set(self, value, execution_context=None, override=False):
         self.source.set(value, execution_context, override)
 
+    def _initialize_from_context(self, execution_context, base_execution_context=None, override=True):
+        self.source._initialize_from_context(execution_context, base_execution_context, override)
+
 
 class Parameters(ParamsTemplate):
     _parsing_method_prefix = '_parse_'
@@ -3357,6 +3360,15 @@ class Component(object, metaclass=ComponentsMeta):
             return self._current_execution_time
         except AttributeError:
             self._update_current_execution_time(self.context.string)
+
+    def get_current_execution_time(self, execution_context=None):
+        if execution_context is None:
+            return self.current_execution_time
+        else:
+            try:
+                return self.parameters.context.get(execution_context).composition.scheduler_processing.get_clock(execution_context).time
+            except AttributeError:
+                return None
 
     def _get_current_execution_time(self, context):
         from psyneulink.globals.log import _get_context

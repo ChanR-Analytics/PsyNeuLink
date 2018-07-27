@@ -4,11 +4,9 @@ import pytest
 
 from psyneulink.components.functions.function import PROB
 from psyneulink.components.functions.function import Reinforcement, SoftMax
-from psyneulink.components.mechanisms.processing.transfermechanism import \
-    TransferMechanism
+from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism
 from psyneulink.components.process import Process
-from psyneulink.components.projections.modulatory.learningprojection import \
-    LearningProjection
+from psyneulink.components.projections.modulatory.learningprojection import LearningProjection
 from psyneulink.components.system import System
 
 
@@ -49,7 +47,7 @@ def test_reinforcement():
         print("\n\n**** TRIAL: ", system.scheduler_processing.clock.simple_time)
 
     def show_weights():
-        print('Reward prediction weights: \n', action_selection.input_states[0].path_afferents[0].mod_matrix)
+        print('Reward prediction weights: \n', action_selection.input_states[0].path_afferents[0].get_mod_matrix(s))
         print('\nAction selected:  {}; predicted reward: {}'.format(
             np.nonzero(action_selection.output_state.value)[0][0],
             action_selection.output_state.value[np.nonzero(action_selection.output_state.value)[0][0]],
@@ -93,7 +91,7 @@ def test_reinforcement():
         (pytest.helpers.expand_np_ndarray(mech_learning_input_to_action.output_states.values), pytest.helpers.expand_np_ndarray([
             [np.array([0.        , 0.        , 0.38581875]), np.array([0.        , 0.        , 0.38581875])]
         ])),
-        (reward_prediction_weights.mod_matrix, np.array([
+        (reward_prediction_weights.get_mod_matrix(s), np.array([
             [1.,         0.,         0.        ],
             [0.,         3.38417298, 0.        ],
             [0.,         0.,         2.66944375],

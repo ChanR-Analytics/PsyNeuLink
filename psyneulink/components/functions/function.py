@@ -5552,6 +5552,7 @@ class Integrator(IntegratorFunction):  # ---------------------------------------
         value = []
         for i in range(len(self.stateful_attributes)):
             setattr(self, self.stateful_attributes[i], reinitialization_values[i])
+            getattr(self.parameters, self.stateful_attributes[i]).set(reinitialization_values[i], execution_context, override=True)
             value.append(getattr(self, self.stateful_attributes[i]))
 
         self.parameters.value.set(value, execution_context, override=True)

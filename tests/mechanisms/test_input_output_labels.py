@@ -181,7 +181,7 @@ class TestMechanismTargetLabels:
 
         learned_matrix = []
         def record_matrix_after_trial():
-            learned_matrix.append(M2.path_afferents[0].mod_matrix)
+            learned_matrix.append(M2.path_afferents[0].get_mod_matrix(S))
         S.run(inputs=['red', 'green', 'green', 'red'],
               targets=['red', 'green', 'green', 'red'],
               call_after_trial=record_matrix_after_trial)
@@ -207,7 +207,7 @@ class TestMechanismTargetLabels:
         learned_matrix = []
         count = []
         def record_matrix_after_trial():
-            learned_matrix.append(M2.path_afferents[0].mod_matrix)
+            learned_matrix.append(M2.path_afferents[0].get_mod_matrix(S))
             count.append(1)
 
 
@@ -239,7 +239,7 @@ class TestMechanismTargetLabels:
         learned_matrix = []
         count = []
         def record_matrix_after_trial():
-            learned_matrix.append(M2.path_afferents[0].mod_matrix)
+            learned_matrix.append(M2.path_afferents[0].get_mod_matrix(S))
             count.append(1)
 
 
