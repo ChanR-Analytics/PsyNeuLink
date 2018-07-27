@@ -304,7 +304,7 @@ from psyneulink.components.component import Param, function_type, method_type
 from psyneulink.components.functions.function import CombinationFunction, Exponential, IntegratorFunction, Linear, Reduce, SimpleIntegrator, TransferFunction, _is_modulation_param, is_function_type
 from psyneulink.components.shellclasses import Function
 from psyneulink.components.states.modulatorysignals.modulatorysignal import ModulatorySignal
-from psyneulink.components.states.outputstate import SEQUENTIAL, _parse_output_state_variable
+from psyneulink.components.states.outputstate import SEQUENTIAL, _output_state_variable_getter
 from psyneulink.components.states.state import State_Base
 from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.defaults import defaultControlAllocation
@@ -620,7 +620,7 @@ class ControlSignal(ModulatorySignal):
         # NOTE: if the specification of this getter is happening in several other classes, should consider
         # refactoring Param to allow individual attributes to be inherited, othwerise, leaving this is an
         # isolated case
-        variable = Param(np.array(defaultControlAllocation), aliases='allocation', getter=_parse_output_state_variable)
+        variable = Param(np.array(defaultControlAllocation), aliases='allocation', getter=_output_state_variable_getter)
         allocation_samples = Param(np.arange(0.1, 1.01, 0.3), modulable=True)
         cost_options = ControlSignalCosts.DEFAULTS
         intensity_cost_function = Exponential

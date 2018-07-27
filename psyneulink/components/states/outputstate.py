@@ -714,6 +714,9 @@ def _parse_output_state_variable(variable, owner, execution_id=None, output_stat
     return fct_variable
 
 
+def _output_state_variable_getter(owning_component=None, execution_id=None, output_state_name=None):
+    return _parse_output_state_variable(owning_component._variable_spec, owning_component.owner, execution_id, output_state_name)
+
 
 class OutputStateError(Exception):
     def __init__(self, error_value):
@@ -921,7 +924,7 @@ class OutputState(State_Base):
     #     kp<pref>: <setting>...}
 
     class Params(State_Base.Params):
-        variable = Param(np.array([0]), read_only=True, getter=_parse_output_state_variable)
+        variable = Param(np.array([0]), read_only=True, getter=_output_state_variable_getter)
 
     paramClassDefaults = State_Base.paramClassDefaults.copy()
     paramClassDefaults.update({PROJECTION_TYPE: MAPPING_PROJECTION,
@@ -997,9 +1000,6 @@ class OutputState(State_Base):
 
         if not is_numeric(variable):
             self._variable = variable
-            # can't assign here because .parameters has not been initialized for this instance yet,
-            # so it still refers to the class parameters
-            variable_getter = functools.partial(self.parameters.variable.getter, variable=self._variable_spec)
 
         # # MODIFIED 3/10/18 NEW:
         # # FIX: SHOULD HANDLE THIS MORE GRACEFULLY IN _instantiate_state and/or instaniate_output_state
@@ -1029,9 +1029,6 @@ class OutputState(State_Base):
                          function=function,
                          )
 
-        if variable_getter is not None:
-            self.parameters.variable.getter = variable_getter
-
     def _validate_against_reference_value(self, reference_value):
         """Validate that State.variable is compatible with the reference_value
 
@@ -1049,7 +1046,6 @@ class OutputState(State_Base):
         #    the value was a reference_value generated during initialization/parsing and passed in the constructor
         if self._variable_spec is None or is_numeric(self._variable_spec):
             self._variable_spec = DEFAULT_VARIABLE_SPEC
-            self.parameters.variable.getter = functools.partial(self.class_parameters.variable.getter, variable=self._variable_spec)
 
     def _instantiate_projections(self, projections, context=None):
         """Instantiate Projections specified in PROJECTIONS entry of params arg of State's constructor
