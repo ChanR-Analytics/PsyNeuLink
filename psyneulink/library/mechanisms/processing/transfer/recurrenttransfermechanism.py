@@ -272,6 +272,30 @@ class RECURRENT_OUTPUT():
     #     setattr(DDM_OUTPUT.__class__, item, item)
 
 
+def _recurrent_transfer_mechanism_matrix_getter(owning_component=None, execution_id=None):
+    from psyneulink.library.projections.pathway.autoassociativeprojection import get_auto_matrix, get_hetero_matrix
+
+    try:
+        a = get_auto_matrix(owning_component.parameters.auto.get(execution_id), owning_component.size[0])
+        c = get_hetero_matrix(owning_component.parameters.hetero.get(execution_id), owning_component.size[0])
+        return a + c
+    except TypeError:
+        return None
+
+
+def _recurrent_transfer_mechanism_matrix_setter(value, owning_component=None, execution_id=None):
+    try:
+        value = get_matrix(value, owning_component.size[0], owning_component.size[0])
+    except AttributeError:
+        pass
+    temp_matrix = value.copy()
+    owning_component.parameters.auto.set(np.diag(temp_matrix).copy(), execution_id)
+    np.fill_diagonal(temp_matrix, 0)
+    owning_component.parameters.hetero.set(temp_matrix, execution_id)
+
+    return value
+
+
 # IMPLEMENTATION NOTE:  IMPLEMENTS OFFSET PARAM BUT IT IS NOT CURRENTLY BEING USED
 class RecurrentTransferMechanism(TransferMechanism):
     """
@@ -721,7 +745,7 @@ class RecurrentTransferMechanism(TransferMechanism):
     componentType = RECURRENT_TRANSFER_MECHANISM
 
     class Params(TransferMechanism.Params):
-        matrix = HOLLOW_MATRIX
+        matrix = Param(HOLLOW_MATRIX, modulable=True, getter=_recurrent_transfer_mechanism_matrix_getter, setter=_recurrent_transfer_mechanism_matrix_setter)
 
         noise = Param(0.0, modulable=True)
         smoothing_factor = Param(0.5, modulable=True)

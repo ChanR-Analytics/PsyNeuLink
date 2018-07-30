@@ -697,7 +697,7 @@ class TestRecurrentTransferMechanismInSystem:
         s.run(inputs={R: [[1, 2, 3, 4]]})
         np.testing.assert_allclose(R.parameters.value.get(s), [[1., 2., 3., 4.]])
         np.testing.assert_allclose(T.parameters.value.get(s), [[10., 10., 10.]])
-        R.auto = 0
+        R.parameters.auto.set(0, s)
         s.run(inputs={R: [[5, 6, 7, 8]]})
         np.testing.assert_allclose(R.parameters.value.get(s), [[-4, -2, 0, 2]])
         np.testing.assert_allclose(T.parameters.value.get(s), [[-4, -4, -4]])
