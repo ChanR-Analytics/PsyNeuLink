@@ -378,7 +378,7 @@ class AutoAssociativeLearningMechanism(LearningMechanism):
         # IMPLEMENTATION NOTE:  skip LearningMechanism's implementation of _execute
         #                       as it assumes projections from other LearningMechanisms
         #                       which are not relevant to an autoassociative projection
-        self.learning_signal = super(LearningMechanism, self)._execute(
+        learning_signal = super(LearningMechanism, self)._execute(
             variable=variable,
             execution_id=execution_id,
             runtime_params=runtime_params,
@@ -401,8 +401,12 @@ class AutoAssociativeLearningMechanism(LearningMechanism):
         #                time.time_step))
         #     print("{} weight change matrix: \n{}\n".format(self.name, self.learning_signal))
 
-        self.value = [self.learning_signal]
-        return self.value
+        value = np.array([learning_signal])
+
+        self.parameters.learning_signal.set(learning_signal, execution_id, override=True)
+        self.parameters.value.set(value, execution_id, override=True)
+
+        return value
 
     def _update_output_states(self, execution_id=None, runtime_params=None, context=None):
         '''Update the weights for the AutoAssociativeProjection for which this is the AutoAssociativeLearningMechanism
