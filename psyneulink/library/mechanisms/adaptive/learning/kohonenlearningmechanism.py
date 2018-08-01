@@ -90,12 +90,10 @@ from psyneulink.components.component import parameter_keywords
 from psyneulink.components.functions.function import Hebbian, ModulationParam, _is_modulation_param, is_function_type
 from psyneulink.components.mechanisms.adaptive.learning.learningmechanism import \
     LearningMechanism, LearningType, LearningTiming, ACTIVATION_INPUT, ACTIVATION_OUTPUT
-from psyneulink.components.states.parameterstate import ParameterState
 from psyneulink.components.projections.projection import Projection_Base, projection_keywords
+from psyneulink.components.states.parameterstate import ParameterState
 from psyneulink.globals.context import ContextFlags
-from psyneulink.globals.keywords import \
-    KOHONEN_LEARNING_MECHANISM, CONTROL_PROJECTIONS, INPUT_STATES, \
-    LEARNING, LEARNING_PROJECTION, LEARNING_SIGNAL, NAME, OUTPUT_STATES, OWNER_VALUE, VARIABLE
+from psyneulink.globals.keywords import CONTROL_PROJECTIONS, INPUT_STATES, KOHONEN_LEARNING_MECHANISM, LEARNING, LEARNING_PROJECTION, LEARNING_SIGNAL, NAME, OUTPUT_STATES, OWNER_VALUE, VARIABLE
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.utilities import is_numeric, parameter_spec
