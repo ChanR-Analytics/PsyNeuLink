@@ -2271,7 +2271,7 @@ class Mechanism_Base(Mechanism):
         )
 
         # MODIFIED 7/14/18 NEW:
-        self._update_previous_value()
+        self._update_previous_value(execution_id)
         # MODIFIED 7/14/18 END
 
         # UPDATE VARIABLE and INPUT STATE(S)

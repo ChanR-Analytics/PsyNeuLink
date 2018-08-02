@@ -1103,7 +1103,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
 
         if self.termination_condition is CONVERGENCE:
             self.convergence_criterion = self.termination_criterion
-            self.phase_terminated = self.is_converged
+            self.phase_terminated = self.is_converged(execution_id)
         elif self.termination_condition is COUNT:
             self.phase_terminated = (self.phase_execution_count == self.termination_criterion)
         else:
@@ -1134,7 +1134,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
                 #    both the integrator_function's previous_value
                 #    and the Mechanism's current activity (which is returned as its input)
                 if not self.continuous:
-                    self.reinitialize(self.initial_value)
+                    self.reinitialize(self.initial_value, execution_context=execution_id)
                     self.current_activity = self.initial_value
                 self.termination_criterion = self.plus_phase_termination_criterion
                 self.termination_condition = self.plus_phase_termination_condition
@@ -1148,7 +1148,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
 
     def _parse_function_variable(self, variable, execution_id=None, context=None):
         function_variable = self.combination_function(variable, context)
-        return super(RecurrentTransferMechanism, self)._parse_function_variable(function_variable, context)
+        return super(RecurrentTransferMechanism, self)._parse_function_variable(function_variable, execution_id=execution_id, context=context)
 
     def combination_function(self, variable, context):
         # IMPLEMENTATION NOTE: use try and except here for efficiency: care more about execution than initialization
