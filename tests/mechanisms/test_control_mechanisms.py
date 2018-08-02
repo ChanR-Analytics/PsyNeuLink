@@ -35,7 +35,7 @@ class TestLCControlMechanism:
             )
         )
         for output_state in LC.output_states:
-            output_state.value *= starting_value_LC
+            output_state.parameters.value.set(output_state.value * starting_value_LC, S, override=True)
 
         LC.reinitialize_when = pnl.Never()
         # THIS CURRENTLY DOES NOT WORK:
@@ -51,9 +51,9 @@ class TestLCControlMechanism:
         base_gain_assigned_to_B = []
 
         def report_trial(system):
-            gain_created_by_LC_output_state_1.append(LC.output_states[0].value[0])
-            mod_gain_assigned_to_A.append(A.mod_gain)
-            mod_gain_assigned_to_B.append(B.mod_gain)
+            gain_created_by_LC_output_state_1.append(LC.output_state.parameters.value.get(system))
+            mod_gain_assigned_to_A.append(A.get_mod_gain(system))
+            mod_gain_assigned_to_B.append(B.get_mod_gain(system))
             base_gain_assigned_to_A.append(A.function_object.gain)
             base_gain_assigned_to_B.append(B.function_object.gain)
 
