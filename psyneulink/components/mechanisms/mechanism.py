@@ -974,6 +974,10 @@ class MechParamsDict(UserDict):
     pass
 
 
+def _input_state_variables_getter(owning_component=None, execution_id=None):
+    return [input_state.parameters.variable.get(execution_id) for input_state in owning_component.input_states]
+
+
 class Mechanism_Base(Mechanism):
     """Base class for Mechanism.
 
@@ -1293,7 +1297,10 @@ class Mechanism_Base(Mechanism):
     class Params(Mechanism.Params):
         variable = Param(np.array([[0]]), read_only=True)
         value = Param(np.array([[0]]), read_only=True)
+        previous_value = Param(None, read_only=True)
         function = Linear
+
+        input_state_variables = Param(None, read_only=True, user=False, getter=_input_state_variables_getter)
 
     registry = MechanismRegistry
 
@@ -2430,11 +2437,8 @@ class Mechanism_Base(Mechanism):
 
         return np.array(self.input_values)
 
-    def _update_previous_value(self):
-        try:
-            self.previous_value = self.value
-        except:
-            self.previous_value = None
+    def _update_previous_value(self, execution_id=None):
+        self.parameters.previous_value.set(self.parameters.value.get(execution_id), execution_id, override=True)
 
     def _update_input_states(self, execution_id=None, runtime_params=None, context=None):
         """ Update value for each InputState in self.input_states:

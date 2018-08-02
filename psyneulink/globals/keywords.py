@@ -668,7 +668,8 @@ PARAMS_DICT = 'PARAMS_DICT'
 # as you want - the property "value" will be overwritten then
 output_state_spec_to_parameter_name = {
     OWNER_VARIABLE: VARIABLE,
-    OWNER_VALUE: VALUE
+    OWNER_VALUE: VALUE,
+    INPUT_STATE_VARIABLES: 'input_state_variables'
 }
 
 # Dictionaries of labels for input, output and target arrays

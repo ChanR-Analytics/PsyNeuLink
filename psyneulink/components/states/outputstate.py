@@ -675,7 +675,11 @@ def _parse_output_state_variable(variable, owner, execution_id=None, output_stat
             return spec
         elif isinstance(spec, tuple):
             # Tuple indexing item of owner's attribute (e.g.,: OWNER_VALUE, int))
-            owner_param_name = output_state_spec_to_parameter_name[spec[0]]
+            try:
+                owner_param_name = output_state_spec_to_parameter_name[spec[0]]
+            except KeyError:
+                owner_param_name = spec[0]
+
             try:
                 return getattr(owner.parameters, owner_param_name).get(execution_id)[spec[1]]
             except TypeError:
