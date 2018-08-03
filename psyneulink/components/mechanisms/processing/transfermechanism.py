@@ -1072,7 +1072,7 @@ class TransferMechanism(ProcessingMechanism_Base):
         value = self._clip_result(clip, value)
 
         # Used by update_previous_value, convergence_function and delta
-        self.parameters.value.set(value, execution_id, override=True)
+        self.parameters.value.set(np.atleast_2d(value), execution_id, override=True)
         self._current_value = np.atleast_2d(value)
 
         return value
