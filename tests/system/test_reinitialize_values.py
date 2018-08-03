@@ -149,11 +149,11 @@ class TestReinitializeValues:
 
             if isinstance(mechanism.function_object, Integrator):
                 for attr in mechanism.function_object.stateful_attributes:
-                    reinitialization_value.append(getattr(mechanism.function_object, attr))
+                    reinitialization_value.append(getattr(mechanism.function_object.parameters, attr).get(S))
             elif hasattr(mechanism, "integrator_function"):
                 if isinstance(mechanism.integrator_function, Integrator):
                     for attr in mechanism.integrator_function.stateful_attributes:
-                        reinitialization_value.append(getattr(mechanism.integrator_function, attr))
+                        reinitialization_value.append(getattr(mechanism.integrator_function.parameters, attr).get(S))
 
             reinitialization_values[mechanism] = reinitialization_value
 

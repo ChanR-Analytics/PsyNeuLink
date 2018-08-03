@@ -122,7 +122,7 @@ class TestContrastiveHebbian:
         inputs_dict = {R:[1,0,1,0]}
         S.run(num_trials=4,
               inputs=inputs_dict)
-        assert S.scheduler_processing.get_clock(S).previous_time.pass_ == 18
+        assert S.scheduler_processing.get_clock(S).previous_time.pass_ == 19
         np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].parameters.value.get(S),
                                    [1.14142296, 0.0, 1.14142296, 0.0])
         np.testing.assert_allclose(R.plus_phase_activity, [1.14142296, 0.0, 1.14142296, 0.0])
