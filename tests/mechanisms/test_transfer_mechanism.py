@@ -1237,7 +1237,7 @@ class TestIntegratorMode:
 
         S.run(inputs={T: [[1.5, 2.5], [3.5, 4.5]]})
 
-        result = T.value
+        result = T.parameters.value.get(S)
         # Expected results
         # integrator function:
         # input = [[1.5, 2.5], [3.5, 4.5]]  |  output = [[1.25, 2.25]], [3.25, 4.25]]
@@ -1252,7 +1252,7 @@ class TestIntegratorMode:
         S2 = SoftMax()
         expected_result_s2 = S2.function([[3.25, 4.25]])
 
-        assert np.allclose(expected_result_integrator, T.integrator_function_value)
+        assert np.allclose(expected_result_integrator, T.parameters.integrator_function_value.get(S))
         assert np.allclose(expected_result_s1, result[0])
         assert np.allclose(expected_result_s2, result[1])
 

@@ -312,7 +312,7 @@ from psyneulink.components.mechanisms.processing.processingmechanism import Proc
 from psyneulink.components.states.inputstate import InputState
 from psyneulink.components.states.outputstate import OutputState, PRIMARY, StandardOutputStates, standard_output_states
 from psyneulink.globals.context import ContextFlags
-from psyneulink.globals.keywords import DIFFERENCE, FUNCTION, INITIALIZER, MAX_ABS_INDICATOR, MAX_ABS_VAL, MAX_INDICATOR, MAX_VAL, MEAN, MEDIAN, NAME, NOISE, SELECTION_FUNCTION_TYPE, OWNER_VALUE, PREVIOUS_VALUE, PROB, RATE, RESULT, RESULTS, STANDARD_DEVIATION, TRANSFER_FUNCTION_TYPE, TRANSFER_MECHANISM, VARIABLE, VARIANCE
+from psyneulink.globals.keywords import DIFFERENCE, FUNCTION, INITIALIZER, MAX_ABS_INDICATOR, MAX_ABS_VAL, MAX_INDICATOR, MAX_VAL, MEAN, MEDIAN, NAME, NOISE, OWNER_VALUE, PREVIOUS_VALUE, PROB, RATE, RESULT, RESULTS, SELECTION_FUNCTION_TYPE, STANDARD_DEVIATION, TRANSFER_FUNCTION_TYPE, TRANSFER_MECHANISM, VARIABLE, VARIANCE
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.utilities import append_type_to_name, iscompatible
@@ -723,6 +723,7 @@ class TransferMechanism(ProcessingMechanism_Base):
         convergence_criterion = Param(0.01, modulable=True)
         integration_rate = Param(0.5, modulable=True)
         max_passes = Param(1000, modulable=True)
+        integrator_function_value = Param([[0]], read_only=True)
 
     @tc.typecheck
     def __init__(self,
@@ -1102,14 +1103,15 @@ class TransferMechanism(ProcessingMechanism_Base):
         if integrator_mode:
             initial_value = self.get_current_mechanism_param("initial_value", execution_id)
 
-            self.integrator_function_value = self._get_integrated_function_input(
+            value = self._get_integrated_function_input(
                 variable,
                 initial_value,
                 noise,
                 context,
                 execution_id=execution_id
             )
-            return self.integrator_function_value
+            self.parameters.integrator_function_value.set(value, execution_id, override=True)
+            return value
 
         else:
             return self._get_instantaneous_function_input(variable, noise)
