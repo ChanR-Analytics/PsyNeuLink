@@ -701,7 +701,7 @@ class TestRecurrentTransferMechanismInSystem:
         s.run(inputs={R: [[5, 6, 7, 8]]})
         np.testing.assert_allclose(R.parameters.value.get(s), [[-4, -2, 0, 2]])
         np.testing.assert_allclose(T.parameters.value.get(s), [[-4, -4, -4]])
-        R.recurrent_projection.auto = [1, 1, 2, 4]
+        R.recurrent_projection.parameters.auto.set([1, 1, 2, 4], s)
         s.run(inputs={R: [[12, 11, 10, 9]]})
         np.testing.assert_allclose(R.parameters.value.get(s), [[8, 11, 14, 23]])
         np.testing.assert_allclose(T.parameters.value.get(s), [[56, 56, 56]])
@@ -719,11 +719,11 @@ class TestRecurrentTransferMechanismInSystem:
         s.run(inputs={R: [[1, 2, 3, -0.5]]})
         np.testing.assert_allclose(R.parameters.value.get(s), [[1., 2., 3., -0.5]])
         np.testing.assert_allclose(T.parameters.value.get(s), [[5.5, 5.5, 5.5, 5.5, 5.5]])
-        R.hetero = 0
+        R.parameters.hetero.set(0, s)
         s.run(inputs={R: [[-1.5, 0, 1, 2]]})
         np.testing.assert_allclose(R.parameters.value.get(s), [[-.5, 4, 10, 0]])
         np.testing.assert_allclose(T.parameters.value.get(s), [[13.5, 13.5, 13.5, 13.5, 13.5]])
-        R.hetero = np.array([[-1, 2, 3, 1.5]] * 4)
+        R.parameters.hetero.set(np.array([[-1, 2, 3, 1.5]] * 4), s)
         s.run(inputs={R: [[12, 11, 10, 9]]})
         np.testing.assert_allclose(R.parameters.value.get(s), [[-2.5, 38, 50.5, 29.25]])
         np.testing.assert_allclose(T.parameters.value.get(s), [[115.25, 115.25, 115.25, 115.25, 115.25]])
@@ -741,11 +741,11 @@ class TestRecurrentTransferMechanismInSystem:
         s.run(inputs={R: [[1, 2, 3, -0.5]]})
         np.testing.assert_allclose(R.parameters.value.get(s), [[1., 2., 3., -0.5]])
         np.testing.assert_allclose(T.parameters.value.get(s), [[5.5, 5.5, 5.5, 5.5, 5.5]])
-        R.hetero = 0
+        R.parameters.hetero.set(0, s)
         s.run(inputs={R: [[-1.5, 0, 1, 2]]})
         np.testing.assert_allclose(R.parameters.value.get(s), [[-.5, 4, 10, 0]])
         np.testing.assert_allclose(T.parameters.value.get(s), [[13.5, 13.5, 13.5, 13.5, 13.5]])
-        R.auto = [0, 0, 0, 0]
+        R.parameters.auto.set([0, 0, 0, 0], s)
         s.run(inputs={R: [[12, 11, 10, 9]]})
         np.testing.assert_allclose(R.parameters.value.get(s), [[12, 11, 10, 9]])
         np.testing.assert_allclose(T.parameters.value.get(s), [[42, 42, 42, 42, 42]])
@@ -760,7 +760,7 @@ class TestRecurrentTransferMechanismInSystem:
             function=Linear)
         p = Process(size=4, pathway=[T, R], prefs=TestRecurrentTransferMechanismInSystem.simple_prefs)
         s = System(processes=[p], prefs=TestRecurrentTransferMechanismInSystem.simple_prefs)
-        R.matrix = [[2, 0, 1, 3]] * 4
+        R.parameters.matrix.set([[2, 0, 1, 3]] * 4, s)
         s.run(inputs={T: [[1, 2, 3, 4]]})
         np.testing.assert_allclose(T.parameters.value.get(s), [[1, 2, 3, 4]])
         np.testing.assert_allclose(R.parameters.value.get(s), [[1, 2, 3, 4]])
@@ -865,7 +865,7 @@ class TestRecurrentTransferMechanismInSystem:
         np.testing.assert_allclose(R.output_state.parameters.value.get(S), [1.18518086, 0.0, 1.18518086, 0.0])
 
         # Reset state so learning of new pattern is "uncontaminated" by activity from previous one
-        R.output_state.value = [0,0,0,0]
+        R.output_state.parameters.value.set([0, 0, 0, 0], S, override=True)
         inputs_dict = {R:[0,1,0,1]}
         S.run(num_trials=4,
               inputs=inputs_dict)

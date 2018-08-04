@@ -169,6 +169,7 @@ Class Reference
 
 import numbers
 import warnings
+
 from collections import Iterable
 from types import MethodType
 
@@ -288,10 +289,12 @@ def _recurrent_transfer_mechanism_matrix_setter(value, owning_component=None, ex
         value = get_matrix(value, owning_component.size[0], owning_component.size[0])
     except AttributeError:
         pass
-    temp_matrix = value.copy()
-    owning_component.parameters.auto.set(np.diag(temp_matrix).copy(), execution_id)
-    np.fill_diagonal(temp_matrix, 0)
-    owning_component.parameters.hetero.set(temp_matrix, execution_id)
+
+    if value is not None:
+        temp_matrix = value.copy()
+        owning_component.parameters.auto.set(np.diag(temp_matrix).copy(), execution_id)
+        np.fill_diagonal(temp_matrix, 0)
+        owning_component.parameters.hetero.set(temp_matrix, execution_id)
 
     return value
 
