@@ -2010,7 +2010,7 @@ class State_Base(State):
         # Handle ModulatoryProjection OVERRIDE
         #    if there is one and it wasn't been handled above (i.e., if paramValidation is set)
         if modulatory_override:
-            self.parameters.value.get(type_match(modulatory_override[1], type(self.defaults.value)), execution_id, override=True)
+            self.parameters.value.set(type_match(modulatory_override[1], type(self.defaults.value)), execution_id, override=True)
             return
 
         # AGGREGATE ModulatoryProjection VALUES  -----------------------------------------------------------------------

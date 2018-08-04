@@ -598,11 +598,7 @@ class ControlMechanism(AdaptiveMechanism_Base):
                                                     context=ContextFlags.CONSTRUCTOR)
 
         if system is not None:
-            for eff in self.efferents:
-                eff._enable_for_compositions(system)
-            for aff in self._objective_mechanism.afferents:
-                aff._enable_for_compositions(system)
-
+            self._enable_projections_for_compositions(system)
 
     def _validate_params(self, request_set, target_set=None, context=None):
         """Validate SYSTEM, MONITOR_FOR_CONTROL and CONTROL_SIGNALS
@@ -1109,6 +1105,12 @@ class ControlMechanism(AdaptiveMechanism_Base):
         for output_state in self.objective_mechanism.monitored_output_states:
             for eff in output_state.efferents:
                 eff._enable_for_compositions(compositions)
+
+        for eff in self.efferents:
+                eff._enable_for_compositions(compositions)
+
+        for aff in self._objective_mechanism.afferents:
+                aff._enable_for_compositions(compositions)
 
     def _initialize_from_context(self, execution_context, base_execution_context=None, override=True):
         self.objective_mechanism._initialize_from_context(execution_context, base_execution_context, override)

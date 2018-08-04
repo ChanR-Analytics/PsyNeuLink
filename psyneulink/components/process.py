@@ -460,6 +460,7 @@ import numpy as np
 import typecheck as tc
 
 from psyneulink.components.component import Component, Defaults, Param, function_type
+from psyneulink.components.mechanisms.adaptive.control.controlmechanism import ControlMechanism
 from psyneulink.components.mechanisms.mechanism import MechanismList, Mechanism_Base
 from psyneulink.components.mechanisms.processing.objectivemechanism import ObjectiveMechanism
 from psyneulink.components.projections.modulatory.learningprojection import LearningProjection
@@ -1118,6 +1119,9 @@ class Process(Process_Base):
                 mech._add_process(self, INTERNAL)
                 self._mechs.append(pathway[i])
             # self.mechanism_names.append(mech.name)
+
+            if isinstance(mech, ControlMechanism):
+                mech._enable_projections_for_compositions(self)
 
             # FIX: ADD RECURRENT PROJECTION AND MECHANISM
             # IMPLEMENTATION NOTE:  THIS IS A TOTAL HACK TO ALLOW SELF-RECURRENT MECHANISMS IN THE CURRENT SYSTEM
