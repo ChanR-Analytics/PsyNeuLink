@@ -2602,7 +2602,7 @@ class System(System_Base):
                     runtime_params[mechanism][param] = (runtime_params[mechanism][param], Always())
         return runtime_params
 
-    def initialize(self):
+    def initialize(self, execution_context=None):
         """Assign `initial_values <System.initialize>` to mechanisms designated as `INITIALIZE_CYCLE` \and
         contained in recurrent_init_mechanisms.
         """
@@ -2612,7 +2612,7 @@ class System(System_Base):
         # FIX: ADD SOFT_CLAMP AND HARD_CLAMP OPTIONS
         # FIX: ONLY ASSIGN ONES THAT RECEIVE PROJECTIONS
         for mech, value in self.initial_values.items():
-            mech.initialize(value)
+            mech.initialize(value, execution_context=None)
 
     def execute(self,
                 input=None,

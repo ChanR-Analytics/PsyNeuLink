@@ -2122,14 +2122,14 @@ class Process(Process_Base):
 
 
 
-    def initialize(self):
+    def initialize(self, execution_context=None):
         """Assign the values specified for each Mechanism in the process' `initial_values` attribute.  This usually
         occurs at the beginning of one or a series of executions invoked by a call to the Process` `execute
         <Process.execute>` or `run <Process.run>` methods.
         """
         # FIX:  INITIALIZE PROCESS INPUTS??
         for mech, value in self.initial_values.items():
-            mech.initialize(value)
+            mech.initialize(value, execution_context)
 
     def _initialize_from_context(self, execution_context, base_execution_context=None, override=True):
         for mech in self._mechs:

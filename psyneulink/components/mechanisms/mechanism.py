@@ -2475,7 +2475,7 @@ class Mechanism_Base(Mechanism):
         for state in self.output_states:
             state.update(execution_id=execution_id, params=runtime_params, context=context)
 
-    def initialize(self, value):
+    def initialize(self, value, execution_context=None):
         """Assign an initial value to the Mechanism's `value <Mechanism_Base.value>` attribute and update its
         `OutputStates <Mechanism_OutputStates>`.
 
@@ -2487,11 +2487,11 @@ class Mechanism_Base(Mechanism):
 
         """
         if self.paramValidationPref:
-            if not iscompatible(value, self.value):
+            if not iscompatible(value, self.defaults.value):
                 raise MechanismError("Initialization value ({}) is not compatiable with value of {}".
                                      format(value, append_type_to_name(self)))
-        self.value = np.atleast_1d(value)
-        self._update_output_states(context="INITIAL_VALUE")
+        self.parameters.value.set(np.atleast_1d(value), execution_context, override=True)
+        self._update_output_states(execution_id=execution_context, context="INITIAL_VALUE")
 
     def _report_mechanism_execution(self, input_val=None, params=None, output=None):
 

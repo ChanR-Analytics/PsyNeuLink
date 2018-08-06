@@ -3257,7 +3257,7 @@ class Component(object, metaclass=ComponentsMeta):
             # Immutable, so just assign value
             self.instance_defaults.value = value
 
-    def initialize(self):
+    def initialize(self, execution_context=None):
         raise ComponentError("{} class does not support initialize() method".format(self.__class__.__name__))
 
     def reinitialize(self, *args, execution_context=None):
