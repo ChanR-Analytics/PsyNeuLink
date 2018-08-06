@@ -2123,6 +2123,15 @@ class Process(Process_Base):
         for mech, value in self.initial_values.items():
             mech.initialize(value)
 
+    def _initialize_from_context(self, execution_context, base_execution_context=None, override=True):
+        for mech in self._mechs:
+            mech._initialize_from_context(execution_context, base_execution_context, override)
+
+        for proj in self.projections:
+            proj._initialize_from_context(execution_context, base_execution_context, override)
+
+        super()._initialize_from_context(execution_context, base_execution_context, override)
+
     def execute(
         self,
         input=None,

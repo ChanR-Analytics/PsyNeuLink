@@ -1327,6 +1327,11 @@ class RecurrentTransferMechanism(TransferMechanism):
             super().reinitialize(*args, execution_context=execution_context)
         self.parameters.previous_value.set(None, execution_context, override=True)
 
+    def _initialize_from_context(self, execution_context, base_execution_context=None, override=True):
+        self.recurrent_projection._initialize_from_context(execution_context, base_execution_context, override)
+
+        super()._initialize_from_context(execution_context, base_execution_context, override)
+
     @property
     def _learning_signal_source(self):
         '''Return default source of learning signal (`Primary OutputState <OutputState_Primary>)`

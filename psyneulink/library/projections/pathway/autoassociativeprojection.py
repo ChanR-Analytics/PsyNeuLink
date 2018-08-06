@@ -408,6 +408,9 @@ class AutoAssociativeProjection(MappingProjection):
         else:
             super(AutoAssociativeProjection, self.__class__).matrix.fset(self, setting)
 
+    def _initialize_from_context(self, execution_context, base_execution_context=None, override=True):
+        super()._initialize_from_context(execution_context, base_execution_context, override)
+
 
 # a helper function that takes a specification of `hetero` and returns a hollow matrix with the right values
 def get_hetero_matrix(raw_hetero, size):
