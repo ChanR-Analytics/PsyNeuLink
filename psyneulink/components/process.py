@@ -2140,6 +2140,7 @@ class Process(Process_Base):
             # Note:  DON'T include input arg, as that will be resolved by mechanism from its sender projections
             mechanism.context.execution_phase = ContextFlags.PROCESSING
             context = ContextFlags.PROCESS
+            mechanism.context.composition = self
             mechanism.execute(context=context)
             mechanism.context.execution_phase = ContextFlags.IDLE
 
@@ -2207,6 +2208,7 @@ class Process(Process_Base):
 
         for mechanism in self._learning_mechs:
             mechanism.context.execution_phase = ContextFlags.LEARNING
+            mechanism.context.composition = self
             mechanism.execute(context=context)
             mechanism.context.execution_phase = ContextFlags.IDLE
 
@@ -2240,6 +2242,7 @@ class Process(Process_Base):
                     #       since parameter_state.update() handles parsing of LearningProjection-specific params
                     projection.context.string = self.context.string.replace(EXECUTING, LEARNING + ' ')
                     projection.context.execution_phase = ContextFlags.LEARNING
+                    projection.context.composition = self
 
                     # For each parameter_state of the Projection
                     try:

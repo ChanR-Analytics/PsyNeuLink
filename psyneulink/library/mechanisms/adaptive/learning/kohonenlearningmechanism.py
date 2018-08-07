@@ -377,9 +377,9 @@ class KohonenLearningMechanism(LearningMechanism):
 
         # TEST PRINT
         if not self.context.initialization_status == ContextFlags.INITIALIZING:
-            if self.context.composition:
+            try:
                 time = self.context.composition.scheduler_processing.clock.simple_time
-            else:
+            except AttributeError:
                 time = self.current_execution_time
             print("\nEXECUTED KohonenLearningMechanism [CONTEXT: {}]\nTRIAL:  {}  TIME-STEP: {}".
                 format(self.context.flags_string,
@@ -400,7 +400,7 @@ class KohonenLearningMechanism(LearningMechanism):
 
         super()._update_output_states(runtime_params, context)
 
-        if self.context.composition:
+        if self.learning_enabled and self.context.composition:
             self.learned_projection.execute(context=ContextFlags.LEARNING)
             self.learned_projection.context.execution_phase = ContextFlags.IDLE
 

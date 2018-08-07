@@ -607,7 +607,7 @@ def _get_time(component, context_flags):
 
     system = ref_mech.context.composition
 
-    if system:
+    try:
         execution_flags = context_flags & ContextFlags.EXECUTION_PHASE_MASK
         if execution_flags == ContextFlags.PROCESSING or not execution_flags:
             t = system.scheduler_processing.clock.time
@@ -621,7 +621,7 @@ def _get_time(component, context_flags):
         else:
             t = None
 
-    else:
+    except AttributeError:
         if component.verbosePref:
             offender = "\'{}\'".format(component.name)
             if ref_mech is not component:
