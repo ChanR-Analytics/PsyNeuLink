@@ -444,20 +444,28 @@ class Scheduler(object):
         self.consideration_queue = dependencies
         logger.debug('Consideration queue: {0}'.format(self.consideration_queue))
 
+    # def _dfs_for_cycles(self, graph):
+
+
     def _call_toposort(self, graph):
 
         dependencies = {}
         removed_dependencies = {}
         for vert in graph.vertices:
-            dependencies[vert.component] = set()
-            removed_dependencies[vert.component] = set()
-            for parent in graph.get_parents_from_component(vert.component):
-                dependencies[vert.component].add(parent.component)
+            if vert.component not in dependencies:
+                dependencies[vert.component] = set()
+            for child in graph.get_children_from_component(vert.component):
+                if child.component not in dependencies:
+                    dependencies[child.component] = set()
+                dependencies[child.component].add(vert.component)
                 try:
                     list(toposort(dependencies))
                 except ValueError:
-                    dependencies[vert.component].remove(parent.component)
-                    removed_dependencies[vert.component].add(parent.component)
+                    # nodes_to_remove = []
+                    dependencies[child.component].remove(vert.component)
+                    if child.component not in removed_dependencies:
+                        removed_dependencies[child.component] = set()
+                    removed_dependencies[child.component].add(vert.component)
         return list(toposort(dependencies)), removed_dependencies
 
     def _init_consideration_queue_from_graph(self, graph):
