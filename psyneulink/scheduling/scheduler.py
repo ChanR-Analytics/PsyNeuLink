@@ -444,8 +444,16 @@ class Scheduler(object):
         self.consideration_queue = dependencies
         logger.debug('Consideration queue: {0}'.format(self.consideration_queue))
 
-    # def _dfs_for_cycles(self, graph):
+    def _dfs_for_cycles(self, dependencies, node, loop_start, visited, loop):
 
+        if node is loop_start:
+            return loop
+        if visited is None:
+            visited = set()
+        visited.add(node)
+        loop.append(node)
+        for node in dependencies[node] - visited:
+            return self._dfs_for_cycles(dependencies, node, loop_start, visited, loop)
 
     def _call_toposort(self, graph):
 
@@ -461,11 +469,21 @@ class Scheduler(object):
                 try:
                     list(toposort(dependencies))
                 except ValueError:
-                    # nodes_to_remove = []
-                    dependencies[child.component].remove(vert.component)
-                    if child.component not in removed_dependencies:
-                        removed_dependencies[child.component] = set()
-                    removed_dependencies[child.component].add(vert.component)
+                    cycle = self._dfs_for_cycles(dependencies, vert.component, child.component, None, [child.component])
+                    cycle.append(child.component)
+                    for i in range(len(cycle) - 1):
+                        node_a = cycle[i]
+                        node_b = cycle[i + 1]
+                        dependencies[node_a].remove(node_b)
+                        if node_a not in removed_dependencies:
+                            removed_dependencies[node_a] = set()
+                        removed_dependencies[node_a].add(node_b)
+
+                        if i != 0:
+                            for dependency in dependencies[cycle[0]]:
+                                dependencies[cycle[i]].add(dependency)
+
+
         return list(toposort(dependencies)), removed_dependencies
 
     def _init_consideration_queue_from_graph(self, graph):
