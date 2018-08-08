@@ -285,6 +285,13 @@ def _recurrent_transfer_mechanism_matrix_getter(owning_component=None, execution
 
 
 def _recurrent_transfer_mechanism_matrix_setter(value, owning_component=None, execution_id=None):
+    # KDM 8/3/18: This was attributed to a hack in how auto/hetero were implemented, but this behavior matches
+    # the existing behavior. Unsure if this is actually correct though
+    # KDM 8/7/18: removing the below because it has bad side effects for _instantiate_from_context, and it's not clear
+    # that it's the correct behavior. Similar reason for removing/not implementing auto/hetero setters
+    # if hasattr(owning_component, "recurrent_projection"):
+    #     owning_component.recurrent_projection.parameter_states["matrix"].function_object.parameters.previous_value.set(value, execution_id)
+
     try:
         value = get_matrix(value, owning_component.size[0], owning_component.size[0])
     except AttributeError:

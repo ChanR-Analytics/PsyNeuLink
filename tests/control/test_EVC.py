@@ -659,15 +659,6 @@ def test_laming_validation_specify_control_signals():
         val, expected = expected_output[i]
         np.testing.assert_allclose(val, expected, atol=1e-08, err_msg='Failed on expected_output[{0}]'.format(i))
 
-    np.testing.assert_almost_equal(
-        Decision._parameter_states[DRIFT_RATE].parameters.value.get(mySystem),
-        Decision._parameter_states[DRIFT_RATE].mod_afferents[0].parameters.value.get(mySystem) * Decision._parameter_states[DRIFT_RATE].function_object.parameters.value.get(mySystem)
-    )
-    np.testing.assert_almost_equal(
-        Decision._parameter_states[THRESHOLD].parameters.value.get(mySystem),
-        Decision._parameter_states[THRESHOLD].mod_afferents[0].parameters.value.get(mySystem) * Decision._parameter_states[THRESHOLD].function_object.parameters.value.get(mySystem)
-    )
-
 
 def test_stateful_mechanism_in_simulation():
     # Mechanisms
