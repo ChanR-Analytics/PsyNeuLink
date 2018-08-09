@@ -127,7 +127,9 @@ class TestCycles:
 
         comp.run(inputs={A: [1.0]})
 
-        print(comp.scheduler_processing.consideration_queue)
+        assert comp.scheduler_processing.consideration_queue[0] == {A}
+        assert comp.scheduler_processing.consideration_queue[1] == {B, C, D, C2, C3}
+        assert comp.scheduler_processing.consideration_queue[2] == {E}
 
     def test_two_separate_loops(self):
         A = ProcessingMechanism(name="A")
@@ -146,7 +148,10 @@ class TestCycles:
 
         comp.run(inputs={A: [1.0]})
 
-        print(comp.scheduler_processing.consideration_queue)
+        assert comp.scheduler_processing.consideration_queue[0] == {A}
+        assert comp.scheduler_processing.consideration_queue[1] == {C, L2, B}
+        assert comp.scheduler_processing.consideration_queue[2] == {E, L1, D}
+        assert comp.scheduler_processing.consideration_queue[3] == {F}
 
     def test_two_paths_converge(self):
         A = ProcessingMechanism(name="A")
@@ -162,7 +167,10 @@ class TestCycles:
         comp.run(inputs={A: 1.0,
                          E: 1.0})
 
-        print(comp.scheduler_processing.consideration_queue)
+        assert comp.scheduler_processing.consideration_queue[0] == {A, E}
+        assert comp.scheduler_processing.consideration_queue[1] == {B}
+        assert comp.scheduler_processing.consideration_queue[2] == {C}
+        assert comp.scheduler_processing.consideration_queue[3] == {D}
 
     def test_diverge_and_reconverge(self):
         S = ProcessingMechanism(name="START")
@@ -178,4 +186,73 @@ class TestCycles:
 
         comp.run(inputs={S: 1.0})
 
-        print(comp.scheduler_processing.consideration_queue)
+        assert comp.scheduler_processing.consideration_queue[0] == {S}
+        assert comp.scheduler_processing.consideration_queue[1] == {A, E}
+        assert comp.scheduler_processing.consideration_queue[2] == {B}
+        assert comp.scheduler_processing.consideration_queue[3] == {C}
+        assert comp.scheduler_processing.consideration_queue[4] == {D}
+
+    def test_diverge_and_reconverge_2(self):
+        S = ProcessingMechanism(name="START")
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+        F = ProcessingMechanism(name="F")
+        G = ProcessingMechanism(name="G")
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([S, A, B, C, D])
+        comp.add_linear_processing_pathway([S, E, F, G, D])
+
+        comp.run(inputs={S: 1.0})
+
+        assert comp.scheduler_processing.consideration_queue[0] == {S}
+        assert comp.scheduler_processing.consideration_queue[1] == {A, E}
+        assert comp.scheduler_processing.consideration_queue[2] == {B, F}
+        assert comp.scheduler_processing.consideration_queue[3] == {C, G}
+        assert comp.scheduler_processing.consideration_queue[4] == {D}
+
+    def test_figure_eight(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C1 = ProcessingMechanism(name="C1")
+        D1 = ProcessingMechanism(name="D1")
+        C2 = ProcessingMechanism(name="C2")
+        D2 = ProcessingMechanism(name="D2")
+
+        comp = Composition()
+
+        comp.add_linear_processing_pathway([A, B])
+        comp.add_linear_processing_pathway([B, C1, D1])
+        comp.add_linear_processing_pathway([B, C2, D2])
+        comp.add_linear_processing_pathway([D1, B])
+        comp.add_linear_processing_pathway([D2, B])
+
+        assert comp.scheduler_processing.consideration_queue[0] == {A}
+        assert comp.scheduler_processing.consideration_queue[1] == {B, C1, D1, C2, D2}
+
+    def test_many_loops(self):
+
+        comp = Composition()
+
+        start = ProcessingMechanism(name="start")
+        expected_consideration_sets = [{start}]
+        for i in range(10):
+            A = ProcessingMechanism(name='A'+str(i))
+            B = ProcessingMechanism(name='B'+str(i))
+            C = ProcessingMechanism(name='C'+str(i))
+            D = ProcessingMechanism(name='D'+str(i))
+
+            comp.add_linear_processing_pathway([start, A, B, C, D])
+            comp.add_linear_processing_pathway([C, B])
+
+            expected_consideration_sets.append({A})
+            expected_consideration_sets.append({B, C})
+            expected_consideration_sets.append({D})
+
+            start = D
+
+        for i in range(len(comp.scheduler_processing.consideration_queue)):
+            assert comp.scheduler_processing.consideration_queue[i] == expected_consideration_sets[i]
