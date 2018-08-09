@@ -3616,6 +3616,10 @@ class Component(object, metaclass=ComponentsMeta):
         return self.log.logged_items
 
     @property
+    def _loggable_parameters(self):
+        return [param.name for param in self.parameters if param.loggable and param.user]
+
+    @property
     def has_initializers(self):
         return self._has_initializers
 
