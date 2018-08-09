@@ -444,21 +444,26 @@ class Scheduler(object):
         self.consideration_queue = dependencies
         logger.debug('Consideration queue: {0}'.format(self.consideration_queue))
 
-    def _dfs_for_cycles(self, dependencies, node, loop_start, visited, loop):
+    def _dfs_for_cycles(self, dependencies, node, loop_start_set, visited, loop):
 
-        if node is loop_start:
+        if node in loop_start_set:
+            loop.append(node)
             return loop
+        # if node is loop_start_set:
+        #     return loop
         if visited is None:
             visited = set()
         visited.add(node)
         loop.append(node)
         for node in dependencies[node] - visited:
-            return self._dfs_for_cycles(dependencies, node, loop_start, visited, loop)
+            return self._dfs_for_cycles(dependencies, node, loop_start_set, visited, loop)
 
     def _call_toposort(self, graph):
 
         dependencies = {}
         removed_dependencies = {}
+        current_consideration_queue = []
+
         for vert in graph.vertices:
             if vert.component not in dependencies:
                 dependencies[vert.component] = set()
@@ -466,11 +471,14 @@ class Scheduler(object):
                 if child.component not in dependencies:
                     dependencies[child.component] = set()
                 dependencies[child.component].add(vert.component)
-                try:
-                    list(toposort(dependencies))
-                except ValueError:
-                    cycle = self._dfs_for_cycles(dependencies, vert.component, child.component, None, [child.component])
-                    cycle.append(child.component)
+                loop_start_set = {child.component}
+                for execution_set in current_consideration_queue:
+                    if child.component in execution_set:
+                        loop_start_set = execution_set
+
+                cycle = self._dfs_for_cycles(dependencies, vert.component, loop_start_set, None, [child.component])
+
+                if cycle:
                     for i in range(len(cycle) - 1):
                         node_a = cycle[i]
                         node_b = cycle[i + 1]
@@ -483,6 +491,7 @@ class Scheduler(object):
                             for dependency in dependencies[cycle[0]]:
                                 dependencies[cycle[i]].add(dependency)
 
+                current_consideration_queue = list(toposort(dependencies))
 
         return list(toposort(dependencies)), removed_dependencies
 
