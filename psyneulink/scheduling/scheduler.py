@@ -249,7 +249,7 @@ Please see `Condition` for a list of all supported Conditions and their behavior
     >>> termination_conds = {
     ...     pnl.TimeScale.TRIAL: pnl.AfterNCalls(B, 4, time_scale=pnl.TimeScale.TRIAL)
     ... }
-    >>> execution_sequence = list(my_scheduler.run(termination_conds=termination_conds))
+    >>> execution_sequence = list(my_scheduler.run())
 
     COMMENT:
         TODO: Add output for execution sequence
@@ -289,7 +289,7 @@ Please see `Condition` for a list of all supported Conditions and their behavior
     >>> termination_conds = {
     ...     pnl.TimeScale.TRIAL: pnl.AfterNCalls(C, 4, time_scale=pnl.TimeScale.TRIAL)
     ... }
-    >>> execution_sequence = list(my_scheduler.run(termination_conds=termination_conds))
+    >>> execution_sequence = list(my_scheduler.run())
 
     execution_sequence: [A, {A,B}, A, C, {A,B}, C, A, C, {A,B}, C]
 
@@ -467,7 +467,8 @@ class Scheduler(object):
         for vert in graph.vertices:
             if vert.component not in dependencies:
                 dependencies[vert.component] = set()
-            for child in graph.get_children_from_component(vert.component):
+
+            for child in graph.get_forward_children_from_component(vert.component):
                 if child.component not in dependencies:
                     dependencies[child.component] = set()
                 dependencies[child.component].add(vert.component)

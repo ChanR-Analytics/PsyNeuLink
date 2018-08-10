@@ -368,6 +368,7 @@ class TestAnalyzeGraph:
         assert B in comp.get_c_nodes_by_role(CNodeRole.CYCLE)
         assert C in comp.get_c_nodes_by_role(CNodeRole.RECURRENT_INIT)
 
+
 class TestGraphCycles:
 
     def test_recurrent_transfer_mechanisms(self):
@@ -390,11 +391,249 @@ class TestGraphCycles:
         # input to R2 = 3.0 + 8.0, output from R2 = 22.0
 
 
-        output = comp.run(inputs={R1: [1.0]},
-                          num_trials=3)
+        output = comp.run(inputs={R1: [1.0]}, num_trials=3)
 
         assert np.allclose(output, [[np.array([2.])], [np.array([8.])], [np.array([22.])]])
 
+
+class TestExecutionOrder:
+
+    def test_feedback(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([A, B, MappingProjection(matrix=2.0), C, MappingProjection(matrix=3.0), D, E])
+        comp.add_linear_processing_pathway([D, MappingProjection(matrix=4.0), B], feedback=True)
+
+        comp.run(inputs={A: 1.0})
+
+        expected_consideration_queue = [{A}, {B}, {C}, {D}, {E}]
+        assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i]
+                   for i in range(len(comp.c_nodes)))
+
+    def test_simple_loop(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([A, B, MappingProjection(matrix=2.0), C, MappingProjection(matrix=3.0), D, E])
+        comp.add_linear_processing_pathway([D, MappingProjection(matrix=4.0), B])
+
+        cycle_nodes = [B, C, D]
+        for cycle_node in cycle_nodes:
+            cycle_node.output_states[0].value = [1.0]
+
+        comp.run(inputs={A: [1.0]})
+        expected_values = {A: 1.0,
+                           B: 5.0,
+                           C: 2.0,
+                           D: 3.0,
+                           E: 3.0}
+
+        for node in expected_values:
+            assert np.allclose(expected_values[node], node.value)
+
+        comp.run(inputs={A: [1.0]})
+        expected_values_2 = {A: 1.0,
+                             B: 13.0,
+                             C: 10.0,
+                             D: 6.0,
+                             E: 6.0}
+
+        for node in expected_values:
+            assert np.allclose(expected_values_2[node], node.value)
+
+    def test_loop_with_extra_node(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        C2 = ProcessingMechanism(name="C2")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+
+        comp = Composition()
+
+        cycle_nodes = [B, C, D, C2]
+        for cycle_node in cycle_nodes:
+            cycle_node.output_states[0].value = [1.0]
+
+        comp.add_linear_processing_pathway([A, B, MappingProjection(matrix=2.0), C, D, MappingProjection(matrix=5.0), E])
+        comp.add_linear_processing_pathway([D, MappingProjection(matrix=3.0), C2, MappingProjection(matrix=4.0), B])
+
+        comp.run(inputs={A: [1.0]})
+        expected_values = {A: 1.0,
+                           B: 5.0,
+                           C: 2.0,
+                           D: 1.0,
+                           C2: 3.0,
+                           E: 5.0}
+
+        for node in expected_values:
+            assert np.allclose(expected_values[node], node.value)
+
+        comp.run(inputs={A: [1.0]})
+        expected_values_2 = {A: 1.0,
+                             B: 13.0,
+                             C: 10.0,
+                             D: 2.0,
+                             C2: 3.0,
+                             E: 10.0}
+
+        for node in expected_values:
+            assert np.allclose(expected_values_2[node], node.value)
+
+    def test_two_overlapping_loops(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        C2 = ProcessingMechanism(name="C2")
+        C3 = ProcessingMechanism(name="C3")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([A, B, C, D, E])
+        comp.add_linear_processing_pathway([D, C2, B])
+        comp.add_linear_processing_pathway([D, C3, B])
+
+        comp.run(inputs={A: [1.0]})
+
+        assert comp.scheduler_processing.consideration_queue[0] == {A}
+        assert comp.scheduler_processing.consideration_queue[1] == {B, C, D, C2, C3}
+        assert comp.scheduler_processing.consideration_queue[2] == {E}
+
+    def test_two_separate_loops(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        L1 = ProcessingMechanism(name="L1")
+        L2 = ProcessingMechanism(name="L2")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+        F = ProcessingMechanism(name="F")
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([A, B, C, D, E, F])
+        comp.add_linear_processing_pathway([E, L1, D])
+        comp.add_linear_processing_pathway([C, L2, B])
+
+        comp.run(inputs={A: [1.0]})
+
+        assert comp.scheduler_processing.consideration_queue[0] == {A}
+        assert comp.scheduler_processing.consideration_queue[1] == {C, L2, B}
+        assert comp.scheduler_processing.consideration_queue[2] == {E, L1, D}
+        assert comp.scheduler_processing.consideration_queue[3] == {F}
+
+    def test_two_paths_converge(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([A, B, C, D])
+        comp.add_linear_processing_pathway([E, D])
+
+        comp.run(inputs={A: 1.0,
+                         E: 1.0})
+
+        assert comp.scheduler_processing.consideration_queue[0] == {A, E}
+        assert comp.scheduler_processing.consideration_queue[1] == {B}
+        assert comp.scheduler_processing.consideration_queue[2] == {C}
+        assert comp.scheduler_processing.consideration_queue[3] == {D}
+
+    def test_diverge_and_reconverge(self):
+        S = ProcessingMechanism(name="START")
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([S, A, B, C, D])
+        comp.add_linear_processing_pathway([S, E, D])
+
+        comp.run(inputs={S: 1.0})
+
+        assert comp.scheduler_processing.consideration_queue[0] == {S}
+        assert comp.scheduler_processing.consideration_queue[1] == {A, E}
+        assert comp.scheduler_processing.consideration_queue[2] == {B}
+        assert comp.scheduler_processing.consideration_queue[3] == {C}
+        assert comp.scheduler_processing.consideration_queue[4] == {D}
+
+    def test_diverge_and_reconverge_2(self):
+        S = ProcessingMechanism(name="START")
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+        F = ProcessingMechanism(name="F")
+        G = ProcessingMechanism(name="G")
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([S, A, B, C, D])
+        comp.add_linear_processing_pathway([S, E, F, G, D])
+
+        comp.run(inputs={S: 1.0})
+
+        assert comp.scheduler_processing.consideration_queue[0] == {S}
+        assert comp.scheduler_processing.consideration_queue[1] == {A, E}
+        assert comp.scheduler_processing.consideration_queue[2] == {B, F}
+        assert comp.scheduler_processing.consideration_queue[3] == {C, G}
+        assert comp.scheduler_processing.consideration_queue[4] == {D}
+
+    def test_figure_eight(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C1 = ProcessingMechanism(name="C1")
+        D1 = ProcessingMechanism(name="D1")
+        C2 = ProcessingMechanism(name="C2")
+        D2 = ProcessingMechanism(name="D2")
+
+        comp = Composition()
+
+        comp.add_linear_processing_pathway([A, B])
+        comp.add_linear_processing_pathway([B, C1, D1])
+        comp.add_linear_processing_pathway([B, C2, D2])
+        comp.add_linear_processing_pathway([D1, B])
+        comp.add_linear_processing_pathway([D2, B])
+
+        assert comp.scheduler_processing.consideration_queue[0] == {A}
+        assert comp.scheduler_processing.consideration_queue[1] == {B, C1, D1, C2, D2}
+
+    def test_many_loops(self):
+
+        comp = Composition()
+
+        start = ProcessingMechanism(name="start")
+        expected_consideration_sets = [{start}]
+        for i in range(10):
+            A = ProcessingMechanism(name='A'+str(i))
+            B = ProcessingMechanism(name='B'+str(i))
+            C = ProcessingMechanism(name='C'+str(i))
+            D = ProcessingMechanism(name='D'+str(i))
+
+            comp.add_linear_processing_pathway([start, A, B, C, D])
+            comp.add_linear_processing_pathway([C, B])
+
+            expected_consideration_sets.append({A})
+            expected_consideration_sets.append({B, C})
+            expected_consideration_sets.append({D})
+
+            start = D
+
+        for i in range(len(comp.scheduler_processing.consideration_queue)):
+            assert comp.scheduler_processing.consideration_queue[i] == expected_consideration_sets[i]
 # class TestValidateFeedDict:
 #
 #     def test_empty_feed_dicts(self):
@@ -895,10 +1134,7 @@ class TestRun:
         comp._analyze_graph()
         inputs_dict = {A: [5]}
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
         assert np.allclose(125, output[0][0])
 
     def test_projection_assignment_mistake_swap(self):
@@ -966,10 +1202,7 @@ class TestRun:
         inputs_dict = {A: [5],
                        B: [5]}
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
         assert np.allclose([250], output)
 
@@ -988,10 +1221,7 @@ class TestRun:
         inputs_dict = {A: [5]}
         sched = Scheduler(composition=comp)
         sched.add_condition(B, EveryNCalls(A, 2))
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
         assert np.allclose(50.0, output[0][0])
 
@@ -1011,10 +1241,7 @@ class TestRun:
         inputs_dict = {A: [5]}
         sched = Scheduler(composition=comp)
         sched.add_condition(B, EveryNCalls(A, 2))
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
         assert np.allclose(50.0, output[0][0])
 
     def test_run_2_mechanisms_with_multiple_trials_of_input_values(self):
@@ -1028,10 +1255,7 @@ class TestRun:
         comp._analyze_graph()
         inputs_dict = {A: [1, 2, 3, 4]}
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
         assert np.allclose([[[10.0]], [[20.0]], [[30.0]], [[40.0]]], output)
 
@@ -1046,10 +1270,7 @@ class TestRun:
         comp._analyze_graph()
         inputs_dict = {A: [1, 2, 3, 4]}
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
         assert np.allclose([[[10.0]], [[20.0]], [[30.0]], [[40.0]]], output)
 
@@ -1064,11 +1285,7 @@ class TestRun:
         comp._analyze_graph()
         inputs_dict = {A: [5]}
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched,
-            num_trials=5
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched, num_trials=5)
         assert np.allclose([125], output)
 
     def test_run_2_mechanisms_double_trial_specs(self):
@@ -1081,11 +1298,7 @@ class TestRun:
         comp._analyze_graph()
         inputs_dict = {A: [[5], [4], [3]]}
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched,
-            num_trials=3
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched, num_trials=3)
 
         assert np.allclose([np.array([[125.]]), np.array([[100.]]), np.array([[75.]])], output)
 
@@ -1223,10 +1436,7 @@ class TestRun:
         inputs_dict = {A: [5],
                        B: [5]}
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
         assert np.allclose([250], output)
 
 
@@ -1273,13 +1483,9 @@ class TestCallBeforeAfterTimescale:
 
             return record_trial
 
-        comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched,
-            call_after_time_step=cb_timestep(sched, time_step_array),
-            call_before_trial=cb_trial(sched, trial_array),
-            call_before_pass=cb_pass(sched, pass_array)
-        )
+        comp.run(inputs=inputs_dict, scheduler_processing=sched,
+                 call_after_time_step=cb_timestep(sched, time_step_array), call_before_pass=cb_pass(sched, pass_array),
+                 call_before_trial=cb_trial(sched, trial_array))
         assert time_step_array == [0, 1, 0, 1, 0, 1, 0, 1]
         assert trial_array == [0, 1, 2, 3]
         assert pass_array == [0, 1, 2, 3]
@@ -1341,16 +1547,13 @@ class TestCallBeforeAfterTimescale:
             },
         }
 
-        comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched,
-            call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B),
-            call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B),
-            call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B),
-            call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B),
-            call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B),
-            call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B),
-        )
+        comp.run(inputs=inputs_dict, scheduler_processing=sched,
+                 call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B),
+                 call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B),
+                 call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B),
+                 call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B),
+                 call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B),
+                 call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B))
 
         for ts in before_expected:
             for mech in before_expected[ts]:
@@ -1448,16 +1651,13 @@ class TestCallBeforeAfterTimescale:
             },
         }
 
-        comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched,
-            call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B),
-            call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B),
-            call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B),
-            call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B),
-            call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B),
-            call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B),
-        )
+        comp.run(inputs=inputs_dict, scheduler_processing=sched,
+                 call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B),
+                 call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B),
+                 call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B),
+                 call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B),
+                 call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B),
+                 call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B))
 
         for ts in before_expected:
             for mech in before_expected[ts]:
@@ -1815,10 +2015,7 @@ class TestSystemComposition:
         sys._analyze_graph()
         inputs_dict = {A: [[5]]}
         sched = Scheduler(composition=sys)
-        output = sys.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = sys.run(inputs=inputs_dict, scheduler_processing=sched)
         assert np.allclose(125, output[0][0])
 
     def test_call_beforeafter_values_onepass(self):
@@ -1878,16 +2075,13 @@ class TestSystemComposition:
             },
         }
 
-        comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched,
-            call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B),
-            call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B),
-            call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B),
-            call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B),
-            call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B),
-            call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B),
-        )
+        comp.run(inputs=inputs_dict, scheduler_processing=sched,
+                 call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B),
+                 call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B),
+                 call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B),
+                 call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B),
+                 call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B),
+                 call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B))
 
         for ts in before_expected:
             for mech in before_expected[ts]:
@@ -1986,16 +2180,13 @@ class TestSystemComposition:
             },
         }
 
-        comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched,
-            call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B),
-            call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B),
-            call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B),
-            call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B),
-            call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B),
-            call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B),
-        )
+        comp.run(inputs=inputs_dict, scheduler_processing=sched,
+                 call_before_time_step=functools.partial(record_values, before, TimeScale.TIME_STEP, A, B),
+                 call_after_time_step=functools.partial(record_values, after, TimeScale.TIME_STEP, A, B),
+                 call_before_pass=functools.partial(record_values, before, TimeScale.PASS, A, B),
+                 call_after_pass=functools.partial(record_values, after, TimeScale.PASS, A, B),
+                 call_before_trial=functools.partial(record_values, before, TimeScale.TRIAL, A, B),
+                 call_after_trial=functools.partial(record_values, after, TimeScale.TRIAL, A, B))
 
         for ts in before_expected:
             for mech in before_expected[ts]:
@@ -2486,9 +2677,7 @@ class TestNestedCompositions:
         sys.add_pathway(myPath)
 
         # execute the SystemComposition
-        output = sys.run(
-            inputs=stimulus,
-        )
+        output = sys.run(inputs=stimulus)
         assert np.allclose([8], output)
 
     def test_two_paths_converge_one_system(self):
@@ -2528,10 +2717,7 @@ class TestNestedCompositions:
         stimulus = {myMech1: [[1]], myMech4: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.run(
-            inputs=stimulus,
-            # scheduler_processing=schedule
-        )
+        output = sys.run(inputs=stimulus)
         assert np.allclose(16, output)
 
     def test_two_paths_in_series_one_system(self):
@@ -2575,10 +2761,7 @@ class TestNestedCompositions:
         sys._analyze_graph()
 
         # schedule = Scheduler(composition=sys)
-        output = sys.run(
-            inputs=stimulus,
-            # scheduler_processing=schedule
-        )
+        output = sys.run(inputs=stimulus)
 
         assert np.allclose([64], output)
 
@@ -2623,10 +2806,7 @@ class TestNestedCompositions:
         stimulus = {myMech1: [[1]], myMech4: [[1]]}
 
         # schedule = Scheduler(composition=sys)
-        output = sys.run(
-            inputs=stimulus,
-            # scheduler_processing=schedule
-        )
+        output = sys.run(inputs=stimulus)
         assert np.allclose(16, output)
 
 
@@ -2675,10 +2855,7 @@ class TestCompositionInterface:
             B: [[5.]]
         }
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
         assert np.allclose(250, output)
 
@@ -2716,10 +2893,7 @@ class TestCompositionInterface:
         }
         sched = Scheduler(composition=comp)
 
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
         assert np.allclose(250, output)
 
         inputs_dict2 = {
@@ -2738,10 +2912,7 @@ class TestCompositionInterface:
         }
         sched = Scheduler(composition=comp)
 
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
         assert np.allclose([np.array([[250.]]), np.array([[250.]])], output)
 
@@ -2764,10 +2935,7 @@ class TestCompositionInterface:
         }
 
         sched = Scheduler(composition=comp)
-        output2 = comp.run(
-            inputs=inputs_dict2,
-            scheduler_processing=sched
-        )
+        output2 = comp.run(inputs=inputs_dict2, scheduler_processing=sched)
 
         assert np.allclose([np.array([[250.]]), np.array([[250.]]), np.array([[135.]])], output)
 
@@ -2789,10 +2957,7 @@ class TestCompositionInterface:
         inputs_dict = {A: [[5.]]}
         sched = Scheduler(composition=comp)
 
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
         assert np.allclose(25, output)
 
@@ -2808,10 +2973,7 @@ class TestCompositionInterface:
         inputs_dict2 = {F: [[3.]]}
 
         sched = Scheduler(composition=comp)
-        output2 = comp.run(
-            inputs=inputs_dict2,
-            scheduler_processing=sched
-        )
+        output2 = comp.run(inputs=inputs_dict2, scheduler_processing=sched)
 
         connections_to_A = []
         expected_connections_to_A = [(F.output_states[0], A.input_states[0])]
@@ -2842,17 +3004,11 @@ class TestCompositionInterface:
         inputs_dict = {A: [[5.], [5.]]}
 
         sched = Scheduler(composition=comp)
-        comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
         inputs_dict2 = {A: [[2.], [4.]]}
 
-        output = comp.run(
-            inputs=inputs_dict2,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict2, scheduler_processing=sched)
 
         assert np.allclose(A.input_states[0].value, [2.])
         assert np.allclose(A.input_states[1].value, [4.])
@@ -2890,10 +3046,7 @@ class TestCompositionInterface:
         inputs_dict = {A: [[5.], [5.]]}
 
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
         assert np.allclose(A.input_states[0].value, [5.])
         assert np.allclose(A.input_states[1].value, [5.])
         assert np.allclose(A.variable, [[5.], [5.]])
@@ -2921,10 +3074,7 @@ class TestCompositionInterface:
 
         inputs_dict2 = {A: [[2.], [4.]],
                         D: [[2.], [4.]]}
-        output2 = comp.run(
-            inputs=inputs_dict2,
-            scheduler_processing=sched
-        )
+        output2 = comp.run(inputs=inputs_dict2, scheduler_processing=sched)
         assert np.allclose(A.input_states[0].value, [2.])
         assert np.allclose(A.input_states[1].value, [4.])
         assert np.allclose(A.variable, [[2.], [4.]])
@@ -3030,8 +3180,7 @@ class TestInputStateSpecifications:
 
         inputs_dict = {A: [[2.], [4.]]}
         sched = Scheduler(composition=comp)
-        comp.run(inputs=inputs_dict,
-                 scheduler_processing=sched)
+        comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
@@ -3064,10 +3213,7 @@ class TestInputStateSpecifications:
         inputs_dict = { A: [[2.],[4.]]}
 
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
@@ -3093,10 +3239,7 @@ class TestInputStateSpecifications:
         inputs_dict = {A: [[2.], [4.]]}
 
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
@@ -3125,10 +3268,7 @@ class TestInputStateSpecifications:
         inputs_dict = {A: [[2.], [4.]]}
 
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
@@ -3154,10 +3294,7 @@ class TestInputStateSpecifications:
         inputs_dict = {A: [[2.], [4.]]}
 
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
@@ -3222,10 +3359,7 @@ class TestInputSpecifications:
         }
 
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs, scheduler_processing=sched)
 
         assert np.allclose([np.array([[0.]]), np.array([[6.]]), np.array([[12.]])], output)
 
@@ -3239,10 +3373,7 @@ class TestInputSpecifications:
         comp._analyze_graph()
         inputs_dict = {A: [[5]]}
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched)
         assert np.allclose([125], output)
 
     def test_run_2_mechanisms_reuse_input(self):
@@ -3255,11 +3386,7 @@ class TestInputSpecifications:
         comp._analyze_graph()
         inputs_dict = {A: [[5]]}
         sched = Scheduler(composition=comp)
-        output = comp.run(
-            inputs=inputs_dict,
-            scheduler_processing=sched,
-            num_trials=5
-        )
+        output = comp.run(inputs=inputs_dict, scheduler_processing=sched, num_trials=5)
         assert np.allclose([125], output)
 
     def test_some_inputs_not_specified(self):
@@ -3288,8 +3415,7 @@ class TestInputSpecifications:
                   D: [[4.]]}
 
         sched = Scheduler(composition=comp)
-        comp.run(inputs=inputs,
-                 scheduler_processing=sched)[0]
+        comp.run(inputs=inputs, scheduler_processing=sched)[0]
 
         assert np.allclose(A.output_values, [[2.0, 4.0], [6.0, 8.0]])
         assert np.allclose(B.output_values, [[3., 6., 9.]])
@@ -3326,8 +3452,7 @@ class TestInputSpecifications:
                   D: [[4.]]}
 
         sched = Scheduler(composition=comp)
-        comp.run(inputs=inputs,
-                 scheduler_processing=sched)[0]
+        comp.run(inputs=inputs, scheduler_processing=sched)[0]
 
         assert np.allclose(A.output_values, [[2.0, 4.0], [6.0, 8.0]])
         assert np.allclose(compA.output_values, [[2.0, 4.0], [6.0, 8.0]])
