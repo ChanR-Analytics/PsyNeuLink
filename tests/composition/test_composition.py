@@ -467,7 +467,11 @@ class TestExecutionOrder:
         comp.add_linear_processing_pathway([A, B, MappingProjection(matrix=2.0), C, D, MappingProjection(matrix=5.0), E])
         comp.add_linear_processing_pathway([D, MappingProjection(matrix=3.0), C2, MappingProjection(matrix=4.0), B])
 
+        expected_consideration_queue = [{A}, {B, C, D, C2}, {E}]
+
+        assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i] for i in range(3))
         comp.run(inputs={A: [1.0]})
+
         expected_values = {A: 1.0,
                            B: 5.0,
                            C: 2.0,

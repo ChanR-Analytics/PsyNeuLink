@@ -1408,10 +1408,7 @@ class Composition(object):
 
                         node.execute(runtime_params=execution_runtime_params,
                                      context=ContextFlags.COMPOSITION)
-                        new_values[node] = node.output_values
 
-                        for i in range(len(node.output_states)):
-                            node.output_states[i].value = frozen_values[node][i]
 
                     for key in node._runtime_params_reset:
                         node._set_parameter_value(key, node._runtime_params_reset[key])
@@ -1431,7 +1428,9 @@ class Composition(object):
                             for input_state in node.input_states:
                             # clamp = None --> "turn off" input node
                                 self.input_CIM_states[input_state][1].value = 0
-
+                new_values[node] = node.output_values
+                for i in range(len(node.output_states)):
+                    node.output_states[i].value = frozen_values[node][i]
             for node in next_execution_set:
                 for i in range(len(node.output_states)):
                     node.output_states[i].value = new_values[node][i]
