@@ -100,7 +100,7 @@ from uuid import UUID
 
 import typecheck as tc
 
-from psyneulink.globals.keywords import CONTROL, EXECUTING, EXECUTION_PHASE, FLAGS, INITIALIZATION_STATUS, INITIALIZING, LEARNING, SEPARATOR_BAR, SOURCE, VALIDATE
+from psyneulink.globals.keywords import CONTROL, EXECUTING, EXECUTION_PHASE, FLAGS, HIDDEN, INITIALIZATION_STATUS, INITIALIZING, LEARNING, SEPARATOR_BAR, SOURCE, VALIDATE
 from psyneulink.globals.utilities import get_deepcopy_with_shared_keys
 
 
@@ -180,6 +180,8 @@ class ContextFlags(IntEnum):
 
     PROCESS =   1<<15     # 32768
 
+    HIDDEN =   1<<16 # 65536
+    """Call by a/the Composition to which the Component belongs."""
     SOURCE_MASK = COMMAND_LINE | CONSTRUCTOR | INSTANTIATE | COMPONENT | PROPERTY | COMPOSITION | PROCESS
     NONE = ~SOURCE_MASK
 
@@ -254,7 +256,9 @@ INITIALIZATION_STATUS_FLAGS = {ContextFlags.DEFERRED_INIT,
 EXECUTION_PHASE_FLAGS = {ContextFlags.PROCESSING,
                          ContextFlags.LEARNING,
                          ContextFlags.CONTROL,
-                         ContextFlags.SIMULATION}
+                         ContextFlags.SIMULATION,
+                         ContextFlags.HIDDEN
+                         }
 
 SOURCE_FLAGS = {ContextFlags.CONSTRUCTOR,
                 ContextFlags.COMMAND_LINE,
@@ -286,6 +290,7 @@ class ContextStatus(IntEnum):
     # Component accessed by user
     CONSTRUCTOR = ContextFlags.CONSTRUCTOR
     # Component being constructor (used in call to super.__init__)
+    HIDDEN = ContextFlags.HIDDEN
     ALL_ASSIGNMENTS = \
         INITIALIZATION | VALIDATION | EXECUTION | PROCESSING | LEARNING | CONTROL
     """Specifies all contexts."""
@@ -547,6 +552,8 @@ def _get_context(context:tc.any(ContextFlags, str)):
         context_flag |= ContextFlags.CONTROL
     if LEARNING in context:
         context_flag |= ContextFlags.LEARNING
+    if HIDDEN in context:
+        context_flag |= ContextFlags.HIDDEN
     # if context == ContextFlags.TRIAL.name: # cxt-test
     #     context_flag |= ContextFlags.TRIAL
     # if context == ContextFlags.RUN.name:

@@ -2736,7 +2736,6 @@ class Component(object):
     def _execute(self, variable=None, runtime_params=None, context=None, **kwargs):
 
         # GET/SET CONTEXT
-
         from psyneulink.components.functions.function import Function
         if isinstance(self, Function):
             pass # Functions don't have a Logs or maintain execution_counts or time
@@ -2935,7 +2934,9 @@ class Component(object):
     @value.setter
     def value(self, assignment):
         self._value = assignment
-        self.log._log_value(assignment)
+        if not self.context.source == ContextFlags.COMMAND_LINE and \
+                not self.context.execution_phase == ContextFlags.HIDDEN:
+            self.log._log_value(assignment)
 
     @property
     def verbosePref(self):
