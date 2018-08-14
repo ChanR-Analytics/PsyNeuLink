@@ -1429,19 +1429,15 @@ class Composition(object):
                             # clamp = None --> "turn off" input node
                                 self.input_CIM_states[input_state][1].value = 0
                 new_values[node] = node.output_values
+
                 for i in range(len(node.output_states)):
-                    node.output_states[i].value = frozen_values[node][i]
+                    node.output_states[i].set_value_without_logging(frozen_values[node][i])
+
             for node in next_execution_set:
 
                 for i in range(len(node.output_states)):
-                    old_execution_phase = node.output_states[i].context.execution_phase
-                    # node.output_states[i].context.execution_phase = ContextFlags.HIDDEN
-                    node.output_states[i].context.execution_phase = ContextFlags.HIDDEN
+                    node.output_states[i].set_value_without_logging(new_values[node][i])
 
-                    node.output_states[i].value = new_values[node][i]
-                    # node.output_states[i].context.execution_phase = ContextFlags.PROCESSING
-                    node.output_states[i].context.execution_phase = old_execution_phase
-                    # print(old_execution_phase)
             if call_after_time_step:
                 call_after_time_step()
 

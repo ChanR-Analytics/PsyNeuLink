@@ -2892,6 +2892,9 @@ class Component(object):
             raise ComponentError("Attempt to assign non-PreferenceSet {0} to {0}.prefs".
                                 format(pref_set, self.name))
 
+    def set_value_without_logging(self, assignment):
+        self._value = assignment
+
     @property
     def params(self):
         return self.paramsCurrent
@@ -2934,9 +2937,7 @@ class Component(object):
     @value.setter
     def value(self, assignment):
         self._value = assignment
-        if not self.context.source == ContextFlags.COMMAND_LINE and \
-                not self.context.execution_phase == ContextFlags.HIDDEN:
-            self.log._log_value(assignment)
+        self.log._log_value(assignment)
 
     @property
     def verbosePref(self):
