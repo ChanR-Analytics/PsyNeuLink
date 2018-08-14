@@ -449,14 +449,20 @@ class Scheduler(object):
         if node in loop_start_set:
             loop.append(node)
             return loop
-        # if node is loop_start_set:
-        #     return loop
+
         if visited is None:
             visited = set()
         visited.add(node)
         loop.append(node)
-        for node in dependencies[node] - visited:
-            return self._dfs_for_cycles(dependencies, node, loop_start_set, visited, loop)
+
+        if len(loop) == 2:
+            for next_node in dependencies[node]:
+                if next_node in loop_start_set:
+                    loop.append(next_node)
+                    return loop
+
+        for next_node in dependencies[node] - visited:
+            return self._dfs_for_cycles(dependencies, next_node, loop_start_set, visited, loop)
 
     def _call_toposort(self, graph):
 

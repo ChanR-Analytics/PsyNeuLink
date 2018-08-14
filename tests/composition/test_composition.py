@@ -397,6 +397,39 @@ class TestGraphCycles:
 
 
 class TestExecutionOrder:
+    def test_2_node_loop(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        D = ProcessingMechanism(name="D")
+
+        comp = Composition(name="comp")
+        comp.add_linear_processing_pathway([A, B, C, D])
+        comp.add_linear_processing_pathway([C, B])
+
+        comp.run(inputs={A: 1.0})
+
+    def test_double_loop(self):
+        A1 = ProcessingMechanism(name="A1")
+        A2 = ProcessingMechanism(name="A2")
+        B1 = ProcessingMechanism(name="B1")
+        B2 = ProcessingMechanism(name="B2")
+        C1 = ProcessingMechanism(name="C1")
+        C2 = ProcessingMechanism(name="C2")
+        D = ProcessingMechanism(name="D")
+
+        comp = Composition(name="comp")
+        comp.add_linear_processing_pathway([A1, A2, D])
+        comp.add_linear_processing_pathway([B1, B2, D])
+        comp.add_linear_processing_pathway([C1, C2, D])
+        comp.add_linear_processing_pathway([A2, B2])
+        comp.add_linear_processing_pathway([B2, A2])
+        comp.add_linear_processing_pathway([C2, B2])
+        comp.add_linear_processing_pathway([B2, C2])
+
+        comp.run(inputs={A1: 1.0,
+                         B1: 1.0,
+                         C1: 1.0})
 
     def test_feedback(self):
         A = ProcessingMechanism(name="A")
@@ -426,6 +459,7 @@ class TestExecutionOrder:
         comp.add_linear_processing_pathway([A, B, MappingProjection(matrix=2.0), C, MappingProjection(matrix=3.0), D, E])
         comp.add_linear_processing_pathway([D, MappingProjection(matrix=4.0), B])
 
+        D.set_log_conditions("OutputState-0")
         cycle_nodes = [B, C, D]
         for cycle_node in cycle_nodes:
             cycle_node.output_states[0].value = [1.0]
@@ -447,8 +481,11 @@ class TestExecutionOrder:
                              D: 6.0,
                              E: 6.0}
 
+        print(D.log.nparray_dictionary(["OutputState-0"]))
         for node in expected_values:
             assert np.allclose(expected_values_2[node], node.value)
+
+
 
     def test_loop_with_extra_node(self):
         A = ProcessingMechanism(name="A")
