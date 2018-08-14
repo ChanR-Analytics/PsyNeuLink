@@ -685,6 +685,35 @@ class Log:
         if entries is None:
             return
 
+    @property
+    def parameter_items(self):
+        return self.owner._loggable_parameters
+
+    @property
+    def input_state_items(self):
+        try:
+            return [input_state.name for input_state in self.owner.input_states]
+        except AttributeError:
+            return []
+
+    @property
+    def output_state_items(self):
+        try:
+            return [output_state.name for output_state in self.owner.output_states]
+        except AttributeError:
+            return []
+
+    @property
+    def parameter_state_items(self):
+        try:
+            return [parameter_state.name for parameter_state in self.owner.parameter_states]
+        except AttributeError:
+            return []
+
+    @property
+    def all_items(self):
+        return self.parameter_items + self.input_state_items + self.output_state_items + self.parameter_state_items
+
     def set_log_conditions(self, items, log_condition=LogCondition.EXECUTION):
         """Specifies items to be logged under the specified `LogCondition`\\(s).
 
@@ -728,6 +757,7 @@ class Log:
             level = levels
 
             if not item in self.loggable_items:
+                # KDM 8/13/18: NOTE: add_entries is not defined anywhere
                 raise LogError("\'{0}\' is not a loggable item for {1} (try using \'{1}.log.add_entries()\')".
                                format(item, self.owner.name))
             try:
@@ -919,16 +949,16 @@ class Log:
             width is truncated and suffixes with an ellipsis.
 
         display : TIME, CONTEXT, VALUE, a list containing any of these, or ALL : default ALL
-            specifies the information items to display.  The name of the entry is always displayed, followed by the 
+            specifies the information items to display.  The name of the entry is always displayed, followed by the
             specified items;  the widths of the columns for the items is dynamically adjusted, based on how many
-            are specified, allowing more information about one to be shown by omitting others (this is useful 
+            are specified, allowing more information about one to be shown by omitting others (this is useful
             if the context strings are long and/or the values are arrays).
         COMMENT:
         long_context : bool : default False
             specifies the use of the full context string in the display;  this can be informative, but can also take up
             more space in each line of the display.
         COMMENT
-            
+
         """
 
         entries = self._validate_entries_arg(entries, logged=True)
