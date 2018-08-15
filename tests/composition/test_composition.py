@@ -431,7 +431,7 @@ class TestExecutionOrder:
                          B1: 1.0,
                          C1: 1.0})
 
-    def test_feedback(self):
+    def test_feedback_pathway_spec(self):
         A = ProcessingMechanism(name="A")
         B = ProcessingMechanism(name="B")
         C = ProcessingMechanism(name="C")
@@ -447,6 +447,126 @@ class TestExecutionOrder:
         expected_consideration_queue = [{A}, {B}, {C}, {D}, {E}]
         assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i]
                    for i in range(len(comp.c_nodes)))
+
+        expected_results = {A: 1.0,
+                            B: 1.0,
+                            C: 2.0,
+                            D: 6.0,
+                            E: 6.0}
+
+        assert all(expected_results[mech] == mech.value for mech in expected_results)
+
+        comp.run(inputs={A: 1.0})
+
+        expected_results_2 = {A: 1.0,
+                              B: 25.0,
+                              C: 50.0,
+                              D: 150.0,
+                              E: 150.0}
+
+        assert all(expected_results_2[mech] == mech.value for mech in expected_results_2)
+
+    def test_feedback_projection_spec(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([A, B, MappingProjection(matrix=2.0), C, MappingProjection(matrix=3.0), D, E])
+        comp.add_projection(projection=MappingProjection(matrix=4.0), sender=D, receiver=B, feedback=True)
+
+        comp.run(inputs={A: 1.0})
+
+        expected_consideration_queue = [{A}, {B}, {C}, {D}, {E}]
+        assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i]
+                   for i in range(len(comp.c_nodes)))
+
+        expected_results = {A: 1.0,
+                            B: 1.0,
+                            C: 2.0,
+                            D: 6.0,
+                            E: 6.0}
+
+        assert all(expected_results[mech] == mech.value for mech in expected_results)
+
+        comp.run(inputs={A: 1.0})
+
+        expected_results_2 = {A: 1.0,
+                              B: 25.0,
+                              C: 50.0,
+                              D: 150.0,
+                              E: 150.0}
+
+        assert all(expected_results_2[mech] == mech.value for mech in expected_results_2)
+
+    def test_outer_feedback_inner_loop(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([A, B, MappingProjection(matrix=2.0), C, MappingProjection(matrix=3.0), D, E])
+        comp.add_projection(projection=MappingProjection(matrix=4.0), sender=D, receiver=B, feedback=True)
+        comp.add_projection(projection=MappingProjection(matrix=1.0), sender=D, receiver=C, feedback=False)
+
+        expected_consideration_queue = [{A}, {B}, {C, D}, {E}]
+        assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i]
+                   for i in range(len(expected_consideration_queue)))
+
+    def test_inner_feedback_outer_loop(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([A, B, MappingProjection(matrix=2.0), C, MappingProjection(matrix=3.0), D, E])
+        comp.add_projection(projection=MappingProjection(matrix=1.0), sender=D, receiver=B, feedback=False)
+        comp.add_projection(projection=MappingProjection(matrix=4.0), sender=D, receiver=C, feedback=True)
+
+        expected_consideration_queue = [{A}, {B, C, D}, {E}]
+        assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i]
+                   for i in range(len(expected_consideration_queue)))
+
+    def test_origin_loop(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([A, B, MappingProjection(matrix=2.0), C, MappingProjection(matrix=3.0), D, E])
+
+        comp.add_projection(projection=MappingProjection(matrix=1.0), sender=B, receiver=A, feedback=False)
+        comp.add_projection(projection=MappingProjection(matrix=1.0), sender=C, receiver=B, feedback=False)
+        print()
+        print(comp.scheduler_processing.consideration_queue)
+        print()
+        new_origin = ProcessingMechanism(name="new_origin")
+        comp.add_linear_processing_pathway([new_origin, C])
+        # expected_consideration_queue = [{A, B, C}, {D}, {E}]
+        # assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i]
+        #            for i in range(len(expected_consideration_queue)))
+        #
+        # comp._analyze_graph()
+        # for node in expected_consideration_queue[0]:
+        #     assert node in comp.get_c_nodes_by_role(CNodeRole.ORIGIN)
+
+
+        # comp._analyze_graph()
+        print(comp.scheduler_processing.consideration_queue)
+        # expected_consideration_queue = [{new_origin}, {A, B, C}, {D}, {E}]
+        # assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i]
+        #            for i in range(len(expected_consideration_queue)))
+        #
+        # for node in expected_consideration_queue[0]:
+        #     assert node in comp.get_c_nodes_by_role(CNodeRole.ORIGIN)
 
     def test_simple_loop(self):
         A = ProcessingMechanism(name="A")
