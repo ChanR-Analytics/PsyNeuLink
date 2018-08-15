@@ -3380,7 +3380,7 @@ class Component(object, metaclass=ComponentsMeta):
                 return None
 
     def _get_current_execution_time(self, context):
-        from psyneulink.globals.log import _get_context
+        from psyneulink.globals.context import _get_context
         return _get_time(self, context_flags=_get_context(context))
 
     def _update_current_execution_time(self, context):

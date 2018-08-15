@@ -389,8 +389,8 @@ from collections import OrderedDict, namedtuple
 import numpy as np
 import typecheck as tc
 
-from psyneulink.globals.context import ContextFlags, _get_context, _get_time
-from psyneulink.globals.keywords import ALL, COMMAND_LINE, CONTEXT, INITIALIZING, LEARNING, TIME, VALUE
+from psyneulink.globals.context import ContextFlags, _get_time
+from psyneulink.globals.keywords import ALL, CONTEXT, MODULATED_PARAMETER_PREFIX, TIME, VALUE
 from psyneulink.globals.utilities import AutoNumber, ContentAddressableList, is_component
 
 __all__ = [
@@ -692,27 +692,50 @@ class Log:
     @property
     def input_state_items(self):
         try:
-            return [input_state.name for input_state in self.owner.input_states]
+            return self.owner.input_states.names
         except AttributeError:
             return []
 
     @property
     def output_state_items(self):
         try:
-            return [output_state.name for output_state in self.owner.output_states]
+            return self.owner.output_states.names
         except AttributeError:
             return []
 
     @property
     def parameter_state_items(self):
         try:
-            return [parameter_state.name for parameter_state in self.owner.parameter_states]
+            return [MODULATED_PARAMETER_PREFIX + name for name in self.owner.parameter_states.names]
         except AttributeError:
             return []
 
     @property
     def all_items(self):
-        return self.parameter_items + self.input_state_items + self.output_state_items + self.parameter_state_items
+        return sorted(self.parameter_items + self.input_state_items + self.output_state_items + self.parameter_state_items)
+
+    def _get_parameter_from_item_string(self, string):
+        # KDM 8/15/18: can easily cache these results if it occupies too much time, assuming
+        # no duplicates/changing
+        if string.startswith(MODULATED_PARAMETER_PREFIX):
+            try:
+                return self.owner.parameter_states[string[len(MODULATED_PARAMETER_PREFIX):]].parameters.value
+            except (AttributeError, TypeError):
+                pass
+        try:
+            return getattr(self.owner.parameters, string)
+        except AttributeError:
+            pass
+
+        try:
+            return self.owner.input_states[string].parameters.value
+        except (AttributeError, TypeError):
+            pass
+
+        try:
+            return self.owner.output_states[string].parameters.value
+        except (AttributeError, TypeError):
+            pass
 
     def set_log_conditions(self, items, log_condition=LogCondition.EXECUTION):
         """Specifies items to be logged under the specified `LogCondition`\\(s).
@@ -760,21 +783,22 @@ class Log:
                 # KDM 8/13/18: NOTE: add_entries is not defined anywhere
                 raise LogError("\'{0}\' is not a loggable item for {1} (try using \'{1}.log.add_entries()\')".
                                format(item, self.owner.name))
-            try:
-                component = next(c for c in self.loggable_components if self._alias_owner_name(c.name) == item)
-                component.logPref=PreferenceEntry(level, PreferenceLevel.INSTANCE)
-            except AttributeError:
-                raise LogError("PROGRAM ERROR: Unable to set ContextFlags for {} of {}".format(item, self.owner.name))
+
+            self._get_parameter_from_item_string(item).log_condition = level
 
         if items is ALL:
             for component in self.loggable_components:
                 component.logPref = PreferenceEntry(log_condition, PreferenceLevel.INSTANCE)
+
+            for item in self.all_items:
+                self._get_parameter_from_item_string(item).log_condition = log_condition
             # self.logPref = PreferenceEntry(log_condition, PreferenceLevel.INSTANCE)
             return
 
         if not isinstance(items, list):
             items = [items]
 
+        # allow multiple sets of conditions to be set for multiple items with one call
         for item in items:
             if isinstance(item, (str, Component)):
                 if isinstance(item, Component):
@@ -1492,13 +1516,14 @@ class Log:
         # return {key: value for (key, value) in [(c.name, c.logPref.name) for c in self.loggable_components]}
 
         loggable_items = {}
-        for c in self.loggable_components:
-            name = self._alias_owner_name(c.name)
+        for item in self.all_items:
+            cond = self._get_parameter_from_item_string(item).log_condition
             try:
-                log_pref_names = LogCondition._get_log_condition_string(c.logPref)
-            except:
-                log_pref_names = None
-            loggable_items[name] = log_pref_names
+                # may be an actual LogCondition
+                loggable_items[item] = cond.name
+            except AttributeError:
+                loggable_items[item] = cond
+
         return loggable_items
 
     @property

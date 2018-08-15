@@ -770,6 +770,8 @@ MODULATORY_SPEC_KEYWORDS = {LEARNING, LEARNING_SIGNAL, LEARNING_PROJECTION, LEAR
                             CONTROL, CONTROL_SIGNAL, CONTROL_PROJECTION, CONTROL_MECHANISM,
                             GATING, GATING_SIGNAL, GATING_PROJECTION, GATING_MECHANISM}
 
+MODULATED_PARAMETER_PREFIX = 'mod_'
+
 #endregion
 
 #region ----------------------------------------------    STATES  ------------------------------------------------------
