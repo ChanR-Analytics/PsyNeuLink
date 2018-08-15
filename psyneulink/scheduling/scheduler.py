@@ -474,7 +474,6 @@ class Scheduler(object):
             if vert.component not in dependencies:
                 dependencies[vert.component] = set()
 
-            cycles = []
             for child in graph.get_forward_children_from_component(vert.component):
                 if child.component not in dependencies:
                     dependencies[child.component] = set()
@@ -484,7 +483,8 @@ class Scheduler(object):
                 for execution_set in current_consideration_queue:
                     if child.component in execution_set:
                         loop_start_set = execution_set
-
+                # visited_starting_nodes = set()
+                # self._build_loop_start_set(child.component, flattened_cycles, loop_start_set, visited_starting_nodes)
                 cycle = self._dfs_for_cycles(dependencies, vert.component, loop_start_set, None, [child.component])
 
                 if cycle:
@@ -526,6 +526,15 @@ class Scheduler(object):
                     dependencies[cycle_node].add(new_source)
                     self._connect_cycles(cycle_node, visited_keys, flattened_cycles, new_source, dependencies)
 
+    def _build_loop_start_set(self, starting_node, flattened_cycles, loop_start_set, visited_starting_nodes):
+        if starting_node in visited_starting_nodes:
+            return
+        visited_starting_nodes.add(starting_node)
+        if starting_node in flattened_cycles:
+            for cycle in flattened_cycles[starting_node]:
+                for node in cycle:
+                    loop_start_set.add(node)
+                    self._build_loop_start_set(node, flattened_cycles, loop_start_set, visited_starting_nodes)
     def _init_consideration_queue_from_graph(self, graph):
         self.consideration_queue, self.removed_dependencies = self._call_toposort(graph)
 

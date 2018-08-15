@@ -339,10 +339,10 @@ class TestAnalyzeGraph:
 
         comp.add_projection(MappingProjection(), B, A)
         comp._analyze_graph()
-        assert A not in comp.get_c_nodes_by_role(CNodeRole.ORIGIN)
-        assert B not in comp.get_c_nodes_by_role(CNodeRole.ORIGIN)
-        assert A not in comp.get_c_nodes_by_role(CNodeRole.TERMINAL)
-        assert B not in comp.get_c_nodes_by_role(CNodeRole.TERMINAL)
+        assert A in comp.get_c_nodes_by_role(CNodeRole.ORIGIN)
+        assert B in comp.get_c_nodes_by_role(CNodeRole.ORIGIN)
+        assert A in comp.get_c_nodes_by_role(CNodeRole.TERMINAL)
+        assert B in comp.get_c_nodes_by_role(CNodeRole.TERMINAL)
         assert A in comp.get_c_nodes_by_role(CNodeRole.CYCLE)
         assert B in comp.get_c_nodes_by_role(CNodeRole.RECURRENT_INIT)
 
