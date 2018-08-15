@@ -542,31 +542,55 @@ class TestExecutionOrder:
 
         comp = Composition()
         comp.add_linear_processing_pathway([A, B, MappingProjection(matrix=2.0), C, MappingProjection(matrix=3.0), D, E])
-
         comp.add_projection(projection=MappingProjection(matrix=1.0), sender=B, receiver=A, feedback=False)
         comp.add_projection(projection=MappingProjection(matrix=1.0), sender=C, receiver=B, feedback=False)
-        print()
-        print(comp.scheduler_processing.consideration_queue)
-        print()
+
+        expected_consideration_queue = [{A, B, C}, {D}, {E}]
+        assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i]
+                   for i in range(len(expected_consideration_queue)))
+
+        comp._analyze_graph()
+        assert set(comp.get_c_nodes_by_role(CNodeRole.ORIGIN)) == expected_consideration_queue[0]
+
         new_origin = ProcessingMechanism(name="new_origin")
-        comp.add_linear_processing_pathway([new_origin, C])
-        # expected_consideration_queue = [{A, B, C}, {D}, {E}]
-        # assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i]
-        #            for i in range(len(expected_consideration_queue)))
-        #
-        # comp._analyze_graph()
-        # for node in expected_consideration_queue[0]:
-        #     assert node in comp.get_c_nodes_by_role(CNodeRole.ORIGIN)
+        comp.add_linear_processing_pathway([new_origin, B])
 
+        expected_consideration_queue = [{new_origin}, {A, B, C}, {D}, {E}]
+        assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i]
+                   for i in range(len(expected_consideration_queue)))
 
-        # comp._analyze_graph()
-        print(comp.scheduler_processing.consideration_queue)
-        # expected_consideration_queue = [{new_origin}, {A, B, C}, {D}, {E}]
-        # assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i]
-        #            for i in range(len(expected_consideration_queue)))
-        #
-        # for node in expected_consideration_queue[0]:
-        #     assert node in comp.get_c_nodes_by_role(CNodeRole.ORIGIN)
+        comp._analyze_graph()
+        assert set(comp.get_c_nodes_by_role(CNodeRole.ORIGIN)) == expected_consideration_queue[0]
+
+    def test_terminal_loop(self):
+        A = ProcessingMechanism(name="A")
+        B = ProcessingMechanism(name="B")
+        C = ProcessingMechanism(name="C")
+        D = ProcessingMechanism(name="D")
+        E = ProcessingMechanism(name="E")
+
+        comp = Composition()
+        comp.add_linear_processing_pathway([A, B, MappingProjection(matrix=2.0), C, MappingProjection(matrix=3.0), D, E])
+        comp.add_projection(projection=MappingProjection(matrix=1.0), sender=E, receiver=D, feedback=False)
+        comp.add_projection(projection=MappingProjection(matrix=1.0), sender=D, receiver=C, feedback=False)
+
+        expected_consideration_queue = [{A}, {B}, {C, D, E}]
+        assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i]
+                   for i in range(len(expected_consideration_queue)))
+
+        comp._analyze_graph()
+        assert set(comp.get_c_nodes_by_role(CNodeRole.TERMINAL)) == expected_consideration_queue[-1]
+
+        new_terminal = ProcessingMechanism(name="new_terminal")
+        comp.add_linear_processing_pathway([D, new_terminal])
+
+        expected_consideration_queue = [{A}, {B}, {C, D, E}, {new_terminal}]
+        assert all(expected_consideration_queue[i] == comp.scheduler_processing.consideration_queue[i]
+                   for i in range(len(expected_consideration_queue)))
+
+        comp._analyze_graph()
+        assert set(comp.get_c_nodes_by_role(CNodeRole.TERMINAL)) == expected_consideration_queue[-1]
+
 
     def test_simple_loop(self):
         A = ProcessingMechanism(name="A")

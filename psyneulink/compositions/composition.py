@@ -816,6 +816,9 @@ class Composition(object):
         if len(self.scheduler_processing.consideration_queue) > 0:
             for node in self.scheduler_processing.consideration_queue[0]:
                 self._add_c_node_role(node, CNodeRole.ORIGIN)
+        if len(self.scheduler_processing.consideration_queue) > 0:
+            for node in self.scheduler_processing.consideration_queue[-1]:
+                self._add_c_node_role(node, CNodeRole.TERMINAL)
         # Identify Origin nodes
         for node in self.c_nodes:
             if graph.get_parents_from_component(node) == []:
