@@ -6,10 +6,9 @@ from psyneulink.components.mechanisms.processing.transfermechanism import Transf
 from psyneulink.components.process import Process
 from psyneulink.components.projections.modulatory.controlprojection import ControlProjection
 from psyneulink.components.system import System
-from psyneulink.globals.keywords import ALLOCATION_SAMPLES, CONTROL, IDENTITY_MATRIX, MEAN, RESULT, SLOPE, VARIANCE
+from psyneulink.globals.keywords import ALLOCATION_SAMPLES, IDENTITY_MATRIX, MEAN, RESULT, VARIANCE
 from psyneulink.globals.preferences.componentpreferenceset import ComponentPreferenceSet, kpReportOutputPref, kpVerbosePref
 from psyneulink.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel
-from psyneulink.globals.preferences.systempreferenceset import RECORD_SIMULATION_PREF
 from psyneulink.library.mechanisms.processing.integrator.ddm import DDM, DECISION_VARIABLE, PROBABILITY_UPPER_THRESHOLD, RESPONSE_TIME
 from psyneulink.library.subsystems.evc.evccontrolmechanism import EVCControlMechanism
 from psyneulink.scheduling.condition import Never
@@ -112,9 +111,6 @@ def test_EVC():
     mySystem.run(
         inputs=stim_list_dict,
     )
-
-    RewardPrediction = mySystem.execution_list[3]
-    InputPrediction = mySystem.execution_list[4]
 
     # rearranging mySystem.results into a format that we can compare with pytest
     results_array = []
@@ -584,9 +580,6 @@ def test_laming_validation_specify_control_signals():
         inputs=stim_list_dict
     )
 
-    RewardPrediction = mySystem.execution_list[3]
-    InputPrediction = mySystem.execution_list[4]
-
     # rearranging mySystem.results into a format that we can compare with pytest
     results_array = []
     for elem in mySystem.results:
@@ -607,7 +600,6 @@ def test_laming_validation_specify_control_signals():
         for inner_elem in elem:
             elem_array.append(float(inner_elem))
         sim_results_array.append(elem_array)
-
 
     # # mySystem.simulation_results expected output properly formatted
     expected_sim_results_array = [
@@ -745,9 +737,6 @@ def test_stateful_mechanism_in_simulation():
     mySystem.run(
         inputs=stim_list_dict,
     )
-
-    RewardPrediction = mySystem.execution_list[3]
-    InputPrediction = mySystem.execution_list[4]
 
     # rearranging mySystem.results into a format that we can compare with pytest
     results_array = []
