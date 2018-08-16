@@ -55,7 +55,7 @@ class TestLog:
             'previous_value': 'OFF',
             'value': 'OFF',
             'variable': 'OFF'
-            }
+        }
         assert PJ.loggable_items == {
             'exponent': 'OFF',
             'function': 'OFF',
@@ -64,32 +64,63 @@ class TestLog:
             'value': 'OFF',
             'variable': 'OFF',
             'weight': 'OFF'
-            }
+        }
 
         T_1.set_log_conditions('mod_noise')
         T_1.set_log_conditions(pnl.RESULTS)
         PJ.set_log_conditions(pnl.MATRIX)
 
-        assert T_1.loggable_items == {'InputState-0': 'OFF',
-                                     'convergence_criterion':'OFF',
-                                     'max_passes':'OFF',
-                                     'slope': 'OFF',
-                                     'RESULTS': 'EXECUTION',
-                                     'intercept': 'OFF',
-                                     'noise': 'EXECUTION',
-                                     'integration_rate': 'OFF',
-                                     'value': 'OFF'}
-        assert T_2.loggable_items == {'InputState-0': 'OFF',
-                                     'convergence_criterion':'OFF',
-                                     'max_passes':'OFF',
-                                     'slope': 'OFF',
-                                     'RESULTS': 'OFF',
-                                     'intercept': 'OFF',
-                                     'noise': 'OFF',
-                                     'integration_rate': 'OFF',
-                                     'value': 'OFF'}
-        assert PJ.loggable_items == {'matrix': 'EXECUTION',
-                                     'value': 'OFF'}
+        assert T_1.loggable_items == {
+            'InputState-0': 'OFF',
+            'RESULTS': 'EXECUTION',
+            'clip': 'OFF',
+            'convergence_criterion': 'OFF',
+            'function': 'OFF',
+            'initial_value': 'OFF',
+            'integration_rate': 'OFF',
+            'integrator_function_value': 'OFF',
+            'max_passes': 'OFF',
+            'mod_convergence_criterion': 'OFF',
+            'mod_integration_rate': 'OFF',
+            'mod_intercept': 'OFF',
+            'mod_max_passes': 'OFF',
+            'mod_noise': 'EXECUTION',
+            'mod_slope': 'OFF',
+            'noise': 'OFF',
+            'previous_value': 'OFF',
+            'value': 'OFF',
+            'variable': 'OFF'
+        }
+        assert T_2.loggable_items == {
+            'InputState-0': 'OFF',
+            'RESULTS': 'OFF',
+            'clip': 'OFF',
+            'convergence_criterion': 'OFF',
+            'function': 'OFF',
+            'initial_value': 'OFF',
+            'integration_rate': 'OFF',
+            'integrator_function_value': 'OFF',
+            'max_passes': 'OFF',
+            'mod_convergence_criterion': 'OFF',
+            'mod_integration_rate': 'OFF',
+            'mod_intercept': 'OFF',
+            'mod_max_passes': 'OFF',
+            'mod_noise': 'OFF',
+            'mod_slope': 'OFF',
+            'noise': 'OFF',
+            'previous_value': 'OFF',
+            'value': 'OFF',
+            'variable': 'OFF'
+        }
+        assert PJ.loggable_items == {
+            'exponent': 'OFF',
+            'function': 'OFF',
+            'matrix': 'EXECUTION',
+            'mod_matrix': 'OFF',
+            'value': 'OFF',
+            'variable': 'OFF',
+            'weight': 'OFF'
+        }
 
         PS.execute()
         PS.execute()
