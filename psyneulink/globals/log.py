@@ -454,8 +454,19 @@ class LogCondition(aenum.IntFlag):
                     if condition & LogCondition.EXECUTION == ContextFlags.EXECUTION_PHASE_MASK:
                         continue
                 flagged_items.append(c)
-        string += ", ".join(flagged_items)
-        return string
+
+        if len(flagged_items) > 0:
+            string += ", ".join(flagged_items)
+            return string
+        else:
+            return 'invalid LogCondition'
+
+    @staticmethod
+    def from_string(string):
+        try:
+            return LogCondition[string.upper()]
+        except KeyError:
+            raise LogError("\'{}\' is not a value of {}".format(string, LogCondition))
 
 
 TIME_NOT_SPECIFIED = 'Time Not Specified'
@@ -771,11 +782,8 @@ class Log:
                 level = [level]
             levels = LogCondition.OFF
             for l in level:
-                try:
-                    l = LogCondition[l.upper()] if isinstance(l, str) else l
-                except KeyError:
-                    raise LogError("\'{}\' is not a value of {}".
-                                   format(l, LogCondition.__name__))
+                if isinstance(l, str):
+                    l = LogCondition.from_string(l)
                 levels |= l
             level = levels
 
