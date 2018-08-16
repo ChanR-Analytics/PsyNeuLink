@@ -568,7 +568,7 @@ def _compute_EVC(ctlr, allocation_vector, runtime_params, context, execution_id=
     # Run simulation trial by trial in order to get EVC for each trial
     # IMPLEMENTATION NOTE:  Consider calling execute rather than run (for efficiency)
     for i in range(num_trials):
-        sim_execution_id = _get_unique_id()
+        sim_execution_id = ctlr.get_next_sim_id(execution_id)
         try:
             ctlr.parameters.simulation_ids.get(execution_id).append(sim_execution_id)
         except AttributeError:

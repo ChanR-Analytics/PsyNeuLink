@@ -331,10 +331,10 @@ Class Reference
 
 """
 
-import warnings
-
 import numpy as np
+import threading
 import typecheck as tc
+import warnings
 
 from psyneulink.components.component import Param
 from psyneulink.components.functions.function import LinearCombination, ModulationParam, _is_modulation_param
@@ -349,7 +349,6 @@ from psyneulink.globals.defaults import defaultControlAllocation
 from psyneulink.globals.keywords import AUTO_ASSIGN_MATRIX, CONTROL, CONTROL_PROJECTION, CONTROL_PROJECTIONS, CONTROL_SIGNAL, CONTROL_SIGNALS, INIT__EXECUTE__METHOD_ONLY, MONITOR_FOR_CONTROL, OBJECTIVE_MECHANISM, OWNER_VALUE, PRODUCT, PROJECTIONS, PROJECTION_TYPE, SYSTEM
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
-from psyneulink.globals.socket import ConnectionInfo
 from psyneulink.globals.utilities import ContentAddressableList, is_iterable
 
 __all__ = [
@@ -587,6 +586,8 @@ class ControlMechanism(AdaptiveMechanism_Base):
                                                   control_signals=control_signals,
                                                   modulation=modulation,
                                                   params=params)
+
+        self._sim_counts = {}
 
         super(ControlMechanism, self).__init__(default_variable=default_variable,
                                                     size=size,
@@ -1147,3 +1148,22 @@ class ControlMechanism(AdaptiveMechanism_Base):
     @property
     def allocation_policy(self):
         return self.value
+
+    @property
+    def _sim_count_lock(self):
+        try:
+            return self.__sim_count_lock
+        except AttributeError:
+            self.__sim_count_lock = threading.Lock()
+            return self.__sim_count_lock
+
+    def get_next_sim_id(self, execution_id):
+        with self._sim_count_lock:
+            try:
+                sim_num = self._sim_counts[execution_id]
+                self._sim_counts[execution_id] += 1
+            except KeyError:
+                sim_num = 0
+                self._sim_counts[execution_id] = 1
+
+        return '{0}-sim-{1}'.format(execution_id, sim_num)
