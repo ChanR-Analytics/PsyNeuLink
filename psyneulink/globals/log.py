@@ -1566,8 +1566,10 @@ class Log:
     @property
     def logged_entries(self):
         entries = {}
-        for e in self.loggable_components:
-            entries.update(e.log.entries)
+        for item in self.all_items:
+            log = self._get_parameter_from_item_string(item).log
+            if len(log) > 0:
+                entries[item] = log
         return entries
 
     # def save_log(self):
