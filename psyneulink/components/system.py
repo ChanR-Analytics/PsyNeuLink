@@ -2704,7 +2704,8 @@ class System(System_Base):
                         projection.sender.owner._assign_context_values(execution_id, composition=self)
 
         # initialize from null context but don't overwrite any values already set for this execution_id
-        self._initialize_from_context(execution_id, None, override=False)
+        if not (ContextFlags.SIMULATION & self.parameters.context.get().flags):
+            self._initialize_from_context(execution_id, None, override=False)
 
         self._report_system_output = (self.prefs.reportOutputPref and
                                       self.context.execution_phase & (ContextFlags.PROCESSING | ContextFlags.LEARNING))
