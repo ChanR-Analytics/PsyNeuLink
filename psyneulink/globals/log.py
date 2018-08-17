@@ -390,7 +390,7 @@ import numpy as np
 import typecheck as tc
 
 from psyneulink.globals.context import ContextFlags, _get_time
-from psyneulink.globals.keywords import ALL, CONTEXT, MODULATED_PARAMETER_PREFIX, TIME, VALUE
+from psyneulink.globals.keywords import ALL, CONTEXT, FUNCTION_PARAMETER_PREFIX, MODULATED_PARAMETER_PREFIX, TIME, VALUE
 from psyneulink.globals.utilities import AutoNumber, ContentAddressableList, is_component
 
 __all__ = [
@@ -722,8 +722,15 @@ class Log:
             return []
 
     @property
+    def function_items(self):
+        try:
+            return [FUNCTION_PARAMETER_PREFIX + name for name in self.owner.function_object._loggable_parameters]
+        except AttributeError:
+            return []
+
+    @property
     def all_items(self):
-        return sorted(self.parameter_items + self.input_state_items + self.output_state_items + self.parameter_state_items)
+        return sorted(self.parameter_items + self.input_state_items + self.output_state_items + self.parameter_state_items + self.function_items)
 
     def _get_parameter_from_item_string(self, string):
         # KDM 8/15/18: can easily cache these results if it occupies too much time, assuming

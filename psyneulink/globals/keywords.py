@@ -914,4 +914,6 @@ REWARD = 'reward'
 NETWORK = 'network'
 
 GAMMA = 'gamma'
+
+FUNCTION_PARAMETER_PREFIX = 'func_'
 #endregion
