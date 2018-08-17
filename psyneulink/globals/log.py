@@ -126,7 +126,7 @@ that the `value <Mechanism_Base.value>` of ``my_mech`` be logged both during exe
     >>> my_mech = pnl.TransferMechanism()
     >>> my_mech.set_log_conditions('value', pnl.LogCondition.EXECUTION | pnl.LogCondition.LEARNING)
     >>> my_mech.set_log_conditions('value', pnl.LogCondition.EXECUTION + pnl.LogCondition.LEARNING)
-    >>> my_mech.set_log_conditions('value', [pnl.EXECUTION, LEARNING])
+    >>> my_mech.set_log_conditions('value', [pnl.EXECUTION, pnl.LEARNING])
 
 
 .. note::
@@ -740,6 +740,7 @@ class Log:
                 return self.owner.parameter_states[string[len(MODULATED_PARAMETER_PREFIX):]].parameters.value
             except (AttributeError, TypeError):
                 pass
+
         try:
             return getattr(self.owner.parameters, string)
         except AttributeError:
@@ -754,6 +755,12 @@ class Log:
             return self.owner.output_states[string].parameters.value
         except (AttributeError, TypeError):
             pass
+
+        if string.startswith(FUNCTION_PARAMETER_PREFIX):
+            try:
+                return getattr(self.owner.function_object.parameters, string[len(FUNCTION_PARAMETER_PREFIX):])
+            except AttributeError:
+                pass
 
     def set_log_conditions(self, items, log_condition=LogCondition.EXECUTION):
         """Specifies items to be logged under the specified `LogCondition`\\(s).
