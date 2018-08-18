@@ -914,6 +914,28 @@ class Log:
             self._log_value(value=self.loggable_components[self._dealias_owner_name(entry)].value,
                             context=ContextFlags.COMMAND_LINE)
 
+    def get_logged_entries(self, entries=ALL, execution_id=None):
+        if entries is ALL:
+            entries = self.all_items
+
+        entries = {}
+        for item in entries:
+            try:
+                # allow entries to be names of Components
+                item = item.name
+            except AttributeError:
+                pass
+
+            log = self._get_parameter_from_item_string(item).log
+            cleaned = dict(log)
+            for eid in log:
+                # remove execution id entries that have no log entries
+                if len(log[eid]) == 0:
+                    del cleaned[eid]
+            if len(cleaned) > 0:
+                entries[item] = cleaned
+        return entries
+
     def clear_entries(self, entries=ALL, delete_entry=True, confirm=False):
         """Clear one or more entries either by deleting the entry or just removing its data.
 
@@ -1579,12 +1601,7 @@ class Log:
 
     @property
     def logged_entries(self):
-        entries = {}
-        for item in self.all_items:
-            log = self._get_parameter_from_item_string(item).log
-            if len(log) > 0:
-                entries[item] = log
-        return entries
+        return self.get_logged_entries()
 
     # def save_log(self):
     #     print("Saved")
