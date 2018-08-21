@@ -894,7 +894,7 @@ class Param(types.SimpleNamespace):
             return
 
         try:
-            context = self._owner.context.get(execution_id)
+            context = self._owner.context.get()
         except AttributeError:
             logger.warning('Attempted to log {0} but has no context attribute'.format(self))
             context = None
@@ -907,7 +907,7 @@ class Param(types.SimpleNamespace):
                 self.log[execution_id].append(
                     LogEntry(
                         _get_time(self._owner._owner, context.execution_phase, execution_id),
-                        ContextFlags._get_context_string(context.execution_phase),
+                        ContextFlags._get_context_string(context.flags),
                         value
                     )
                 )

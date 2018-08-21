@@ -918,7 +918,7 @@ class Log:
         if entries is ALL:
             entries = self.all_items
 
-        entries = {}
+        logged_entries = {}
         for item in entries:
             try:
                 # allow entries to be names of Components
@@ -933,8 +933,8 @@ class Log:
                 if len(log[eid]) == 0:
                     del cleaned[eid]
             if len(cleaned) > 0:
-                entries[item] = cleaned
-        return entries
+                logged_entries[item] = cleaned
+        return logged_entries
 
     def clear_entries(self, entries=ALL, delete_entry=True, confirm=False):
         """Clear one or more entries either by deleting the entry or just removing its data.
