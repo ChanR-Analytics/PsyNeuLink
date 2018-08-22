@@ -914,12 +914,13 @@ class Log:
             self._log_value(value=self.loggable_components[self._dealias_owner_name(entry)].value,
                             context=ContextFlags.COMMAND_LINE)
 
-    def get_logged_entries(self, entries=ALL, execution_id=None):
+    def get_logged_entries(self, entries=ALL, execution_ids=NotImplemented):
         if entries is ALL:
             entries = self.all_items
 
         logged_entries = {}
         for item in entries:
+            logged_entries[item] = {}
             try:
                 # allow entries to be names of Components
                 item = item.name
@@ -927,13 +928,18 @@ class Log:
                 pass
 
             log = self._get_parameter_from_item_string(item).log
-            cleaned = dict(log)
-            for eid in log:
-                # remove execution id entries that have no log entries
-                if len(log[eid]) == 0:
-                    del cleaned[eid]
-            if len(cleaned) > 0:
-                logged_entries[item] = cleaned
+            if execution_ids is NotImplemented:
+                eids = log.keys()
+            elif not isinstance(execution_ids, list):
+                eids = [execution_ids]
+
+            for eid in eids:
+                if eid in log and len(log[eid]) > 0:
+                    logged_entries[item][eid] = log[eid]
+
+            if len(logged_entries[item]) == 0:
+                del logged_entries[item]
+
         return logged_entries
 
     def clear_entries(self, entries=ALL, delete_entry=True, confirm=False):
@@ -992,6 +998,7 @@ class Log:
                       entries:tc.optional(tc.any(str, list, is_component))=ALL,
                       width:int=120,
                       display:tc.any(tc.enum(TIME, CONTEXT, VALUE, ALL), list)=ALL,
+                      execution_ids=NotImplemented,
                       # long_context=False
                       ):
         """
@@ -1071,8 +1078,10 @@ class Log:
         if option_flags & options.CONTEXT:
             c_width = 0
             for entry in entries:
-                for datum in self.logged_entries[entry]:
-                    c_width = max(c_width, len(datum.context))
+                logged_entries = self.get_logged_entries(execution_ids=execution_ids)[entry]
+                for eid in logged_entries:
+                    for datum in logged_entries[eid]:
+                        c_width = max(c_width, len(datum.context))
             context_width = min(context_width, c_width)
 
         # Set other widths based on options:
@@ -1114,40 +1123,42 @@ class Log:
         # for entry_name in self.logged_entries:
         for entry_name in entry_names_sorted:
             try:
-                datum = self.logged_entries[entry_name]
+                datum = self.get_logged_entries(execution_ids=execution_ids)[entry_name]
             except KeyError:
                 warnings.warn("{0} is not an entry in the Log for {1}".
                       format(entry_name, self.owner.name))
             else:
                 import numpy as np
-                for i, item in enumerate(datum):
+                for eid in datum:
+                    print('{0}:'.format(eid))
+                    for i, item in enumerate(datum[eid]):
 
-                    time, context, value = item
+                        time, context, value = item
 
-                    entry_name = self._alias_owner_name(entry_name)
-                    data_str = repr(entry_name).ljust(item_name_width, spacer)
+                        entry_name = self._alias_owner_name(entry_name)
+                        data_str = repr(entry_name).ljust(item_name_width, spacer)
 
-                    if options.TIME & option_flags:
-                        time_str = _time_string(time)
-                        data_str = data_str + time_str.ljust(time_width)
+                        if options.TIME & option_flags:
+                            time_str = _time_string(time)
+                            data_str = data_str + time_str.ljust(time_width)
 
-                    if options.CONTEXT & option_flags:
-                        context = repr(context)
-                        if len(context) > context_width:
-                            context = context[:context_width-3] + "..."
-                        data_str = data_str + context.ljust(context_width, spacer)
+                        if options.CONTEXT & option_flags:
+                            context = repr(context)
+                            if len(context) > context_width:
+                                context = context[:context_width-3] + "..."
+                            data_str = data_str + context.ljust(context_width, spacer)
 
-                    if options.VALUE & option_flags:
-                        value = str(value).replace('\n',',')
-                        if len(value) > value_width:
-                            value = value[:value_width-3].rstrip() + "..."
-                        format_str = "{{:2.{0}}}".format(value_width)
-                        data_str = data_str + value_spacer + format_str.format(value).ljust(value_width)
+                        if options.VALUE & option_flags:
+                            value = str(value).replace('\n',',')
+                            if len(value) > value_width:
+                                value = value[:value_width-3].rstrip() + "..."
+                            format_str = "{{:2.{0}}}".format(value_width)
+                            data_str = data_str + value_spacer + format_str.format(value).ljust(value_width)
 
-                    print(data_str)
+                        print(data_str)
 
-                if len(datum) > 1:
-                    print("\n")
+                    if len(datum[eid]) > 1:
+                        print("\n")
 
     @tc.typecheck
     def nparray(self,
@@ -1486,7 +1497,7 @@ class Log:
             mod_time_values[i] = tuple(update_tuple)
         return mod_time_values
 
-    def _parse_entries_for_time_values(self, entries):
+    def _parse_entries_for_time_values(self, entries, execution_ids=None):
         # Returns sorted list of SimpleTime tuples for all time points at which these entries logged values
 
         time_values = []
@@ -1507,7 +1518,7 @@ class Log:
             #         self.logged_entries[entry][i] = LogEntry(temp_list[0], temp_list[1], temp_list[2])
 
             time_values.extend([item.time
-                                for item in self.logged_entries[entry]
+                                for item in self.get_logged_entries(execution_ids=execution_ids)[entry]
                                 if all(i is not None for i in item.time)])
 
         # Insure that all time values are assigned, get rid of duplicates, and sort

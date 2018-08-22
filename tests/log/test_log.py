@@ -19,6 +19,14 @@ class TestLog:
             'RESULTS': 'OFF',
             'clip': 'OFF',
             'convergence_criterion': 'OFF',
+            'func_additive_param': 'OFF',
+            'func_bounds': 'OFF',
+            'func_function': 'OFF',
+            'func_intercept': 'OFF',
+            'func_multiplicative_param': 'OFF',
+            'func_slope': 'OFF',
+            'func_value': 'OFF',
+            'func_variable': 'OFF',
             'function': 'OFF',
             'initial_value': 'OFF',
             'integration_rate': 'OFF',
@@ -40,6 +48,14 @@ class TestLog:
             'RESULTS': 'OFF',
             'clip': 'OFF',
             'convergence_criterion': 'OFF',
+            'func_additive_param': 'OFF',
+            'func_bounds': 'OFF',
+            'func_function': 'OFF',
+            'func_intercept': 'OFF',
+            'func_multiplicative_param': 'OFF',
+            'func_slope': 'OFF',
+            'func_value': 'OFF',
+            'func_variable': 'OFF',
             'function': 'OFF',
             'initial_value': 'OFF',
             'integration_rate': 'OFF',
@@ -58,7 +74,11 @@ class TestLog:
         }
         assert PJ.loggable_items == {
             'exponent': 'OFF',
-            'function': 'OFF',
+            'func_bounds': 'OFF',
+            'func_function': 'OFF',
+            'func_matrix': 'OFF',
+            'func_value': 'OFF',
+            'func_variable': 'OFF',
             'matrix': 'OFF',
             'mod_matrix': 'OFF',
             'value': 'OFF',
@@ -68,13 +88,21 @@ class TestLog:
 
         T_1.set_log_conditions('mod_noise')
         T_1.set_log_conditions(pnl.RESULTS)
-        PJ.set_log_conditions(pnl.MATRIX)
+        PJ.set_log_conditions('mod_matrix')
 
         assert T_1.loggable_items == {
             'InputState-0': 'OFF',
             'RESULTS': 'EXECUTION',
             'clip': 'OFF',
             'convergence_criterion': 'OFF',
+            'func_additive_param': 'OFF',
+            'func_bounds': 'OFF',
+            'func_function': 'OFF',
+            'func_intercept': 'OFF',
+            'func_multiplicative_param': 'OFF',
+            'func_slope': 'OFF',
+            'func_value': 'OFF',
+            'func_variable': 'OFF',
             'function': 'OFF',
             'initial_value': 'OFF',
             'integration_rate': 'OFF',
@@ -96,6 +124,14 @@ class TestLog:
             'RESULTS': 'OFF',
             'clip': 'OFF',
             'convergence_criterion': 'OFF',
+            'func_additive_param': 'OFF',
+            'func_bounds': 'OFF',
+            'func_function': 'OFF',
+            'func_intercept': 'OFF',
+            'func_multiplicative_param': 'OFF',
+            'func_slope': 'OFF',
+            'func_value': 'OFF',
+            'func_variable': 'OFF',
             'function': 'OFF',
             'initial_value': 'OFF',
             'integration_rate': 'OFF',
@@ -114,9 +150,13 @@ class TestLog:
         }
         assert PJ.loggable_items == {
             'exponent': 'OFF',
-            'function': 'OFF',
-            'matrix': 'EXECUTION',
-            'mod_matrix': 'OFF',
+            'func_bounds': 'OFF',
+            'func_function': 'OFF',
+            'func_matrix': 'OFF',
+            'func_value': 'OFF',
+            'func_variable': 'OFF',
+            'matrix': 'OFF',
+            'mod_matrix': 'EXECUTION',
             'value': 'OFF',
             'variable': 'OFF',
             'weight': 'OFF'
@@ -126,10 +166,10 @@ class TestLog:
         PS.execute()
         PS.execute()
 
-        assert T_1.logged_items == {'RESULTS': 'EXECUTION', 'noise': 'EXECUTION'}
-        assert PJ.logged_items == {'matrix': 'EXECUTION'}
+        assert T_1.logged_items == {'RESULTS': 'EXECUTION', 'mod_noise': 'EXECUTION'}
+        assert PJ.logged_items == {'mod_matrix': 'EXECUTION'}
 
-        T_1.log.print_entries()
+        T_1.log.print_entries(execution_ids=PS.name)
 
         # assert T_1.log.print_entries() ==
         # # Log for mech_A:
@@ -153,17 +193,17 @@ class TestLog:
         # # 0         'noise'...........................................' EXECUTING  PROCESS Process-0'.......................................    0.0
         # # 1         'noise'...........................................' EXECUTING  PROCESS Process-0'.......................................    0.0
 
-        print(T_1.log.csv(entries=['noise', 'RESULTS'], owner_name=False, quotes=None))
-        assert T_1.log.csv(entries=['noise', 'RESULTS'], owner_name=False, quotes=None) == \
-                        "\'Index\', \'noise\', \'RESULTS\'\n0, 0.0, 0.0 0.0\n1, 0.0, 0.0 0.0\n2, 0.0, 0.0 0.0\n"
+        print(T_1.log.csv(entries=['mod_noise', 'RESULTS'], owner_name=False, quotes=None))
+        assert T_1.log.csv(entries=['mod_noise', 'RESULTS'], owner_name=False, quotes=None) == \
+                        "\'Index\', \'mod_noise\', \'RESULTS\'\n0, 0.0, 0.0 0.0\n1, 0.0, 0.0 0.0\n2, 0.0, 0.0 0.0\n"
 
-        assert PJ.log.csv(entries='matrix', owner_name=True, quotes=True) == \
+        assert PJ.log.csv(entries='mod_matrix', owner_name=True, quotes=True) == \
                "\'Index\', \'MappingProjection from log_test_T_1 to log_test_T_2[matrix]\'\n" \
                "\'0\', \'1.0 0.0\' \'0.0 1.0\'\n" \
                "\'1\', \'1.0 0.0\' \'0.0 1.0\'\n" \
                "\'2\', \'1.0 0.0\' \'0.0 1.0\'\n"
 
-        result = T_1.log.nparray(entries=['noise', 'RESULTS'], header=False, owner_name=True)
+        result = T_1.log.nparray(entries=['mod_noise', 'RESULTS'], header=False, owner_name=True)
         np.testing.assert_array_equal(result,
                                       np.array([[[0], [1], [2]],
                                                 [[ 0.], [ 0.], [ 0.]],
