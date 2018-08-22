@@ -6,23 +6,23 @@ from timeit import timeit
 import numpy as np
 import pytest
 
-from psyneulink.components.functions.function import Linear, SimpleIntegrator, ModulationParam
+from psyneulink.components.functions.function import Linear, ModulationParam, SimpleIntegrator
 from psyneulink.components.mechanisms.processing.integratormechanism import IntegratorMechanism
-from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism, TRANSFER_OUTPUT
 from psyneulink.components.mechanisms.processing.objectivemechanism import ObjectiveMechanism
 from psyneulink.components.mechanisms.processing.processingmechanism import ProcessingMechanism
-from psyneulink.library.mechanisms.processing.transfer.recurrenttransfermechanism import RecurrentTransferMechanism
+from psyneulink.components.mechanisms.processing.transfermechanism import TRANSFER_OUTPUT, TransferMechanism
 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.components.states.inputstate import InputState
-from psyneulink.compositions.composition import Composition, CompositionError, CNodeRole
+from psyneulink.compositions.composition import CNodeRole, Composition, CompositionError
 from psyneulink.compositions.pathwaycomposition import PathwayComposition
 from psyneulink.compositions.systemcomposition import SystemComposition
+from psyneulink.globals.keywords import HARD_CLAMP, IDENTITY_MATRIX, INPUT_STATE, NAME, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP
+from psyneulink.library.mechanisms.processing.transfer.recurrenttransfermechanism import RecurrentTransferMechanism
 from psyneulink.library.subsystems.agt.lccontrolmechanism import LCControlMechanism
+from psyneulink.scheduling.condition import AfterNCalls, EveryNPasses
 from psyneulink.scheduling.condition import EveryNCalls
 from psyneulink.scheduling.scheduler import Scheduler
-from psyneulink.scheduling.condition import EveryNPasses, AfterNCalls
 from psyneulink.scheduling.time import TimeScale
-from psyneulink.globals.keywords import IDENTITY_MATRIX, NAME, INPUT_STATE, HARD_CLAMP, SOFT_CLAMP, NO_CLAMP, PULSE_CLAMP
 
 logger = logging.getLogger(__name__)
 
@@ -224,9 +224,9 @@ class TestAddProjection:
         comp.add_c_node(B)
         proj = comp.add_projection(weights, A, B)
         comp.run(inputs={A: [[1.1, 1.2, 1.3]]})
-        assert np.allclose(A.value, [[1.1, 1.2, 1.3]])
+        assert np.allclose(A.parameters.value.get(comp), [[1.1, 1.2, 1.3]])
         assert np.allclose(B.input_values, [[11.2,  14.8]])
-        assert np.allclose(B.value, [[22.4,  29.6]])
+        assert np.allclose(B.parameters.value.get(comp), [[22.4,  29.6]])
         assert np.allclose(proj.matrix, weights)
 
     def test_linear_processing_pathway_weights_only(self):
@@ -239,9 +239,9 @@ class TestAddProjection:
         weights = [[1., 2.], [3., 4.], [5., 6.]]
         comp.add_linear_processing_pathway([A, weights, B])
         comp.run(inputs={A: [[1.1, 1.2, 1.3]]})
-        assert np.allclose(A.value, [[1.1, 1.2, 1.3]])
+        assert np.allclose(A.parameters.value.get(comp), [[1.1, 1.2, 1.3]])
         assert np.allclose(B.input_values, [[11.2,  14.8]])
-        assert np.allclose(B.value, [[22.4,  29.6]])
+        assert np.allclose(B.parameters.value.get(comp), [[22.4,  29.6]])
 
     def test_add_conflicting_projection_object(self):
         comp = Composition()
@@ -470,7 +470,7 @@ class TestExecutionOrder:
                             D: 6.0,
                             E: 6.0}
 
-        assert all(expected_results[mech] == mech.value for mech in expected_results)
+        assert all(expected_results[mech] == mech.parameters.value.get(comp) for mech in expected_results)
 
         comp.run(inputs={A: 1.0})
 
@@ -480,7 +480,7 @@ class TestExecutionOrder:
                               D: 150.0,
                               E: 150.0}
 
-        assert all(expected_results_2[mech] == mech.value for mech in expected_results_2)
+        assert all(expected_results_2[mech] == mech.parameters.value.get(comp) for mech in expected_results_2)
 
     def test_feedback_projection_spec(self):
         A = ProcessingMechanism(name="A")
@@ -505,7 +505,7 @@ class TestExecutionOrder:
                             D: 6.0,
                             E: 6.0}
 
-        assert all(expected_results[mech] == mech.value for mech in expected_results)
+        assert all(expected_results[mech] == mech.parameters.value.get(comp) for mech in expected_results)
 
         comp.run(inputs={A: 1.0})
 
@@ -515,7 +515,7 @@ class TestExecutionOrder:
                               D: 150.0,
                               E: 150.0}
 
-        assert all(expected_results_2[mech] == mech.value for mech in expected_results_2)
+        assert all(expected_results_2[mech] == mech.parameters.value.get(comp) for mech in expected_results_2)
 
     def test_outer_feedback_inner_loop(self):
         A = ProcessingMechanism(name="A")
@@ -632,7 +632,7 @@ class TestExecutionOrder:
                            E: 3.0}
 
         for node in expected_values:
-            assert np.allclose(expected_values[node], node.value)
+            assert np.allclose(expected_values[node], node.parameters.value.get(comp))
 
         comp.run(inputs={A: [1.0]})
         expected_values_2 = {A: 1.0,
@@ -643,7 +643,7 @@ class TestExecutionOrder:
 
         print(D.log.nparray_dictionary(["OutputState-0"]))
         for node in expected_values:
-            assert np.allclose(expected_values_2[node], node.value)
+            assert np.allclose(expected_values_2[node], node.parameters.value.get(comp))
 
 
 
@@ -677,7 +677,7 @@ class TestExecutionOrder:
                            E: 5.0}
 
         for node in expected_values:
-            assert np.allclose(expected_values[node], node.value)
+            assert np.allclose(expected_values[node], node.parameters.value.get(comp))
 
         comp.run(inputs={A: [1.0]})
         expected_values_2 = {A: 1.0,
@@ -688,7 +688,7 @@ class TestExecutionOrder:
                              E: 10.0}
 
         for node in expected_values:
-            assert np.allclose(expected_values_2[node], node.value)
+            assert np.allclose(expected_values_2[node], node.parameters.value.get(comp))
 
     def test_two_overlapping_loops(self):
         A = ProcessingMechanism(name="A")

@@ -1109,8 +1109,8 @@ class Composition(object):
                 if input_state not in set(self.input_CIM_states.keys()):
 
                     interface_input_state = InputState(owner=self.input_CIM,
-                                                       variable=input_state.value,
-                                                       reference_value=input_state.value,
+                                                       variable=input_state.defaults.value,
+                                                       reference_value=input_state.defaults.value,
                                                        name="INPUT_CIM_" + node.name + "_" + input_state.name)
 
                     interface_output_state = OutputState(owner=self.input_CIM,
@@ -1174,10 +1174,12 @@ class Composition(object):
 
                     proj_name = "(" + output_state.name + ") to (" + interface_input_state.name + ")"
 
-                    MappingProjection(sender=output_state,
+                    proj = MappingProjection(sender=output_state,
                                       receiver=interface_input_state,
                                       matrix=IDENTITY_MATRIX,
                                       name=proj_name)
+                    proj._enable_for_compositions(self)
+                    self._add_projection(proj)
 
         previous_terminal_output_states = set(self.output_CIM_states.keys())
         for output_state in previous_terminal_output_states.difference(current_terminal_output_states):
@@ -1186,7 +1188,7 @@ class Composition(object):
             self.output_CIM.output_states.remove(self.output_CIM_states[output_state][1])
             del self.output_CIM_states[output_state]
 
-    def _assign_values_to_input_CIM(self, inputs):
+    def _assign_values_to_input_CIM(self, inputs, execution_id=None):
         """
             Assign values from input dictionary to the InputStates of the Input CIM, then execute the Input CIM
 
@@ -1216,7 +1218,7 @@ class Composition(object):
 
             build_CIM_input.append(value)
 
-        self.input_CIM.execute(build_CIM_input)
+        self.input_CIM.execute(build_CIM_input, execution_id=execution_id)
 
     def _assign_execution_ids(self, execution_id=None):
         '''
@@ -1367,13 +1369,12 @@ class Composition(object):
             scheduler_learning = self.scheduler_learning
 
         if nested:
-            self.execution_id = self.input_CIM.path_afferents[0].sender.owner.composition.default_execution_id
             self.input_CIM.context.execution_phase = ContextFlags.PROCESSING
-            self.input_CIM.execute(context=ContextFlags.PROCESSING)
+            self.input_CIM.execute(execution_id=execution_id, context=ContextFlags.PROCESSING)
 
         else:
             inputs = self._adjust_execution_stimuli(inputs)
-            self._assign_values_to_input_CIM(inputs)
+            self._assign_values_to_input_CIM(inputs, execution_id=execution_id)
 
         if termination_processing is None:
             termination_processing = self.termination_processing
@@ -1413,8 +1414,8 @@ class Composition(object):
             frozen_values = {}
             new_values = {}
             # execute each node with EXECUTING in context
-            for node in next_execution_set:
-                frozen_values[node] = node.output_values
+            for node in sorted(next_execution_set, key=lambda node: node.name):
+                frozen_values[node] = node.get_output_values(execution_id)
                 if node in origin_nodes:
                     # KAM 8/28 commenting out the below code because it's not necessarily how we want to handle
                     # a recurrent projection on the first time step (meaning, before its node has executed)
@@ -1477,15 +1478,15 @@ class Composition(object):
                             for input_state in node.input_states:
                             # clamp = None --> "turn off" input node
                                 self.input_CIM_states[input_state][1].parameters.value.set(0, execution_id, override=True)
-                new_values[node] = node.output_values
+                new_values[node] = node.get_output_values(execution_id)
 
                 for i in range(len(node.output_states)):
-                    node.output_states[i].set_value_without_logging(frozen_values[node][i])
+                    node.output_states[i].parameters.value.set(frozen_values[node][i], execution_id, override=True, skip_history=True, skip_log=True)
 
             for node in next_execution_set:
 
                 for i in range(len(node.output_states)):
-                    node.output_states[i].set_value_without_logging(new_values[node][i])
+                    node.output_states[i].parameters.value.set(new_values[node][i], execution_id, override=True, skip_history=True, skip_log=True)
 
             if call_after_time_step:
                 call_with_pruned_args(call_after_time_step, execution_id=execution_id)
@@ -1494,11 +1495,11 @@ class Composition(object):
             call_with_pruned_args(call_after_pass, execution_id=execution_id)
 
         self.output_CIM.context.execution_phase = ContextFlags.PROCESSING
-        self.output_CIM.execute(context=ContextFlags.PROCESSING)
+        self.output_CIM.execute(execution_id=execution_id, context=ContextFlags.PROCESSING)
 
         output_values = []
         for i in range(0, len(self.output_CIM.output_states)):
-            output_values.append(self.output_CIM.output_states[i].value)
+            output_values.append(self.output_CIM.output_states[i].parameters.value.get(execution_id))
 
         # TBI control phase
 
@@ -1613,6 +1614,7 @@ class Composition(object):
                                       format(node.name, self.name))
 
 
+        results = []
         self._analyze_graph()
 
         execution_id = self._assign_execution_ids(execution_id)
@@ -1702,7 +1704,7 @@ class Composition(object):
                 result_copy = trial_output.copy()
             else:
                 result_copy = trial_output
-            self.results.append(result_copy)
+            results.append(result_copy)
 
             if trial_output is not None:
                 result = trial_output
@@ -1745,7 +1747,8 @@ class Composition(object):
 
         scheduler_processing.clocks[execution_id]._increment_time(TimeScale.RUN)
 
-        return self.results
+        self.results = results
+        return results
 
     def run_simulation(self):
         print("simulation runs now")

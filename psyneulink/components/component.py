@@ -3439,8 +3439,8 @@ class Component(object, metaclass=ComponentsMeta):
             try:
                 pref_set.owner = self
             except:
-                pass
             # MODIFIED 6/1/16 END
+                pass
             self._prefs = pref_set
             if self.prefs.verbosePref:
                 warnings.warn('PreferenceSet {0} assigned to {1}'.format(pref_set.name, self.name))
@@ -3455,9 +3455,6 @@ class Component(object, metaclass=ComponentsMeta):
         else:
             raise ComponentError("Attempt to assign non-PreferenceSet {0} to {0}.prefs".
                                 format(pref_set, self.name))
-
-    def set_value_without_logging(self, assignment):
-        self._value = assignment
 
     @property
     def params(self):

@@ -3211,11 +3211,10 @@ class InterfaceStateMap(InterfaceFunction):
 
         index = self.corresponding_input_state.position_in_mechanism
 
-        if self.corresponding_input_state.owner.value is not None:
+        if self.corresponding_input_state.owner.parameters.value.get(execution_id) is not None:
 
             # If CIM's variable does not match its value, then a new pair of states was added since the last execution
-            if not np.allclose(np.shape(self.corresponding_input_state.owner.input_values),
-                               np.shape(self.corresponding_input_state.owner.value)):
+            if not np.shape(self.corresponding_input_state.owner.input_values) == np.shape(self.corresponding_input_state.owner.parameters.value.get(execution_id)):
                 return self.corresponding_input_state.owner.instance_defaults.variable[index]
 
             # If the variable is 1D (e.g. [0. , 0.], NOT [[0. , 0.]]), and the index is 0, then return whole variable

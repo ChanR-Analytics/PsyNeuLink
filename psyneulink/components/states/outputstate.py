@@ -698,7 +698,16 @@ def _parse_output_state_variable(variable, owner, execution_id=None, output_stat
             return owner.attributes_dict
         elif isinstance(spec, str):
             # Owner's full value or attribute other than its value
-            return owner.attributes_dict[spec]
+            try:
+                owner_param_name = output_state_spec_to_parameter_name[spec]
+            except KeyError:
+                owner_param_name = spec
+
+            try:
+                return getattr(owner.parameters, owner_param_name).get(execution_id)
+            except:
+                raise OutputStateError("Can't parse variable ({}) for {} of {}".
+                                   format(spec, output_state_name or OutputState.__name__, owner.name))
         else:
             raise OutputStateError("\'{}\' entry for {} specification dictionary of {} ({}) must be "
                                    "numeric or a list of {} attribute names".
