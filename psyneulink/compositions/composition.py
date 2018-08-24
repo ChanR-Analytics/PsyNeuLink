@@ -1301,7 +1301,6 @@ class Composition(object, metaclass=ComponentsMeta):
         call_after_time_step=None,
         call_after_pass=None,
         execution_id=None,
-        parent=None,
         clamp_input=SOFT_CLAMP,
         targets=None,
         runtime_params=None,
@@ -1330,9 +1329,6 @@ class Composition(object, metaclass=ComponentsMeta):
 
             execution_id : UUID
                 execution_id will typically be set to none and assigned randomly at runtime
-
-            parent : Composition or None
-                the Composition in which this Composition is embedded, if applicable
 
             call_before_time_step : callable
                 will be called before each `TIME_STEP` is executed
@@ -1395,7 +1391,8 @@ class Composition(object, metaclass=ComponentsMeta):
         execution_scheduler = scheduler_processing
 
         # initialize from null context but don't overwrite any values already set for this execution_id
-        self._initialize_from_context(execution_id, parent, override=False)
+        if not nested:
+            self._initialize_from_context(execution_id, None, override=False)
 
         if call_before_pass:
             call_with_pruned_args(call_before_pass, execution_id=execution_id)
@@ -1518,7 +1515,6 @@ class Composition(object, metaclass=ComponentsMeta):
         termination_processing=None,
         termination_learning=None,
         execution_id=None,
-        parent=None,
         num_trials=None,
         call_before_time_step=None,
         call_after_time_step=None,
@@ -1553,9 +1549,6 @@ class Composition(object, metaclass=ComponentsMeta):
 
             execution_id : UUID
                 execution_id will typically be set to none and assigned randomly at runtime.
-
-            parent : Composition or None
-                the Composition in which this Composition is embedded, if applicable
 
             num_trials : int
                 typically, the composition will infer the number of trials from the length of its input specification.
@@ -1696,7 +1689,6 @@ class Composition(object, metaclass=ComponentsMeta):
                                         call_after_time_step=call_after_time_step,
                                         call_after_pass=call_after_pass,
                                         execution_id=execution_id,
-                                        parent=parent,
                                         clamp_input=clamp_input,
                                         runtime_params=runtime_params)
 
