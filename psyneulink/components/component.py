@@ -1503,6 +1503,11 @@ class Component(object, metaclass=ComponentsMeta):
         # Otherwise, if prefs is a specification dict instantiate it, or if it is None assign defaults
         else:
             self.prefs = ComponentPreferenceSet(owner=self, prefs=prefs, context=context)
+        try:
+            # assign log conditions from preferences
+            self.parameters.value.log_condition = self.prefs._log_pref.setting
+        except AttributeError:
+            pass
 
         # ASSIGN LOG
         from psyneulink.globals.log import Log
