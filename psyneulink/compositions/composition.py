@@ -54,7 +54,7 @@ import uuid
 from collections import Iterable, OrderedDict
 from enum import Enum
 
-from psyneulink.components.component import ComponentsMeta, Defaults, Param, function_type
+from psyneulink.components.component import ComponentsMeta, Defaults, Param, Parameters, function_type
 from psyneulink.components.functions.function import InterfaceStateMap
 from psyneulink.components.mechanisms.adaptive.control.controlmechanism import ControlMechanism
 from psyneulink.components.mechanisms.processing.compositioninterfacemechanism import CompositionInterfaceMechanism
@@ -64,7 +64,7 @@ from psyneulink.components.states.inputstate import InputState
 from psyneulink.components.states.outputstate import OutputState
 from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.keywords import HARD_CLAMP, IDENTITY_MATRIX, MATRIX_KEYWORD_VALUES, NO_CLAMP, OWNER_VALUE, PULSE_CLAMP, SOFT_CLAMP
-from psyneulink.globals.utilities import ParamsTemplate, call_with_pruned_args
+from psyneulink.globals.utilities import call_with_pruned_args
 from psyneulink.scheduling.condition import Always
 from psyneulink.scheduling.scheduler import Scheduler
 from psyneulink.scheduling.time import TimeScale
@@ -424,7 +424,7 @@ class Composition(object, metaclass=ComponentsMeta):
         COMMENT
 
     '''
-    class Params(ParamsTemplate):
+    class Params(Parameters):
         results = Param([], loggable=False)
 
     def __init__(self,
@@ -1615,7 +1615,6 @@ class Composition(object, metaclass=ComponentsMeta):
                     raise CompositionError("{} (entry in initial_values arg) is not a node in \'{}\'".
                                       format(node.name, self.name))
 
-
         results = []
         self._analyze_graph()
 
@@ -1656,8 +1655,6 @@ class Composition(object, metaclass=ComponentsMeta):
             targets = {}
 
         scheduler_processing._reset_counts_total(TimeScale.RUN, execution_id)
-
-        result = None
 
         # --- RESET FOR NEXT TRIAL ---
         # by looping over the length of the list of inputs - each input represents a TRIAL
@@ -1708,9 +1705,6 @@ class Composition(object, metaclass=ComponentsMeta):
                 result_copy = trial_output
             results.append(result_copy)
 
-            if trial_output is not None:
-                result = trial_output
-
         # LEARNING ------------------------------------------------------------------------
             # Prepare targets from the outside world  -- collect the targets for this TRIAL and store them in a dict
             execution_targets = {}
@@ -1750,7 +1744,12 @@ class Composition(object, metaclass=ComponentsMeta):
         scheduler_processing.clocks[execution_id]._increment_time(TimeScale.RUN)
 
         full_results = self.parameters.results.get(execution_id)
-        full_results.append(results)
+        if full_results is None:
+            full_results = results
+        else:
+            full_results.extend(results)
+
+        self.parameters.results.set(full_results, execution_id)
         return full_results
 
     def run_simulation(self):
@@ -1981,6 +1980,10 @@ class Composition(object, metaclass=ComponentsMeta):
     def output_state(self):
         """Returns the index 0 OutputState that belongs to the Output CompositionInterfaceMechanism"""
         return self.output_CIM.output_states[0]
+
+    @property
+    def results(self):
+        return self.parameters.results.get(self.default_execution_id)
 
     @property
     def class_parameters(self):

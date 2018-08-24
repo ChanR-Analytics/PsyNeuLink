@@ -121,9 +121,9 @@ class TestRuntimeParams:
         # Runtime param NOT used for noise
         C.run(inputs={T: 2.0})
 
-        assert np.allclose(C.results, [np.array([2.]),      # Trial 0 - NOT condition 0, NOT condition 1
-                                     np.array([12.]),     # Trial 1 - condition 0, NOT condition 1
-                                     np.array([2.]),      # Trial 2 - NOT condition 0, NOT condition 1
-                                     np.array([12.]),     # Trial 3 - NOT condition 0, condition 1
-                                     np.array([12.]),     # Trial 4 - NOT condition 0, condition 1
-                                     np.array([2.])])     # New run (runtime param no longer applies)
+        assert np.allclose(C.results,[np.array([[2.]]),      # Trial 0 - NOT condition 0, NOT condition 1
+                                      np.array([[12.]]),     # Trial 1 - condition 0, NOT condition 1
+                                      np.array([[2.]]),      # Trial 2 - NOT condition 0, NOT condition 1
+                                      np.array([[12.]]),     # Trial 3 - NOT condition 0, condition 1
+                                      np.array([[12.]]),     # Trial 4 - NOT condition 0, condition 1
+                                      np.array([[2.]])])     # New run (runtime param no longer applies)
