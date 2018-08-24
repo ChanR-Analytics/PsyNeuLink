@@ -1,16 +1,6 @@
-import psyneulink as pnl
+import functools
 import numpy as np
-
-from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism
-from psyneulink.globals.keywords import RESULT, MEAN, VARIANCE, ALLOCATION_SAMPLES, IDENTITY_MATRIX
-from psyneulink.library.mechanisms.processing.integrator.ddm import DDM, DECISION_VARIABLE, RESPONSE_TIME, \
-    PROBABILITY_UPPER_THRESHOLD
-from psyneulink.components.functions.function import BogaczEtAl, Linear
-from psyneulink.components.process import Process
-from psyneulink.components.system import System
-from psyneulink.components.projections.modulatory.controlprojection import ControlProjection
-from psyneulink.library.subsystems.evc.evccontrolmechanism import EVCControlMechanism
-from psyneulink.compositions.composition import Composition
+import psyneulink as pnl
 
 
 class TestControlMechanisms:
@@ -52,10 +42,10 @@ class TestControlMechanisms:
         B_value = []
         LC_value = []
 
-        def report_trial():
-            gain_created_by_LC_output_state_1.append(LC.output_states[0].value[0])
-            mod_gain_assigned_to_A.append(A.mod_gain)
-            mod_gain_assigned_to_B.append(B.mod_gain)
+        def report_trial(system):
+            gain_created_by_LC_output_state_1.append(LC.output_state.parameters.value.get(system))
+            mod_gain_assigned_to_A.append(A.get_mod_gain(system))
+            mod_gain_assigned_to_B.append(B.get_mod_gain(system))
             base_gain_assigned_to_A.append(A.function_object.gain)
             base_gain_assigned_to_B.append(B.function_object.gain)
             A_value.append(A.value)
@@ -63,7 +53,7 @@ class TestControlMechanisms:
             LC_value.append(LC.value)
 
         result = S.run(inputs={A: [[1.0], [1.0], [1.0], [1.0], [1.0]]},
-                      call_after_trial=report_trial)
+                      call_after_trial=functools.partial(report_trial, S))
 
         # (1) First value of gain in mechanisms A and B must be whatever we hardcoded for LC starting value
         assert mod_gain_assigned_to_A[0] == starting_value_LC

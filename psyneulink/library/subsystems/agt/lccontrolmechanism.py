@@ -270,19 +270,18 @@ Class Reference
 """
 import typecheck as tc
 
-from psyneulink.components.functions.function import \
-    FHNIntegrator, MULTIPLICATIVE_PARAM, ModulationParam, _is_modulation_param
+from psyneulink.components.component import Param
+from psyneulink.components.functions.function import FHNIntegrator, MULTIPLICATIVE_PARAM, ModulationParam, _is_modulation_param
 from psyneulink.components.mechanisms.adaptive.control.controlmechanism import ControlMechanism
 from psyneulink.components.mechanisms.processing.objectivemechanism import ObjectiveMechanism
 from psyneulink.components.projections.modulatory.controlprojection import ControlProjection
-from psyneulink.components.states.outputstate import OutputState
 from psyneulink.components.shellclasses import Mechanism, System_Base
-from psyneulink.globals.keywords import \
-    ALL, CONTROL, CONTROL_PROJECTIONS, CONTROL_SIGNALS, FUNCTION, INIT__EXECUTE__METHOD_ONLY, PROJECTIONS
-from psyneulink.globals.utilities import is_iterable
+from psyneulink.components.states.outputstate import OutputState
 from psyneulink.globals.context import ContextFlags
+from psyneulink.globals.keywords import ALL, CONTROL, CONTROL_PROJECTIONS, CONTROL_SIGNALS, FUNCTION, INIT__EXECUTE__METHOD_ONLY, PROJECTIONS
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
+from psyneulink.globals.utilities import is_iterable
 
 __all__ = [
     'CONTROL_SIGNAL_NAME', 'ControlMechanismRegistry', 'LCControlMechanism', 'LCControlMechanismError',
@@ -602,6 +601,9 @@ class LCControlMechanism(ControlMechanism):
     # classPreferences = {
     #     kwPreferenceSetName: 'ControlMechanismClassPreferences',
     #     kp<pref>: <setting>...}
+
+    class Params(ControlMechanism.Params):
+        function = Param(FHNIntegrator, stateful=False, loggable=False)
 
     paramClassDefaults = ControlMechanism.paramClassDefaults.copy()
     paramClassDefaults.update({FUNCTION:FHNIntegrator,

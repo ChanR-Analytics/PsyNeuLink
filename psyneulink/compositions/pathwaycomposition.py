@@ -1,7 +1,7 @@
-from psyneulink.compositions.composition import Composition, CNodeRole
 from psyneulink.components.mechanisms.mechanism import Mechanism
 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.components.projections.projection import Projection
+from psyneulink.compositions.composition import CNodeRole, Composition
 from psyneulink.globals.keywords import SOFT_CLAMP
 
 
@@ -85,6 +85,7 @@ class PathwayComposition(Composition):
         call_after_time_step=None,
         call_after_pass=None,
         execution_id=None,
+        parent=None,
         clamp_input=SOFT_CLAMP,
         targets=None,
         runtime_params=None,
@@ -104,6 +105,7 @@ class PathwayComposition(Composition):
             call_after_time_step,
             call_after_pass,
             execution_id,
+            parent,
             clamp_input,
             targets,
             runtime_params

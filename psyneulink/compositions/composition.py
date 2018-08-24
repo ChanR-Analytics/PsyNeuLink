@@ -54,7 +54,7 @@ import uuid
 from collections import Iterable, OrderedDict
 from enum import Enum
 
-from psyneulink.components.component import function_type
+from psyneulink.components.component import ComponentsMeta, Defaults, Param, function_type
 from psyneulink.components.functions.function import InterfaceStateMap
 from psyneulink.components.mechanisms.adaptive.control.controlmechanism import ControlMechanism
 from psyneulink.components.mechanisms.processing.compositioninterfacemechanism import CompositionInterfaceMechanism
@@ -64,8 +64,7 @@ from psyneulink.components.states.inputstate import InputState
 from psyneulink.components.states.outputstate import OutputState
 from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.keywords import HARD_CLAMP, IDENTITY_MATRIX, MATRIX_KEYWORD_VALUES, NO_CLAMP, OWNER_VALUE, PULSE_CLAMP, SOFT_CLAMP
-from psyneulink.globals.socket import ConnectionInfo
-from psyneulink.globals.utilities import call_with_pruned_args
+from psyneulink.globals.utilities import ParamsTemplate, call_with_pruned_args
 from psyneulink.scheduling.condition import Always
 from psyneulink.scheduling.scheduler import Scheduler
 from psyneulink.scheduling.time import TimeScale
@@ -397,7 +396,8 @@ class Graph(object):
 
         return list(self.comp_to_vertex[component].backward_sources)
 
-class Composition(object):
+
+class Composition(object, metaclass=ComponentsMeta):
     '''
         Composition
 
@@ -424,6 +424,8 @@ class Composition(object):
         COMMENT
 
     '''
+    class Params(ParamsTemplate):
+        results = Param([], loggable=False)
 
     def __init__(self,
                  name=None,
@@ -469,12 +471,11 @@ class Composition(object):
         self.all_output_nodes = []
         self.target_nodes = []  # Do not need to track explicit as they must be explicit
 
-        # Reporting
-        self.results = []
-
         # TBI: update self.sched whenever something is added to the composition
         self.sched = Scheduler(composition=self)
 
+        self.parameters = self.Params(owner=self, parent=self.class_parameters)
+        self.defaults = Defaults(owner=self)
 
     def __repr__(self):
         return '({0} {1})'.format(type(self).__name__, self.name)
@@ -1300,6 +1301,7 @@ class Composition(object):
         call_after_time_step=None,
         call_after_pass=None,
         execution_id=None,
+        parent=None,
         clamp_input=SOFT_CLAMP,
         targets=None,
         runtime_params=None,
@@ -1328,6 +1330,9 @@ class Composition(object):
 
             execution_id : UUID
                 execution_id will typically be set to none and assigned randomly at runtime
+
+            parent : Composition or None
+                the Composition in which this Composition is embedded, if applicable
 
             call_before_time_step : callable
                 will be called before each `TIME_STEP` is executed
@@ -1390,7 +1395,7 @@ class Composition(object):
         execution_scheduler = scheduler_processing
 
         # initialize from null context but don't overwrite any values already set for this execution_id
-        self._initialize_from_context(execution_id, None, override=False)
+        self._initialize_from_context(execution_id, parent, override=False)
 
         if call_before_pass:
             call_with_pruned_args(call_before_pass, execution_id=execution_id)
@@ -1414,7 +1419,7 @@ class Composition(object):
             frozen_values = {}
             new_values = {}
             # execute each node with EXECUTING in context
-            for node in sorted(next_execution_set, key=lambda node: node.name):
+            for node in next_execution_set:
                 frozen_values[node] = node.get_output_values(execution_id)
                 if node in origin_nodes:
                     # KAM 8/28 commenting out the below code because it's not necessarily how we want to handle
@@ -1513,6 +1518,7 @@ class Composition(object):
         termination_processing=None,
         termination_learning=None,
         execution_id=None,
+        parent=None,
         num_trials=None,
         call_before_time_step=None,
         call_after_time_step=None,
@@ -1547,6 +1553,9 @@ class Composition(object):
 
             execution_id : UUID
                 execution_id will typically be set to none and assigned randomly at runtime.
+
+            parent : Composition or None
+                the Composition in which this Composition is embedded, if applicable
 
             num_trials : int
                 typically, the composition will infer the number of trials from the length of its input specification.
@@ -1687,6 +1696,7 @@ class Composition(object):
                                         call_after_time_step=call_after_time_step,
                                         call_after_pass=call_after_pass,
                                         execution_id=execution_id,
+                                        parent=parent,
                                         clamp_input=clamp_input,
                                         runtime_params=runtime_params)
 
@@ -1747,8 +1757,9 @@ class Composition(object):
 
         scheduler_processing.clocks[execution_id]._increment_time(TimeScale.RUN)
 
-        self.results = results
-        return results
+        full_results = self.parameters.results.get(execution_id)
+        full_results.append(results)
+        return full_results
 
     def run_simulation(self):
         print("simulation runs now")
@@ -1907,11 +1918,14 @@ class Composition(object):
         return adjusted_stimuli
 
     def _initialize_from_context(self, execution_context, base_execution_context=None, override=True):
-        for mech in self.c_nodes:
-            mech._initialize_from_context(execution_context, base_execution_context, override)
+        for c_node in self.c_nodes:
+            c_node._initialize_from_context(execution_context, base_execution_context, override)
 
         for proj in self.projections:
             proj._initialize_from_context(execution_context, base_execution_context, override)
+
+        self.input_CIM._initialize_from_context(execution_context, base_execution_context, override)
+        self.output_CIM._initialize_from_context(execution_context, base_execution_context, override)
 
     @property
     def input_states(self):
@@ -1926,10 +1940,10 @@ class Composition(object):
     @property
     def output_values(self):
         """Returns values of all OutputStates that belong to the Output CompositionInterfaceMechanism"""
-        output_values = []
-        for state in self.output_CIM.output_states:
-            output_values.append(state.value)
-        return output_values
+        return self.get_output_values()
+
+    def get_output_values(self, execution_context=None):
+        return [output_state.parameters.value.get(execution_context) for output_state in self.output_CIM.output_states]
 
     @property
     def input_state(self):
@@ -1939,10 +1953,10 @@ class Composition(object):
     @property
     def input_values(self):
         """Returns values of all InputStates that belong to the Input CompositionInterfaceMechanism"""
-        input_values = []
-        for state in self.input_CIM.input_states:
-            input_values.append(state.value)
-        return input_values
+        return self.get_input_values()
+
+    def get_input_values(self, execution_context=None):
+        return [input_state.parameters.value.get(execution_context) for input_state in self.input_CIM.input_states]
 
     #  For now, external_input_states == input_states and external_input_values == input_values
     #  They could be different in the future depending on new features (ex. if we introduce recurrent compositions)
@@ -1971,9 +1985,15 @@ class Composition(object):
         except (TypeError, AttributeError):
             return None
 
-
     @property
     def output_state(self):
         """Returns the index 0 OutputState that belongs to the Output CompositionInterfaceMechanism"""
         return self.output_CIM.output_states[0]
 
+    @property
+    def class_parameters(self):
+        return self.__class__.parameters
+
+    @property
+    def stateful_parameters(self):
+        return [param for param in self.parameters if param.stateful]

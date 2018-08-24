@@ -225,7 +225,7 @@ class TestAddProjection:
         proj = comp.add_projection(weights, A, B)
         comp.run(inputs={A: [[1.1, 1.2, 1.3]]})
         assert np.allclose(A.parameters.value.get(comp), [[1.1, 1.2, 1.3]])
-        assert np.allclose(B.input_values, [[11.2,  14.8]])
+        assert np.allclose(B.get_input_values(comp), [[11.2,  14.8]])
         assert np.allclose(B.parameters.value.get(comp), [[22.4,  29.6]])
         assert np.allclose(proj.matrix, weights)
 
@@ -240,7 +240,7 @@ class TestAddProjection:
         comp.add_linear_processing_pathway([A, weights, B])
         comp.run(inputs={A: [[1.1, 1.2, 1.3]]})
         assert np.allclose(A.parameters.value.get(comp), [[1.1, 1.2, 1.3]])
-        assert np.allclose(B.input_values, [[11.2,  14.8]])
+        assert np.allclose(B.get_input_values(comp), [[11.2,  14.8]])
         assert np.allclose(B.parameters.value.get(comp), [[22.4,  29.6]])
 
     def test_add_conflicting_projection_object(self):
@@ -3820,10 +3820,10 @@ class TestInputSpecifications:
         sched = Scheduler(composition=comp)
         comp.run(inputs=inputs, scheduler_processing=sched)[0]
 
-        assert np.allclose(A.output_values, [[2.0, 4.0], [6.0, 8.0]])
-        assert np.allclose(B.output_values, [[3., 6., 9.]])
-        assert np.allclose(C.output_values, [[0.]])
-        assert np.allclose(D.output_values, [[4.]])
+        assert np.allclose(A.get_output_values(comp), [[2.0, 4.0], [6.0, 8.0]])
+        assert np.allclose(B.get_output_values(comp), [[3., 6., 9.]])
+        assert np.allclose(C.get_output_values(comp), [[0.]])
+        assert np.allclose(D.get_output_values(comp), [[4.]])
 
     def test_some_inputs_not_specified_origin_node_is_composition(self):
 
@@ -3857,10 +3857,10 @@ class TestInputSpecifications:
         sched = Scheduler(composition=comp)
         comp.run(inputs=inputs, scheduler_processing=sched)[0]
 
-        assert np.allclose(A.output_values, [[2.0, 4.0], [6.0, 8.0]])
-        assert np.allclose(compA.output_values, [[2.0, 4.0], [6.0, 8.0]])
-        assert np.allclose(B.output_values, [[3., 6., 9.]])
-        assert np.allclose(C.output_values, [[0.]])
-        assert np.allclose(D.output_values, [[4.]])
+        assert np.allclose(A.get_output_values(comp), [[2.0, 4.0], [6.0, 8.0]])
+        assert np.allclose(compA.get_output_values(comp), [[2.0, 4.0], [6.0, 8.0]])
+        assert np.allclose(B.get_output_values(comp), [[3., 6., 9.]])
+        assert np.allclose(C.get_output_values(comp), [[0.]])
+        assert np.allclose(D.get_output_values(comp), [[4.]])
 
 

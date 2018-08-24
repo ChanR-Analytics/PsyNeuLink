@@ -1,26 +1,27 @@
 import functools
 import logging
+
 from timeit import timeit
 
 import numpy as np
 import pytest
 
-from psyneulink.components.functions.function import Linear, SimpleIntegrator, Identity
-from psyneulink.components.mechanisms.processing.integratormechanism import IntegratorMechanism
-from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism, TRANSFER_OUTPUT
-from psyneulink.components.mechanisms.processing.processingmechanism import ProcessingMechanism
-from psyneulink.library.mechanisms.processing.transfer.recurrenttransfermechanism import RecurrentTransferMechanism
+from psyneulink.components.functions.function import Identity, Linear, SimpleIntegrator
 from psyneulink.components.mechanisms.processing.compositioninterfacemechanism import CompositionInterfaceMechanism
+from psyneulink.components.mechanisms.processing.integratormechanism import IntegratorMechanism
+from psyneulink.components.mechanisms.processing.processingmechanism import ProcessingMechanism
+from psyneulink.components.mechanisms.processing.transfermechanism import TRANSFER_OUTPUT, TransferMechanism
 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.components.states.inputstate import InputState
-from psyneulink.compositions.composition import Composition, CompositionError, CNodeRole
+from psyneulink.compositions.composition import CNodeRole, Composition, CompositionError
 from psyneulink.compositions.pathwaycomposition import PathwayComposition
 from psyneulink.compositions.systemcomposition import SystemComposition
+from psyneulink.globals.keywords import HARD_CLAMP, INPUT_STATE, NAME, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP
+from psyneulink.library.mechanisms.processing.transfer.recurrenttransfermechanism import RecurrentTransferMechanism
+from psyneulink.scheduling.condition import AfterNCalls, EveryNPasses
 from psyneulink.scheduling.condition import EveryNCalls
 from psyneulink.scheduling.scheduler import Scheduler
-from psyneulink.scheduling.condition import EveryNPasses, AfterNCalls
 from psyneulink.scheduling.time import TimeScale
-from psyneulink.globals.keywords import NAME, INPUT_STATE, HARD_CLAMP, SOFT_CLAMP, NO_CLAMP, PULSE_CLAMP
 
 class TestExecuteCIM:
 
@@ -188,9 +189,9 @@ class TestConnectCompositionsViaCIMS:
         # input = 5.0
         # output = 180.0
         comp3.run(inputs={comp1: [[5.]]})
-        assert np.allclose(comp1.output_state.value, [30.0])
-        assert np.allclose(comp2.output_state.value, [180.0])
-        assert np.allclose(comp3.output_state.value, [180.0])
+        assert np.allclose(comp1.output_state.parameters.value.get(comp3), [30.0])
+        assert np.allclose(comp2.output_state.parameters.value.get(comp3), [180.0])
+        assert np.allclose(comp3.output_state.parameters.value.get(comp3), [180.0])
 
     def test_connect_compositions_with_complicated_states(self):
 
@@ -251,9 +252,9 @@ class TestConnectCompositionsViaCIMS:
             scheduler_processing=sched
         )
 
-        assert np.allclose(inner_composition_1.output_values, [[30.], [300.]])
-        assert np.allclose(inner_composition_2.output_values, [[180.], [1800.]])
-        assert np.allclose(outer_composition.output_values, [[180.], [1800.]])
+        assert np.allclose(inner_composition_1.get_output_values(outer_composition), [[30.], [300.]])
+        assert np.allclose(inner_composition_2.get_output_values(outer_composition), [[180.], [1800.]])
+        assert np.allclose(outer_composition.get_output_values(outer_composition), [[180.], [1800.]])
 
     def test_compositions_as_origin_nodes(self):
 
@@ -319,15 +320,15 @@ class TestConnectCompositionsViaCIMS:
             scheduler_processing=sched
         )
 
-        assert np.allclose(A.output_values, [[1.0]])
-        assert np.allclose(B.output_values, [[2.0]])
-        assert np.allclose(C.output_values, [[9.0]])
-        assert np.allclose(A2.output_values, [[3.0]])
-        assert np.allclose(B2.output_values, [[3.0]])
-        assert np.allclose(inner_composition_1.output_values, [[9.0]])
-        assert np.allclose(inner_composition_2.output_values, [[3.0]])
-        assert np.allclose(mechanism_d.output_values, [[36.0]])
-        assert np.allclose(outer_composition.output_values, [[36.0]])
+        assert np.allclose(A.get_output_values(outer_composition), [[1.0]])
+        assert np.allclose(B.get_output_values(outer_composition), [[2.0]])
+        assert np.allclose(C.get_output_values(outer_composition), [[9.0]])
+        assert np.allclose(A2.get_output_values(outer_composition), [[3.0]])
+        assert np.allclose(B2.get_output_values(outer_composition), [[3.0]])
+        assert np.allclose(inner_composition_1.get_output_values(outer_composition), [[9.0]])
+        assert np.allclose(inner_composition_2.get_output_values(outer_composition), [[3.0]])
+        assert np.allclose(mechanism_d.get_output_values(outer_composition), [[36.0]])
+        assert np.allclose(outer_composition.get_output_values(outer_composition), [[36.0]])
 
     def test_compositions_as_origin_nodes_multiple_trials(self):
 
@@ -468,8 +469,8 @@ class TestConnectCompositionsViaCIMS:
                     scheduler_processing=sched)
 
         # level_0 output = 2.0 * (1.0 + 2.0) = 6.0
-        assert np.allclose(level_0.output_values, [6.0])
+        assert np.allclose(level_0.get_output_values(level_2), [6.0])
         # level_1 output = 2.0 * (1.0 + 6.0) = 14.0
-        assert np.allclose(level_1.output_values, [14.0])
+        assert np.allclose(level_1.get_output_values(level_2), [14.0])
         # level_2 output = 2.0 * (1.0 + 2.0 + 14.0) = 34.0
-        assert np.allclose(level_2.output_values, [34.0])
+        assert np.allclose(level_2.get_output_values(level_2), [34.0])
