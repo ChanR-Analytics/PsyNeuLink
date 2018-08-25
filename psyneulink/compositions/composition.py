@@ -663,11 +663,14 @@ class Composition(object, metaclass=ComponentsMeta):
 
         receiver_mechanism = receiver
         graph_receiver = receiver
+        subcomposition = None
+
         if isinstance(receiver, InputState):
             receiver_mechanism = receiver.owner
             graph_receiver = receiver.owner
         elif isinstance(receiver, Composition):
             receiver_mechanism = receiver.input_CIM
+            subcomposition = receiver
 
         if projection not in [vertex.component for vertex in self.graph.vertices]:
 
@@ -686,6 +689,8 @@ class Composition(object, metaclass=ComponentsMeta):
             self.needs_update_scheduler_learning = True
 
             projection._enable_for_compositions(self)
+            if subcomposition is not None:
+                projection._enable_for_compositions(subcomposition)
 
         else:
             raise CompositionError("Cannot add Projection: {}. This Projection is already in the Compositon."
