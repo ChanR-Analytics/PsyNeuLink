@@ -639,6 +639,8 @@ class Composition(object, metaclass=ComponentsMeta):
                                        "either on the Projection or in the call to Composition.add_projection(). {}"
                                        " is missing a sender specification. ".format(projection.name))
 
+        subcompositions = []
+
         sender_mechanism = sender
         graph_sender = sender
         if isinstance(sender, OutputState):
@@ -646,6 +648,7 @@ class Composition(object, metaclass=ComponentsMeta):
             graph_sender = sender.owner
         elif isinstance(sender, Composition):
             sender_mechanism = sender.output_CIM
+            subcompositions.append(sender)
 
         if hasattr(projection, "sender"):
             if projection.sender.owner != sender and \
@@ -663,14 +666,13 @@ class Composition(object, metaclass=ComponentsMeta):
 
         receiver_mechanism = receiver
         graph_receiver = receiver
-        subcomposition = None
 
         if isinstance(receiver, InputState):
             receiver_mechanism = receiver.owner
             graph_receiver = receiver.owner
         elif isinstance(receiver, Composition):
             receiver_mechanism = receiver.input_CIM
-            subcomposition = receiver
+            subcompositions.append(receiver)
 
         if projection not in [vertex.component for vertex in self.graph.vertices]:
 
@@ -689,8 +691,8 @@ class Composition(object, metaclass=ComponentsMeta):
             self.needs_update_scheduler_learning = True
 
             projection._enable_for_compositions(self)
-            if subcomposition is not None:
-                projection._enable_for_compositions(subcomposition)
+            for comp in subcompositions:
+                projection._enable_for_compositions(comp)
 
         else:
             raise CompositionError("Cannot add Projection: {}. This Projection is already in the Compositon."
@@ -1133,6 +1135,8 @@ class Composition(object, metaclass=ComponentsMeta):
                                       name="("+interface_output_state.name + ") to ("
                                            + input_state.owner.name + "-" + input_state.name+")")
                     projection._enable_for_compositions(self)
+                    if isinstance(node, Composition):
+                        projection._enable_for_compositions(node)
 
         sends_to_input_states = set(self.input_CIM_states.keys())
 
@@ -1185,7 +1189,8 @@ class Composition(object, metaclass=ComponentsMeta):
                                       matrix=IDENTITY_MATRIX,
                                       name=proj_name)
                     proj._enable_for_compositions(self)
-                    self._add_projection(proj)
+                    if isinstance(node, Composition):
+                        projection._enable_for_compositions(node)
 
         previous_terminal_output_states = set(self.output_CIM_states.keys())
         for output_state in previous_terminal_output_states.difference(current_terminal_output_states):
