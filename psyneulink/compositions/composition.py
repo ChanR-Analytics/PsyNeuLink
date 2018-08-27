@@ -580,8 +580,13 @@ class Composition(object, metaclass=ComponentsMeta):
             input_state.internal_only = True
         objective_node = control_mechanism._objective_mechanism
         self.add_c_node(objective_node)
+        # KDM 8/27/18: will these always be length 1?
         self.add_projection(objective_node.path_afferents[0])
         self.add_projection(objective_node.efferents[0])
+        for proj in control_mechanism.efferents:
+            # will probably need to filter these by determining which should belong to this composition
+            proj._enable_for_compositions(self)
+            self._add_projection(proj)
         self._add_c_node_role(objective_node, CNodeRole.OBJECTIVE)
         self.add_required_c_node_role(objective_node, CNodeRole.OBJECTIVE)
 
