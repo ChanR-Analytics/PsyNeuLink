@@ -43,14 +43,14 @@ class TestControlMechanisms:
         LC_value = []
 
         def report_trial(system):
-            gain_created_by_LC_output_state_1.append(LC.output_state.parameters.value.get(system))
+            gain_created_by_LC_output_state_1.append(LC.output_state.parameters.value.get(system)[0])
             mod_gain_assigned_to_A.append(A.get_mod_gain(system))
             mod_gain_assigned_to_B.append(B.get_mod_gain(system))
-            base_gain_assigned_to_A.append(A.function_object.gain)
-            base_gain_assigned_to_B.append(B.function_object.gain)
-            A_value.append(A.value)
-            B_value.append(B.value)
-            LC_value.append(LC.value)
+            base_gain_assigned_to_A.append(A.function_object.parameters.gain.get())
+            base_gain_assigned_to_B.append(B.function_object.parameters.gain.get())
+            A_value.append(A.parameters.value.get(system))
+            B_value.append(B.parameters.value.get(system))
+            LC_value.append(LC.parameters.value.get(system))
 
         result = S.run(inputs={A: [[1.0], [1.0], [1.0], [1.0], [1.0]]},
                       call_after_trial=functools.partial(report_trial, S))

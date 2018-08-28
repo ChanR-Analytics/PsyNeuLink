@@ -1384,6 +1384,10 @@ class Composition(object, metaclass=ComponentsMeta):
         if scheduler_learning is None:
             scheduler_learning = self.scheduler_learning
 
+        # initialize from null context but don't overwrite any values already set for this execution_id
+        if not nested:
+            self._initialize_from_context(execution_id, None, override=False)
+
         if nested:
             self.input_CIM.context.execution_phase = ContextFlags.PROCESSING
             self.input_CIM.execute(execution_id=execution_id, context=ContextFlags.PROCESSING)
@@ -1404,10 +1408,6 @@ class Composition(object, metaclass=ComponentsMeta):
             no_clamp_inputs = self._identify_clamp_inputs(NO_CLAMP, clamp_input, origin_nodes)
         # run scheduler to receive sets of nodes that may be executed at this time step in any order
         execution_scheduler = scheduler_processing
-
-        # initialize from null context but don't overwrite any values already set for this execution_id
-        if not nested:
-            self._initialize_from_context(execution_id, None, override=False)
 
         if call_before_pass:
             call_with_pruned_args(call_before_pass, execution_id=execution_id)

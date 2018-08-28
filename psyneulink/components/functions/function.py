@@ -3214,7 +3214,7 @@ class InterfaceStateMap(InterfaceFunction):
         if self.corresponding_input_state.owner.parameters.value.get(execution_id) is not None:
 
             # If CIM's variable does not match its value, then a new pair of states was added since the last execution
-            if not np.shape(self.corresponding_input_state.owner.input_values) == np.shape(self.corresponding_input_state.owner.parameters.value.get(execution_id)):
+            if not np.shape(self.corresponding_input_state.owner.get_input_values(execution_id)) == np.shape(self.corresponding_input_state.owner.parameters.value.get(execution_id)):
                 return self.corresponding_input_state.owner.instance_defaults.variable[index]
 
             # If the variable is 1D (e.g. [0. , 0.], NOT [[0. , 0.]]), and the index is 0, then return whole variable
@@ -3777,7 +3777,7 @@ class Logistic(TransferFunction):  # -------------------------------------------
         """
 
         variable = self._check_args(variable=variable, execution_id=execution_id, params=params, context=context)
-        gain = self.get_current_function_param(GAIN)
+        gain = self.get_current_function_param(GAIN, execution_id)
         bias = self.get_current_function_param(BIAS)
         offset = self.get_current_function_param(OFFSET)
 
