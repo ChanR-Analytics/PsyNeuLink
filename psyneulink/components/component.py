@@ -914,7 +914,13 @@ class Param(types.SimpleNamespace):
 
     def _initialize_from_context(self, execution_context=None, base_execution_context=None, override=True):
         try:
-            if self.get(execution_context) is None or override:
+            try:
+                cur_val = self.get(execution_context)
+            except TypeError:
+                # if there is a failure in getting the value, treat it as if nonexistent (like for getters, etc.)
+                cur_val = None
+
+            if cur_val is None or override:
                 self.set(value=copy.deepcopy(self.get(base_execution_context)), execution_context=execution_context, override=True, skip_history=True, skip_log=True)
         except ComponentError as e:
             raise ComponentError('Error when attempting to initialize from {0}: {1}'.format(base_execution_context, e))
