@@ -2612,7 +2612,7 @@ class System(System_Base):
         # FIX: ADD SOFT_CLAMP AND HARD_CLAMP OPTIONS
         # FIX: ONLY ASSIGN ONES THAT RECEIVE PROJECTIONS
         for mech, value in self.initial_values.items():
-            mech.initialize(value, execution_context=None)
+            mech.initialize(value, execution_context=execution_context)
 
     def execute(self,
                 input=None,

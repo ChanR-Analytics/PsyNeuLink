@@ -801,7 +801,7 @@ def run(obj,
 
     # INITIALIZATION
     if initialize:
-        obj.initialize()
+        obj.initialize(execution_context=execution_id)
 
     # SET UP TIMING
     if object_type == MECHANISM:
