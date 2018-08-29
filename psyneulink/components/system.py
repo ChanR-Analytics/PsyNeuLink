@@ -2703,10 +2703,6 @@ class System(System_Base):
                         projection.sender.owner._execution_id = execution_id
                         projection.sender.owner._assign_context_values(execution_id, composition=self)
 
-        # initialize from null context but don't overwrite any values already set for this execution_id
-        if not (ContextFlags.SIMULATION & self.parameters.context.get().flags):
-            self._initialize_from_context(execution_id, None, override=False)
-
         self._report_system_output = (self.prefs.reportOutputPref and
                                       self.context.execution_phase & (ContextFlags.PROCESSING | ContextFlags.LEARNING))
 
@@ -3193,6 +3189,10 @@ class System(System_Base):
 
         for mechanism in reinitialize_values:
             mechanism.reinitialize(*reinitialize_values[mechanism], execution_context=execution_id)
+
+        # initialize from null context but don't overwrite any values already set for this execution_id
+        if not (ContextFlags.SIMULATION & self.parameters.context.get().flags):
+            self._initialize_from_context(execution_id, None, override=False)
 
         self.initial_values = initial_values
 
