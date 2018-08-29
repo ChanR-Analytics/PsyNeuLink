@@ -406,21 +406,21 @@ class CONTRASTIVE_HEBBIAN_OUTPUT():
 
 
 def _CHM_output_activity_getter(owning_component=None, execution_id=None):
-    return owning_component.parameters.current_activity.get()[owning_component.target_start:owning_component.target_end]
+    return owning_component.parameters.current_activity.get(execution_id)[owning_component.target_start:owning_component.target_end]
 
 
 def _CHM_input_activity_getter(owning_component=None, execution_id=None):
-    return owning_component.parameters.current_activity.get()[:owning_component.input_size]
+    return owning_component.parameters.current_activity.get(execution_id)[:owning_component.input_size]
 
 
 def _CHM_hidden_activity_getter(owning_component=None, execution_id=None):
     if owning_component.hidden_size:
-        return owning_component.parameters.current_activity.get()[owning_component.input_size:owning_component.target_start]
+        return owning_component.parameters.current_activity.get(execution_id)[owning_component.input_size:owning_component.target_start]
 
 
 def _CHM_target_activity_getter(owning_component=None, execution_id=None):
     if owning_component.target_size:
-        return owning_component.parameters.current_activity.get()[owning_component.target_start:owning_component.target_end]
+        return owning_component.parameters.current_activity.get(execution_id)[owning_component.target_start:owning_component.target_end]
 
 
 class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
@@ -867,10 +867,10 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
         plus_phase_activity = None
         minus_phase_activity = None
 
-        output_activity = Param(None, read_only=True, getter=_CHM_output_activity_getter, setter=lambda: None)
-        input_activity = Param(None, read_only=True, getter=_CHM_input_activity_getter, setter=lambda: None)
-        hidden_activity = Param(None, read_only=True, getter=_CHM_hidden_activity_getter, setter=lambda: None)
-        target_activity = Param(None, read_only=True, getter=_CHM_target_activity_getter, setter=lambda: None)
+        output_activity = Param(None, read_only=True, getter=_CHM_output_activity_getter)
+        input_activity = Param(None, read_only=True, getter=_CHM_input_activity_getter)
+        hidden_activity = Param(None, read_only=True, getter=_CHM_hidden_activity_getter)
+        target_activity = Param(None, read_only=True, getter=_CHM_target_activity_getter)
 
     paramClassDefaults = RecurrentTransferMechanism.paramClassDefaults.copy()
 

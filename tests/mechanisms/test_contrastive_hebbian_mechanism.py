@@ -62,8 +62,8 @@ class TestContrastiveHebbian:
         assert S.scheduler_processing.get_clock(S).previous_time.pass_ == 6
         np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].parameters.value.get(S),
                                    [1.20074767, 0.0, 1.20074767, 0.0])
-        np.testing.assert_allclose(R.plus_phase_activity, [1.20074767, 0.0, 1.20074767, 0.0])
-        np.testing.assert_allclose(R.minus_phase_activity, [0.0, 0.0, 0.0, 0.0])
+        np.testing.assert_allclose(R.parameters.plus_phase_activity.get(S), [1.20074767, 0.0, 1.20074767, 0.0])
+        np.testing.assert_allclose(R.parameters.minus_phase_activity.get(S), [0.0, 0.0, 0.0, 0.0])
         np.testing.assert_allclose(R.output_states[pnl.CURRENT_ACTIVITY_OUTPUT].parameters.value.get(S), [1.20074767, 0.0, 1.20074767, 0.0])
         np.testing.assert_allclose(
             R.recurrent_projection.get_mod_matrix(S),
@@ -90,8 +90,8 @@ class TestContrastiveHebbian:
             ]
         )
         np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].parameters.value.get(S), [0.0, 1.20074767, 0.0, 1.20074767])
-        np.testing.assert_allclose(R.plus_phase_activity, [0.0, 1.20074767, 0.0, 1.20074767])
-        np.testing.assert_allclose(R.minus_phase_activity, [0.0, 0.0, 0.0, 0.0])
+        np.testing.assert_allclose(R.parameters.plus_phase_activity.get(S), [0.0, 1.20074767, 0.0, 1.20074767])
+        np.testing.assert_allclose(R.parameters.minus_phase_activity.get(S), [0.0, 0.0, 0.0, 0.0])
 
     def test_using_Hebbian_learning_of_orthognal_inputs_with_integrator_mode(self):
         '''Same as tests/mechanisms/test_recurrent_transfer_mechanism/test_learning_of_orthognal_inputs
@@ -125,8 +125,8 @@ class TestContrastiveHebbian:
         assert S.scheduler_processing.get_clock(S).previous_time.pass_ == 19
         np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].parameters.value.get(S),
                                    [1.14142296, 0.0, 1.14142296, 0.0])
-        np.testing.assert_allclose(R.plus_phase_activity, [1.14142296, 0.0, 1.14142296, 0.0])
-        np.testing.assert_allclose(R.minus_phase_activity, [0.0, 0.0, 0.0, 0.0])
+        np.testing.assert_allclose(R.parameters.plus_phase_activity.get(S), [1.14142296, 0.0, 1.14142296, 0.0])
+        np.testing.assert_allclose(R.parameters.minus_phase_activity.get(S), [0.0, 0.0, 0.0, 0.0])
         np.testing.assert_allclose(R.output_states[pnl.CURRENT_ACTIVITY_OUTPUT].parameters.value.get(S),
                                    [1.1414229612568625, 0.0, 1.1414229612568625, 0.0])
         np.testing.assert_allclose(
@@ -156,8 +156,8 @@ class TestContrastiveHebbian:
                                    [0.0, 1.1414229612568625, 0.0, 1.1414229612568625])
         np.testing.assert_allclose(R.output_states[pnl.ACTIVITY_DIFFERENCE_OUTPUT].parameters.value.get(S),
                                    [ 0.0, 1.14142296, 0.0, 1.14142296])
-        np.testing.assert_allclose(R.plus_phase_activity, [0.0, 1.14142296, 0.0, 1.14142296])
-        np.testing.assert_allclose(R.minus_phase_activity, [0.0, 0.0, 0.0, 0.0])
+        np.testing.assert_allclose(R.parameters.plus_phase_activity.get(S), [0.0, 1.14142296, 0.0, 1.14142296])
+        np.testing.assert_allclose(R.parameters.minus_phase_activity.get(S), [0.0, 0.0, 0.0, 0.0])
 
 
     def test_additional_output_states(self):
