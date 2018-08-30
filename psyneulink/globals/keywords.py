@@ -669,7 +669,8 @@ PARAMS_DICT = 'PARAMS_DICT'
 output_state_spec_to_parameter_name = {
     OWNER_VARIABLE: VARIABLE,
     OWNER_VALUE: VALUE,
-    INPUT_STATE_VARIABLES: 'input_state_variables'
+    INPUT_STATE_VARIABLES: 'input_state_variables',
+    EXECUTION_COUNT: 'execution_count',
 }
 
 # Dictionaries of labels for input, output and target arrays

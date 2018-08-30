@@ -93,6 +93,7 @@ from collections import Iterable
 
 import typecheck as tc
 
+from psyneulink.components.component import Param
 from psyneulink.components.functions.function import Linear
 from psyneulink.components.mechanisms.mechanism import Mechanism_Base
 from psyneulink.globals.context import ContextFlags
@@ -251,6 +252,11 @@ class ProcessingMechanism(ProcessingMechanism_Base):
 
     componentType = PROCESSING_MECHANISM
 
+    class Params(ProcessingMechanism_Base.Params):
+        # not stateful because this really is just a global counter, for accurate counts
+        # should use schedulers which store this info
+        execution_count = Param(0, read_only=True, loggable=False, stateful=False, fallback_default=True)
+
     classPreferenceLevel = PreferenceLevel.TYPE
     # These will override those specified in TypeDefaultPreferences
     classPreferences = {
@@ -285,5 +291,3 @@ class ProcessingMechanism(ProcessingMechanism_Base):
                                                   name=name,
                                                   prefs=prefs,
                                                   context=ContextFlags.CONSTRUCTOR)
-
-
