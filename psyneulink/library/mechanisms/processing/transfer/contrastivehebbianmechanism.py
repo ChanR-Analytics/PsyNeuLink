@@ -305,6 +305,7 @@ from collections import Iterable
 import numpy as np
 import typecheck as tc
 
+from psyneulink.components.component import Param
 from psyneulink.components.functions.function import ContrastiveHebbian, Distance, Function, Hebbian, Linear, get_matrix, is_function_type
 from psyneulink.components.mechanisms.mechanism import Mechanism
 from psyneulink.components.states.outputstate import PRIMARY, StandardOutputStates
@@ -402,6 +403,25 @@ class CONTRASTIVE_HEBBIAN_OUTPUT():
     ACTIVITY_DIFFERENCE_OUTPUT=ACTIVITY_DIFFERENCE_OUTPUT
     MINUS_PHASE_OUTPUT=MINUS_PHASE_OUTPUT
     PLUS_PHASE_OUTPUT=PLUS_PHASE_OUTPUT
+
+
+def _CHM_output_activity_getter(owning_component=None, execution_id=None):
+    return owning_component.parameters.current_activity.get()[owning_component.target_start:owning_component.target_end]
+
+
+def _CHM_input_activity_getter(owning_component=None, execution_id=None):
+    return owning_component.parameters.current_activity.get()[:owning_component.input_size]
+
+
+def _CHM_hidden_activity_getter(owning_component=None, execution_id=None):
+    if owning_component.hidden_size:
+        return owning_component.parameters.current_activity.get()[owning_component.input_size:owning_component.target_start]
+
+
+def _CHM_target_activity_getter(owning_component=None, execution_id=None):
+    if owning_component.target_size:
+        return owning_component.parameters.current_activity.get()[owning_component.target_start:owning_component.target_end]
+
 
 class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
     """
@@ -843,6 +863,14 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
 
     class Params(RecurrentTransferMechanism.Params):
         variable = np.array([[0, 0]])
+        current_activity = Param(None, aliases=['recurrent_activity'])
+        plus_phase_activity = None
+        minus_phase_activity = None
+
+        output_activity = Param(None, read_only=True, getter=_CHM_output_activity_getter, setter=lambda: None)
+        input_activity = Param(None, read_only=True, getter=_CHM_input_activity_getter, setter=lambda: None)
+        hidden_activity = Param(None, read_only=True, getter=_CHM_hidden_activity_getter, setter=lambda: None)
+        target_activity = Param(None, read_only=True, getter=_CHM_target_activity_getter, setter=lambda: None)
 
     paramClassDefaults = RecurrentTransferMechanism.paramClassDefaults.copy()
 
@@ -1087,19 +1115,14 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
 
         self.phase_execution_count += 1
 
-        self.output_activity = self.current_activity[self.target_start:self.target_end]
-
         current_activity = np.squeeze(current_activity)
         # Set value of primary OutputState to current activity
-        self.current_activity = current_activity
-
-        if previous_value is None:
-            return current_activity
+        self.parameters.current_activity.set(current_activity, execution_id)
 
         # This is the first trial, so can't test for convergence
         #    (since that requires comparison with value from previous trial)
         if previous_value is None:
-            return self.current_activity
+            return current_activity
 
         if self.termination_condition is CONVERGENCE:
             self.convergence_criterion = self.termination_criterion
@@ -1118,24 +1141,23 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
             # Terminate if this is the end of the plus phase, prepare for next trial
             if self.execution_phase == PLUS_PHASE:
                 # Store activity from last execution in plus phase
-                self.plus_phase_activity = current_activity
+                self.parameters.plus_phase_activity.set(current_activity, execution_id)
                 # # Set value of primary outputState to activity at end of plus phase
                 # self.current_activity = self.plus_phase_activity
-                self.current_activity = current_activity
-                self.output_activity = current_activity[self.target_start:self.target_end]
+                self.parameters.current_activity.set(current_activity, execution_id)
                 # self.execution_phase = None
                 self._is_finished = True
 
             # Otherwise, prepare for start of plus phase on next execution
             else:
                 # Store activity from last execution in plus phase
-                self.minus_phase_activity = self.current_activity
+                self.parameters.minus_phase_activity.set(self.parameters.current_activity.get(), execution_id)
                 # Use initial_value attribute to initialize, for the minus phase,
                 #    both the integrator_function's previous_value
                 #    and the Mechanism's current activity (which is returned as its input)
                 if not self.continuous:
                     self.reinitialize(self.initial_value, execution_context=execution_id)
-                    self.current_activity = self.initial_value
+                    self.parameters.current_activity.set(self.initial_value, execution_id)
                 self.termination_criterion = self.plus_phase_termination_criterion
                 self.termination_condition = self.plus_phase_termination_condition
 

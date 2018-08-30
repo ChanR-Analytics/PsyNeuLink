@@ -705,9 +705,15 @@ def _parse_output_state_variable(variable, owner, execution_id=None, output_stat
 
             try:
                 return getattr(owner.parameters, owner_param_name).get(execution_id)
-            except:
-                raise OutputStateError("Can't parse variable ({}) for {} of {}".
-                                   format(spec, output_state_name or OutputState.__name__, owner.name))
+            except AttributeError:
+                try:
+                    return getattr(owner.function_object.parameters, owner_param_name).get(execution_id)
+                except AttributeError:
+                    raise OutputStateError(
+                        "Can't parse variable ({}) for {} of {}".format(
+                            spec, output_state_name or OutputState.__name__, owner.name
+                        )
+                    )
         else:
             raise OutputStateError("\'{}\' entry for {} specification dictionary of {} ({}) must be "
                                    "numeric or a list of {} attribute names".
