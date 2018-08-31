@@ -3308,7 +3308,7 @@ class Component(object, metaclass=ComponentsMeta):
         else:
             if self.context.initialization_status & ~(ContextFlags.VALIDATING | ContextFlags.INITIALIZING):
                 self._increment_execution_count()
-            self._update_current_execution_time(context=context)
+            self._update_current_execution_time(context=context, execution_id=execution_id)
 
         # If Component has a Function (function_object), assign Component's execution_phase to its context
         try:
@@ -3390,12 +3390,12 @@ class Component(object, metaclass=ComponentsMeta):
             except AttributeError:
                 return None
 
-    def _get_current_execution_time(self, context):
+    def _get_current_execution_time(self, context, execution_id=None):
         from psyneulink.globals.context import _get_context
-        return _get_time(self, context_flags=_get_context(context))
+        return _get_time(self, context_flags=_get_context(context), execution_id=execution_id)
 
-    def _update_current_execution_time(self, context):
-        self._current_execution_time = self._get_current_execution_time(context=context)
+    def _update_current_execution_time(self, context, execution_id=None):
+        self._current_execution_time = self._get_current_execution_time(context=context, execution_id=execution_id)
 
     def _change_function(self, to_function):
         pass

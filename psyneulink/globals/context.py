@@ -612,13 +612,13 @@ def _get_time(component, context_flags, execution_id=None):
     if system and hasattr(system, 'scheduler_processing'):
         execution_flags = context_flags & ContextFlags.EXECUTION_PHASE_MASK
         if execution_flags == ContextFlags.PROCESSING or not execution_flags:
-            t = system.scheduler_processing.clock.time
+            t = system.scheduler_processing.clocks[execution_id].time
             t = time(t.run, t.trial, t.pass_, t.time_step)
         elif execution_flags == ContextFlags.CONTROL:
-            t = system.scheduler_processing.clock.time
+            t = system.scheduler_processing.clocks[execution_id].time
             t = time(t.run, t.trial, t.pass_, t.time_step)
         elif execution_flags == ContextFlags.LEARNING:
-            t = system.scheduler_learning.clock.time
+            t = system.scheduler_learning.clocks[execution_id].time
             t = time(t.run, t.trial, t.pass_, t.time_step)
         else:
             t = None

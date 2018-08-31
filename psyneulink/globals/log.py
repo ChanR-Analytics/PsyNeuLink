@@ -1497,12 +1497,11 @@ class Log:
             mod_time_values[i] = tuple(update_tuple)
         return mod_time_values
 
-    def _parse_entries_for_time_values(self, entries, execution_ids=None):
+    def _parse_entries_for_time_values(self, entries, execution_ids=NotImplemented):
         # Returns sorted list of SimpleTime tuples for all time points at which these entries logged values
 
         time_values = []
         for entry in entries:
-            entry = self._dealias_owner_name(entry)
             # OLD: finds duplicate time points within any one entry and modifies their values to be unique
             #
             # # collect all time values for this entry

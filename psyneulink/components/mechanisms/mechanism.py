@@ -2352,7 +2352,7 @@ class Mechanism_Base(Mechanism):
 
         if self.context.initialization_status & ~(ContextFlags.VALIDATING | ContextFlags.INITIALIZING):
             self._increment_execution_count()
-            self._update_current_execution_time(context=context)
+            self._update_current_execution_time(context=context, execution_id=execution_id)
 
         # Used by sublcasses with update_previous_value and/or convergence_function and delta
         self._current_value = value
