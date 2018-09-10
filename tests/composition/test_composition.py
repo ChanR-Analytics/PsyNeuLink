@@ -859,10 +859,10 @@ class TestExecutionOrder:
         # D: (20 + 80 + 60) x 2 = 320
 
         comp = Composition()
-        A = TransferMechanism(name="A", function=Linear(slope=5.0))
-        B = TransferMechanism(name="B", function=Linear(slope=4.0))
-        C = TransferMechanism(name="C", function=Linear(slope=3.0))
-        D = TransferMechanism(name="D", function=Linear(slope=2.0))
+        A = TransferMechanism(name="frozen-A", function=Linear(slope=5.0))
+        B = TransferMechanism(name="frozen-B", function=Linear(slope=4.0))
+        C = TransferMechanism(name="frozen-C", function=Linear(slope=3.0))
+        D = TransferMechanism(name="frozen-D", function=Linear(slope=2.0))
         comp.add_linear_processing_pathway([A, D])
         comp.add_linear_processing_pathway([B, C])
         comp.add_linear_processing_pathway([C, B])
@@ -895,15 +895,15 @@ class TestExecutionOrder:
         # E: (20 + 50.83865743) x 5 = 354.19328716
 
         comp = Composition()
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        C = TransferMechanism(name="mult-C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="mult-D", function=Linear(slope=5.0))
         B = ObjectiveMechanism(function=Linear,
                                monitored_output_states=[C],
-                               name="B")
-        A = LCControlMechanism(name="A",
+                               name="mult-B")
+        A = LCControlMechanism(name="mult-A",
                                modulated_mechanisms=D,
                                objective_mechanism=B)
-        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        E = TransferMechanism(name="mult-E", function=Linear(slope=5.0))
         comp.add_linear_processing_pathway([C, D, E])
         comp.add_linear_processing_pathway([C, E])
         comp.add_c_node(B)
@@ -936,15 +936,15 @@ class TestExecutionOrder:
         # E: (20 + 100.50838675) x 5 = 650.83865743
 
         comp = Composition()
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        C = TransferMechanism(name="add-C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="add-D", function=Linear(slope=5.0))
         B = ObjectiveMechanism(function=Linear,
                                monitored_output_states=[C],
-                               name="B")
-        A = LCControlMechanism(name="A", modulation=ModulationParam.ADDITIVE,
+                               name="add-B")
+        A = LCControlMechanism(name="add-A", modulation=ModulationParam.ADDITIVE,
                                modulated_mechanisms=D,
                                objective_mechanism=B)
-        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        E = TransferMechanism(name="add-E", function=Linear(slope=5.0))
         comp.add_linear_processing_pathway([C, D, E])
         comp.add_linear_processing_pathway([C, E])
         comp.add_c_node(B)
@@ -977,15 +977,15 @@ class TestExecutionOrder:
         # E: (20 + 10.167735) x 5 = 150.83865743
 
         comp = Composition()
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        C = TransferMechanism(name="over-C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="over-D", function=Linear(slope=5.0))
         B = ObjectiveMechanism(function=Linear,
                                monitored_output_states=[C],
-                               name="B")
-        A = LCControlMechanism(name="A", modulation=ModulationParam.OVERRIDE,
+                               name="over-B")
+        A = LCControlMechanism(name="over-A", modulation=ModulationParam.OVERRIDE,
                                modulated_mechanisms=D,
                                objective_mechanism=B)
-        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        E = TransferMechanism(name="over-E", function=Linear(slope=5.0))
         comp.add_linear_processing_pathway([C, D, E])
         comp.add_linear_processing_pathway([C, E])
         comp.add_c_node(B)
@@ -1018,15 +1018,15 @@ class TestExecutionOrder:
         # E: (20 + 100) x 5 = 600
 
         comp = Composition()
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", function=Linear(slope=5.0))
+        C = TransferMechanism(name="dis-C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="dis-D", function=Linear(slope=5.0))
         B = ObjectiveMechanism(function=Linear,
                                monitored_output_states=[C],
-                               name="B")
-        A = LCControlMechanism(name="A", modulation=ModulationParam.DISABLE,
+                               name="dis-B")
+        A = LCControlMechanism(name="dis-A", modulation=ModulationParam.DISABLE,
                                modulated_mechanisms=D,
                                objective_mechanism=B)
-        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        E = TransferMechanism(name="dis-E", function=Linear(slope=5.0))
         comp.add_linear_processing_pathway([C, D, E])
         comp.add_linear_processing_pathway([C, E])
         comp.add_c_node(B)
@@ -1536,8 +1536,8 @@ class TestRun:
     @pytest.mark.parametrize("mode", ['Python', 'LLVM'])
     def test_run_2_mechanisms_input_grow(self, mode):
         comp = Composition()
-        A = IntegratorMechanism(default_variable=[1.0, 2.0], function=Linear(slope=5.0))
-        B = TransferMechanism(default_variable=[1.0, 2.0, 3.0], function=Linear(slope=5.0))
+        A = IntegratorMechanism(name="grow-A", default_variable=[1.0, 2.0], function=Linear(slope=5.0))
+        B = TransferMechanism(name="grow-B", default_variable=[1.0, 2.0, 3.0], function=Linear(slope=5.0))
         P = MappingProjection(sender=A, receiver=B)
         comp.add_c_node(A)
         comp.add_c_node(B)
@@ -1557,8 +1557,8 @@ class TestRun:
     @pytest.mark.parametrize("mode", ['Python', 'LLVM'])
     def test_run_2_mechanisms_input_shrink(self, mode):
         comp = Composition()
-        A = IntegratorMechanism(default_variable=[1.0, 2.0, 3.0], function=Linear(slope=5.0))
-        B = TransferMechanism(default_variable=[4.0, 5.0], function=Linear(slope=5.0))
+        A = IntegratorMechanism(name="shrink-A", default_variable=[1.0, 2.0, 3.0], function=Linear(slope=5.0))
+        B = TransferMechanism(name="shrink-B", default_variable=[4.0, 5.0], function=Linear(slope=5.0))
         P = MappingProjection(sender=A, receiver=B)
         comp.add_c_node(A)
         comp.add_c_node(B)
@@ -1577,8 +1577,8 @@ class TestRun:
     @pytest.mark.parametrize("mode", ['Python', 'LLVM'])
     def test_run_2_mechanisms_input_5(self, mode):
         comp = Composition()
-        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
-        B = TransferMechanism(function=Linear(slope=5.0))
+        A = IntegratorMechanism(name="2m-int-A", default_variable=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(name="2m-trans-B", function=Linear(slope=5.0))
         comp.add_c_node(A)
         comp.add_c_node(B)
         comp.add_projection(MappingProjection(sender=A, receiver=B), A, B)
@@ -1739,8 +1739,8 @@ class TestRun:
     @pytest.mark.parametrize("mode", ['Python', 'LLVM'])
     def test_run_2_mechanisms_reuse_input(self, mode):
         comp = Composition()
-        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
-        B = TransferMechanism(function=Linear(slope=5.0))
+        A = IntegratorMechanism(name="reuse-A", default_variable=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(name="reuse-B", function=Linear(slope=5.0))
         comp.add_c_node(A)
         comp.add_c_node(B)
         comp.add_projection(MappingProjection(sender=A, receiver=B), A, B)
@@ -1754,8 +1754,8 @@ class TestRun:
     @pytest.mark.parametrize("mode", ['Python', 'LLVM'])
     def test_run_2_mechanisms_double_trial_specs(self, mode):
         comp = Composition()
-        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
-        B = TransferMechanism(function=Linear(slope=5.0))
+        A = IntegratorMechanism(name="double-A", default_variable=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(name="double-B", function=Linear(slope=5.0))
         comp.add_c_node(A)
         comp.add_c_node(B)
         comp.add_projection(MappingProjection(sender=A, receiver=B), A, B)
@@ -1770,8 +1770,8 @@ class TestRun:
     @pytest.mark.parametrize("mode", ['Python', 'LLVM'])
     def test_execute_composition(self, mode):
         comp = Composition()
-        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
-        B = TransferMechanism(function=Linear(slope=5.0))
+        A = IntegratorMechanism(name="exec-A", default_variable=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(name="exec-B", function=Linear(slope=5.0))
         comp.add_c_node(A)
         comp.add_c_node(B)
         comp.add_projection(MappingProjection(sender=A, receiver=B), A, B)
@@ -1919,8 +1919,8 @@ class TestRun:
     @pytest.mark.parametrize("llvm", ['Python', 'LLVM'])
     def test_run_composition(self, benchmark, llvm):
         comp = Composition()
-        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
-        B = TransferMechanism(function=Linear(slope=5.0))
+        A = IntegratorMechanism(name="basic-A", default_variable=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(name="basic-B", function=Linear(slope=5.0))
         comp.add_c_node(A)
         comp.add_c_node(B)
         comp.add_projection(MappingProjection(sender=A, receiver=B), A, B)
@@ -1936,8 +1936,8 @@ class TestRun:
     @pytest.mark.parametrize("llvm", ['Python', 'LLVM'])
     def test_run_composition_default(self, benchmark, llvm):
         comp = Composition()
-        A = IntegratorMechanism(default_variable=1.0, function=Linear(slope=5.0))
-        B = TransferMechanism(function=Linear(slope=5.0))
+        A = IntegratorMechanism(name="default-A", default_variable=1.0, function=Linear(slope=5.0))
+        B = TransferMechanism(name="default-B", function=Linear(slope=5.0))
         comp.add_c_node(A)
         comp.add_c_node(B)
         comp.add_projection(MappingProjection(sender=A, receiver=B), A, B)
@@ -1952,8 +1952,8 @@ class TestRun:
     def test_run_composition_vector(self, benchmark, llvm, vector_length):
         var = [1.0 for x in range(vector_length)];
         comp = Composition()
-        A = IntegratorMechanism(default_variable=var, function=Linear(slope=5.0))
-        B = TransferMechanism(default_variable=var, function=Linear(slope=5.0))
+        A = IntegratorMechanism(name="vector-A", default_variable=var, function=Linear(slope=5.0))
+        B = TransferMechanism(name="vector-B", default_variable=var, function=Linear(slope=5.0))
         comp.add_c_node(A)
         comp.add_c_node(B)
         comp.add_projection(MappingProjection(sender=A, receiver=B), A, B)
@@ -1975,9 +1975,9 @@ class TestRun:
         # 5 x 5 = 25 --
 
         comp = Composition()
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", function=Linear(slope=5.0))
-        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        C = TransferMechanism(name="scalar-C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="scalar-D", function=Linear(slope=5.0))
+        E = TransferMechanism(name="scalar-E", function=Linear(slope=5.0))
         comp.add_c_node(C)
         comp.add_c_node(D)
         comp.add_c_node(E)
@@ -2003,9 +2003,9 @@ class TestRun:
         #                25 * 6 = 150
 
         comp = Composition()
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", function=Linear(slope=4.0))
-        E = TransferMechanism(name="E", function=Linear(slope=6.0))
+        C = TransferMechanism(name="1o2t-C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="1o2t-D", function=Linear(slope=4.0))
+        E = TransferMechanism(name="1o2t-E", function=Linear(slope=6.0))
         comp.add_c_node(C)
         comp.add_c_node(D)
         comp.add_c_node(E)
@@ -2030,9 +2030,9 @@ class TestRun:
         # [8] x 5 = [40] --
 
         comp = Composition()
-        C = TransferMechanism(name="C", function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", function=Linear(slope=5.0))
-        E = TransferMechanism(name="E", input_states=['a', 'b'], function=Linear(slope=5.0))
+        C = TransferMechanism(name="2o1t-C", function=Linear(slope=5.0))
+        D = TransferMechanism(name="2o1t-D", function=Linear(slope=5.0))
+        E = TransferMechanism(name="2o1t-E", input_states=['a', 'b'], function=Linear(slope=5.0))
         comp.add_c_node(C)
         comp.add_c_node(D)
         comp.add_c_node(E)
@@ -2059,9 +2059,9 @@ class TestRun:
         # [7, 8] x 5 = [35, 40] --
 
         comp = Composition()
-        C = TransferMechanism(name="C", input_states=['a', 'b'], function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", input_states=['a', 'b'], function=Linear(slope=5.0))
-        E = TransferMechanism(name="E", input_states=['a', 'b'], function=Linear(slope=5.0))
+        C = TransferMechanism(name="mimo-par-C", input_states=['a', 'b'], function=Linear(slope=5.0))
+        D = TransferMechanism(name="mimo-par-D", input_states=['a', 'b'], function=Linear(slope=5.0))
+        E = TransferMechanism(name="mimo-par-E", input_states=['a', 'b'], function=Linear(slope=5.0))
         comp.add_c_node(C)
         comp.add_c_node(D)
         comp.add_c_node(E)
@@ -2090,9 +2090,9 @@ class TestRun:
         # [7, 8] x 5 = [35, 40] --
 
         comp = Composition()
-        C = TransferMechanism(name="C", input_states=['a', 'b'], function=Linear(slope=5.0))
-        D = TransferMechanism(name="D", input_states=['a', 'b'], function=Linear(slope=5.0))
-        E = TransferMechanism(name="E", function=Linear(slope=5.0))
+        C = TransferMechanism(name="mimo-sum-C", input_states=['a', 'b'], function=Linear(slope=5.0))
+        D = TransferMechanism(name="mimo-sum-D", input_states=['a', 'b'], function=Linear(slope=5.0))
+        E = TransferMechanism(name="mimo-sum-E", function=Linear(slope=5.0))
         comp.add_c_node(C)
         comp.add_c_node(D)
         comp.add_c_node(E)
@@ -2112,7 +2112,7 @@ class TestRun:
     @pytest.mark.parametrize("mode", ['Python', 'LLVM'])
     def test_run_recurrent_transfer_mechanism(self, benchmark, mode):
         comp = Composition()
-        A = RecurrentTransferMechanism(size=3, function=Linear(slope=5.0), name="A")
+        A = RecurrentTransferMechanism(size=3, function=Linear(slope=5.0), name="rec-A")
         comp.add_c_node(A)
         comp._analyze_graph()
         sched = Scheduler(composition=comp)
@@ -2130,7 +2130,8 @@ class TestRun:
     @pytest.mark.parametrize("mode", ['Python', 'LLVM'])
     def test_run_recurrent_transfer_mechanism_hetero(self, benchmark, mode):
         comp = Composition()
-        R = RecurrentTransferMechanism(size=1,
+        R = RecurrentTransferMechanism(name="rec-hetero-A",
+                                       size=1,
                                        function=Logistic(),
                                        hetero=-2.0,
                                        output_states = [RECURRENT_OUTPUT.RESULT])
@@ -2155,7 +2156,8 @@ class TestRun:
     @pytest.mark.parametrize("mode", ['Python', 'LLVM'])
     def test_run_recurrent_transfer_mechanism_integrator(self, benchmark, mode):
         comp = Composition()
-        R = RecurrentTransferMechanism(size=1,
+        R = RecurrentTransferMechanism(name="rec-hetero-integrator-R",
+                                       size=1,
                                        function=Logistic(),
                                        hetero=-2.0,
                                        integrator_mode=True,
@@ -2182,7 +2184,7 @@ class TestRun:
     @pytest.mark.parametrize("mode", ['Python', 'LLVM'])
     def test_run_recurrent_transfer_mechanism_vector_2(self, benchmark, mode):
         comp = Composition()
-        R = RecurrentTransferMechanism(size=2, function=Logistic())
+        R = RecurrentTransferMechanism(name="rec-v2-R", size=2, function=Logistic())
         comp.add_c_node(R)
         comp._analyze_graph()
         sched = Scheduler(composition=comp)
@@ -2204,7 +2206,8 @@ class TestRun:
     @pytest.mark.parametrize("mode", ['Python', 'LLVM'])
     def test_run_recurrent_transfer_mechanism_hetero_2(self, benchmark, mode):
         comp = Composition()
-        R = RecurrentTransferMechanism(size=2,
+        R = RecurrentTransferMechanism(name="rec-hetero2-R",
+                                       size=2,
                                        function=Logistic(),
                                        hetero=-2.0,
                                        output_states = [RECURRENT_OUTPUT.RESULT])
@@ -2229,7 +2232,8 @@ class TestRun:
     @pytest.mark.parametrize("mode", ['Python', 'LLVM'])
     def test_run_recurrent_transfer_mechanism_integrator_2(self, benchmark, mode):
         comp = Composition()
-        R = RecurrentTransferMechanism(size=2,
+        R = RecurrentTransferMechanism(name="rec-hetero-int2-R",
+                                       size=2,
                                        function=Logistic(),
                                        hetero=-2.0,
                                        integrator_mode=True,
